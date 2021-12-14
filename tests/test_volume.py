@@ -45,6 +45,9 @@ class TestVolume(TestCase):
         self.env.globals['len'] = len
 
     def test_volumes(self):
+        """
+        tests the rendering of a volume as volume_index.html
+        """
         conference=Conference()
         conference.fromDict({
             "id": "Vol-2436",
@@ -84,11 +87,17 @@ class TestVolume(TestCase):
         volume=Volume()
         volume.fromDict(
             {
+                # Keys/Identifiers
                 "number": 2436,
+                "acronym": "EDML 2019",
+                # Relations
+                "conference": conference,
+                "editors": [editor],
+                "sessions": [session],
+                # Properties
                 "url": "http://ceur-ws.org/Vol-2436/",
                 "title": "Evaluation and Experimental Design in Data Mining and Machine Learning",
                 "fullTitle": "1st Workshop on Evaluation and Experimental Design in Data Mining and Machine Learning",
-                "acronym": "EDML 2019",
                 "lang": "en",
                 "location": "Calgary, Alberta, Canada",
                 "country": "Canada",
@@ -100,10 +109,7 @@ class TestVolume(TestCase):
                 "dateTo": "",
                 "pubYear": 2019,
                 "pubDate": "2019-09-08",
-                "submitDate": "2019-07-28",
-                "conference": conference,
-                "editors": [editor],
-                "sessions": [session]
+                "submitDate": "2019-07-28"
             }
         )
 

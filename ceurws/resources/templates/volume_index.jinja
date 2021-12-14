@@ -51,7 +51,7 @@ Returns:
                 </span>
             </a>
         </span>
-        {% if paper.pages %}
+        {% if paper.pagesFrom and paper.pagesTo %}
             <span class="CEURPAGES">
                 <span property="bibo:pageStart" datatype="xsd:nonNegativeInteger">
                     {{ paper.pagesFrom }}
@@ -229,8 +229,8 @@ Returns:
 
     <hr/>
     <span class="unobtrusive">
-        {{ datetime.now().strftime('%Y-%m-d') }}: submitted by {{ volume.getSubmittingEditor().name }}, metadata incl. bibliographic data published under <a href="http://creativecommons.org/publicdomain/zero/1.0/">Creative Commons CC0</a><br/>&#xa;
-    <span property="dcterms:issued" datatype="xsd:date" class="CEURPUBDATE">yyyy-mm-dd</span>: published on CEUR-WS.org
+        {{ datetime.now().strftime('%Y-%m-%d') }}: submitted by {{ volume.getSubmittingEditor().name }}, metadata incl. bibliographic data published under <a href="http://creativecommons.org/publicdomain/zero/1.0/">Creative Commons CC0</a><br/>&#xa;
+    <span property="dcterms:issued" datatype="xsd:date" class="CEURPUBDATE">{{ volume.pubDate if volume.pubDate else "yyyy-mm-dd" }}</span>: published on CEUR-WS.org
         |<a href="https://validator.w3.org/nu/?doc=http%3A%2F%2Fceur-ws.org%2F{{ volume.volNumber }}%2F">valid HTML5</a>|
     </span>
 </body>

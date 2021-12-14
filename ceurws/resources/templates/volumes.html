@@ -1,0 +1,11 @@
+
+{% extends 'base.html' %}
+{% from 'bootstrap/form.html' import render_form %}
+{% from 'bootstrap/pagination.html' import render_pager, render_pagination %}
+{% import 'macros.html' as macros %}
+{% from 'bootstrap/table.html' import render_table %}
+{% block content %}
+
+    {{ volumes|safe }}
+
+{% endblock %}

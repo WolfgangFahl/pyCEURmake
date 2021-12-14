@@ -1,0 +1,158 @@
+#!/bin/bash
+# this script is taken from https://github.com/WolfgangFahl/ProceedingsTitleParser/blob/master/scripts/getsamples
+
+#ansi colors
+#http://www.csc.uvic.ca/~sae/seng265/fall04/tips/s265s047-tips/bash-using-colors.html
+blue='\033[0;34m'
+red='\033[0;31m'
+green='\033[0;32m' # '\e[1;32m' is too bright for white bg.
+endColor='\033[0m'
+
+#
+# a colored message
+#   params:
+#     1: l_color - the color of the message
+#     2: l_msg - the message to display
+#
+color_msg() {
+  local l_color="$1"
+  local l_msg="$2"
+  echo -e "${l_color}$l_msg${endColor}"
+}
+
+# error
+#
+#   show an error message and exit
+#
+#   params:
+#     1: l_msg - the message to display
+error() {
+  local l_msg="$1"
+  # use ansi red for error
+  color_msg $red "Error: $l_msg" 1>&2
+  exit 1
+}
+
+#
+# download
+#
+download() {
+  local l_src="$1"
+  local l_target="$2"
+  if [ ! -f $l_target ]
+  then
+    color_msg $blue "downloading $l_target from $l_src"
+    curl -o $l_target $l_src
+  else
+    color_msg $green "$l_target already downloaded"
+  fi
+  # show number of lines
+  # check if the file has json format
+  if [[ $l_target =~ ^.*\.json$ ]]; then
+    jq length $l_target
+    # invalid json?
+    if [ $? -ne 0 ]
+    then
+      color_msg $red "invalid json received for $l_target:"
+      # show first few lines which might contain error message
+      head $l_target
+      color_msg $red "test will have to work-around this issue e.g. downloading a cached result"
+    fi
+  else
+    wc -l $l_target
+  fi
+}
+
+
+#
+# get the data from CEUR-WS
+#
+getCEURWS() {
+  color_msg $blue "getting sample data for CEUR-WS"
+  samplehtml=$sampledir/ceurs-ws.html
+  sampletxt=$sampledir/proceedings-ceur-ws.txt
+  download http://ceur-ws.org/ $samplehtml
+  if [ ! -f $sampletxt ]
+  then
+    color_msg $blue "filtering proceeding titles from $samplehtml into $sampletxt"
+    cat $samplehtml  | python3 -c 'import html, sys; [print(html.unescape(l), end="") for l in sys.stdin]' | gawk '
+BEGIN {
+ ignorelines=1
+ line=""
+}
+/MAINTABLE/ { ignorelines=0; next }
+ignorelines { next }
+# ignore
+# get Vol from e.g.
+# <a href="http://ceur-ws.org/Vol-2632/">MIning and REasoning with Legal texts.</a>
+/ONLINE:.*<[Aa]\s+(HREF|href)=".*">.*<\/[aA]>/ {
+  found=match($0,/[#/]Vol-[0-9]{1,4}/)
+  if (found) {
+     vol=substr($0, RSTART+1, RLENGTH-1)
+     printf("|id=%s\n",vol)
+     if (vol=="Vol-1")
+       ignorelines=1
+  }
+  next
+}
+/<[Aa]\s+(HREF|href)=".*">/,/<\/[aA]>/ { next }
+/ftp\/pub/ { next }
+/ARCHIVE:/ {next }
+/Published on CEUR-WS:/ { next }
+/<[aA]\sname/ { next }
+/Edited by: / { next }
+/<font>/ { next }
+/<font size=.?-2.?>/ { next }
+/<\/font>/ { next }
+/<TD\salign="left"\sbgcolor="#DCDBD7">/ { next }
+/#00000/ { next }
+/#CCEBC7/ { next }
+/#F0D2F5/ { next }
+/<\/TD>/ { next }
+/<\/td>/ { next }
+/<[\/]?table|TABLE>/ { next }
+/<[\/]?tr|TR>/ { next }
+/--/ { print ""; next }
+# FILTER raw html
+{
+  line=line$0
+  gsub("<BR>","",line)
+  gsub("<br>","",line)
+  gsub("<sup>2</sup>","2",line)
+  gsub("<(td|TD).bgcolor=.#FFFFFF.>","",line)
+  # nbsp
+  gsub(" </TD>","",line)
+  # trim
+  gsub(/^[ \t]+/, "", line);
+  gsub(/[ \t]+$/, "", line);
+  # fix "5 th" typo from http://ceur-ws.org/Vol-2341"
+  gsub("5 th","5th",line)
+  if (index(line,"Submitted by") >0){
+    printf ("%s",line)
+    line=""
+  }
+}' | sed  '/^$/d'  > $sampletxt
+ else
+    color_msg $green "$sampletxt already filtered from $samplehtml"
+ fi
+ wc -l $sampletxt
+}
+
+# commandline option
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+#echo $DIR
+sampledir="$DIR/../sampledata"
+cachedir="$DIR/../cache"
+
+for d in $sampledir $cacheDir
+do
+	if [ ! -d $d ]
+	then
+	  color_msg $blue  "creating $d directory"
+	  mkdir -p $d
+	else
+	  color_msg $green "$d directory already exists"
+	fi
+done
+
+getCEURWS

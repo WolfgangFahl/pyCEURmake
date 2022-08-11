@@ -51,6 +51,7 @@ class Volume(JSONAble):
                 "sessions":[Session]
             }
         ]
+        return samples
 
     @property
     def year(self):

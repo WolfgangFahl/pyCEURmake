@@ -30,6 +30,7 @@ class IndexHtmlParser():
         #trStart, trEnd = makeHTMLTags("tr")
         #self.tr = trStart + SkipTo(trEnd).setResultsName("tr") + trEnd.suppress()
         self.linkPattern=re.compile(r'''.*href=[\'"]?([^\'" >]+).*''',re.I)
+        self.volPattern=re.compile("http://ceur-ws.org/Vol-([0-9]+)")
          
     def log(self,msg:str):
         if self.debug:
@@ -73,7 +74,7 @@ class IndexHtmlParser():
             lineNo+=1
         return None
     
-    def findVolume(self,startLine:int)->int:
+    def findVolume(self,startLine:int,expectedTr:int=3)->int:
         '''
         find Volume lines from the given startLine
         
@@ -94,7 +95,7 @@ class IndexHtmlParser():
                 else:
                     lineNo=trLine+1
                     trCount+=1
-                    if trCount==3:
+                    if trCount==expectedTr:
                         trEndLine=self.find(lineNo+1,"</tr>")
                         return trStartLine,trEndLine
         return None,None 
@@ -105,10 +106,17 @@ class IndexHtmlParser():
             infoValue=infoValue.replace("<BR>","")
             if info=="editors":
                 infoValue=html.unescape(infoValue)
-            if info in ["urn","url"]:
+            if info in ["urn","url","archive"]:
                 href=self.getMatch(self.linkPattern, infoValue, 1)
                 if href is not None:
-                    infoValue=href.replace("https://nbn-resolving.org/","")
+                    infoValue=href
+                    if info=="url":
+                        volNumber=self.getMatch(self.volPattern, href, 1)
+                        if volNumber is not None:
+                            volume["number"]=volNumber
+                    if info=="urn":
+                        infoValue=href.replace("https://nbn-resolving.org/","")
+              
             volume[info]=infoValue
             
     
@@ -121,28 +129,21 @@ class IndexHtmlParser():
         volume={}
         volume["fromLine"]=fromLine
         volume["toLine"]=toLine
-       
-        volPattern=re.compile("http://ceur-ws.org/Vol-([0-9]+)")
         
         infoPattern={}
-        for prefix,info in [("URN","urn"),("ONLINE","url"),("Edited by","editors")]:
-            infoPattern[info]=re.compile(f"{prefix}:(.*)")
+        for prefix,info in [
+            ("URN","urn"),
+            ("ONLINE","url"),
+            ("ARCHIVE","archive"),
+            ("Edited by","editors"),
+            ("Published on CEUR-WS","pubDate")]:
+            infoPattern[info]=re.compile(f"^\s*{prefix}:(.*)")
         for line in range(fromLine,toLine):
             line=self.lines[line]
             for info,pattern in infoPattern.items():
                 self.getInfo(volume,info,pattern,line)
             if verbose:
-                print(line)
-            href=self.getMatch(self.linkPattern, line, 1)
-            if href is not None:
-                if verbose:
-                    print(href)
-                volNumber=self.getMatch(volPattern, href, 1)
-                if volNumber is not None:
-                    volume["number"]=volNumber
-                    if verbose:
-                        print(volNumber)
-            
+                print(line)         
         return volume
         
     def parse(self,limit:int=1000000,verbose:bool=False):
@@ -153,7 +154,8 @@ class IndexHtmlParser():
         volCount=0
         volumes={}
         while lineNo<len(self.lines):
-            volStartLine,volEndLine=self.findVolume(lineNo)
+            expectedTr=3
+            volStartLine,volEndLine=self.findVolume(lineNo,expectedTr=expectedTr)
             if volStartLine is None or volCount>=limit:
                 break
             else:

@@ -50,21 +50,24 @@ class IndexHtmlParser():
         else:
             return None
         
-    def find(self,startLine:int,needleRegex:str):
+    def find(self,startLine:int,needleRegex:str)->int:
         '''
-        find the given regular expression
+        find the next line with the given regular expression
         
         Args:
             startLine(int): index of the line to start search
             needleRegex(str): the regular expression to search for
+            
+        Return:
+            int: the line number of the line or None if nothing was found
         '''
         pattern=re.compile(needleRegex,re.I)
-        i=startLine
-        while i<len(self.lines):
-            line=self.lines[i]
+        lineNo=startLine
+        while lineNo<len(self.lines)+1:
+            line=self.lines[lineNo-1]
             if pattern.match(line):
-                return i
-            i+=1
+                return lineNo
+            lineNo+=1
         return None
     
     def findVolume(self,startLine:int)->int:
@@ -77,18 +80,20 @@ class IndexHtmlParser():
         Returns:
             endLine of the volume html or None
         '''
-        trCount=0
-        lineNo=startLine
-        while lineNo<len(self.lines):
-            trStartLine=self.find(lineNo, "<tr>")
-            if trStartLine is None:
-                break
-            else:
-                lineNo=trStartLine+1
-                trCount+=1
-                if trCount==3:
-                    trEndLine=self.find(lineNo+1,"</tr>")
-                    return trStartLine,trEndLine
+        trStartLine=self.find(startLine, "<tr><th")
+        if trStartLine is not None:
+            lineNo=trStartLine+1
+            trCount=1
+            while lineNo<len(self.lines):
+                trLine=self.find(lineNo, "<tr>")
+                if trLine is None:
+                    break
+                else:
+                    lineNo=trLine+1
+                    trCount+=1
+                    if trCount==3:
+                        trEndLine=self.find(lineNo+1,"</tr>")
+                        return trStartLine,trEndLine
         return None,None 
     
     def parseVolume(self,volCount:int,fromLine:int,toLine:int,verbose:bool):
@@ -110,7 +115,7 @@ class IndexHtmlParser():
         '''
         parse my html code for Volume info
         '''
-        lineNo=self.find(0, '<TABLE id="MAINTABLE"')
+        lineNo=self.find(1, '<TABLE id="MAINTABLE"')
         volCount=0
         while lineNo<len(self.lines):
             volStartLine,volEndLine=self.findVolume(lineNo)

@@ -15,3 +15,5 @@ APScheduler
 pyparsing>=3.0.9
 # https://pypi.org/project/beautifulsoup4/
 BeautifulSoup4~=4.11.1
+# https://pypi.org/project/lxml/
+lxml~=4.9.1

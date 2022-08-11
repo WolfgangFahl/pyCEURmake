@@ -7,7 +7,7 @@ from fb4.widgets import Widget, Link, LodTable
 from flask import render_template, redirect, url_for, send_from_directory
 from lodstorage.lod import LOD
 
-from ceurws import VolumeManager
+from ceurws.ceur_ws import VolumeManager
 
 
 class WebServer(AppWrap):

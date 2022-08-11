@@ -4,11 +4,21 @@ import os
 from lodstorage.entity import EntityManager
 from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
+from bs4 import BeautifulSoup
+from urllib.request import Request, urlopen
+from pathlib import Path
+from lxml import etree
 
-
-CEURWS_URL="http://ceur-ws.org"
-CACHE_FILE=os.path.dirname(__file__) + "/resources/ceurws.db"
-CONFIG=StorageConfig(cacheFile=CACHE_FILE)
+class CEURWS:
+    '''
+    CEUR-WS 
+    '''
+    URL="http://ceur-ws.org"
+    home = str(Path.home())
+    CACHE_DIR = "%s/.ceurws" % home
+    CACHE_FILE=f"{CACHE_DIR}/ceurws.db"
+    CACHE_HTML=f"{CACHE_DIR}/index.html"
+    CONFIG=StorageConfig(cacheFile=CACHE_FILE)
 
 
 class Volume(JSONAble):
@@ -101,15 +111,28 @@ class VolumeManager(EntityManager):
                                             entityName=Volume.__class__.__name__,
                                             primaryKey="number",
                                             entityPluralName="volumes",
-                                            config=CONFIG,
+                                            config=CEURWS.CONFIG,
                                             name=self.__class__.__name__)
 
 
     def loadFromBackup(self):
-        self.fromStore(cacheFile=CACHE_FILE)
-
-
-
+        self.fromStore(cacheFile=CEURWS.CACHE_FILE)
+        
+    def getIndexHtml(self,force:bool=False):
+        '''
+        get the index html
+        '''
+        cacheHtml=CEURWS.CACHE_HTML
+        if os.path.isfile(cacheHtml) and not force:
+            with open(cacheHtml, 'r') as file:
+                html_page = file.read()
+        else:
+            req = Request(CEURWS.URL, headers={'User-Agent': 'pyCEURMake'})
+            html_page = urlopen(req).read().decode()
+            Path(CEURWS.CACHE_DIR).mkdir(parents=True, exist_ok=True)
+            with open(cacheHtml, 'w') as htmlFile:
+                print(html_page,file=htmlFile)
+        return html_page
 
 class Paper(JSONAble):
     """
@@ -164,7 +187,7 @@ class PaperManager(EntityManager):
                                             entityName=Session.__class__.__name__,
                                             primaryKey="id",
                                             entityPluralName="papers",
-                                             config=CONFIG,
+                                            config=CEURWS.CONFIG,
                                             name=self.__class__.__name__)
 
 
@@ -233,7 +256,7 @@ class SessionManager(EntityManager):
                                             entityName=Session.__class__.__name__,
                                             primaryKey="id",  #ToDo: check if just the title is a sufficent key or if an ID must be added
                                             entityPluralName="sessions",
-                                             config=CONFIG,
+                                            config=CEURWS.CONFIG,
                                             name=self.__class__.__name__)
 
 
@@ -277,7 +300,7 @@ class EditorManager(EntityManager):
                                             entityName=Session.__class__.__name__,
                                             primaryKey="id",
                                             entityPluralName="editors",
-                                             config=CONFIG,
+                                            config=CEURWS.CONFIG,
                                             name=self.__class__.__name__)
 
 
@@ -310,7 +333,7 @@ class ConferenceManager(EntityManager):
                                             entityName=Session.__class__.__name__,
                                             primaryKey="id",
                                             entityPluralName="conferences",
-                                             config=CONFIG,
+                                            config=CEURWS.CONFIG,
                                             name=self.__class__.__name__)
 
 if __name__ == '__main__':

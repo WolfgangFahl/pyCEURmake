@@ -16,6 +16,14 @@ class TestIndexHtml(Basetest):
     def setUp(self, debug=False, profile=True):
         Basetest.setUp(self, debug=debug, profile=profile)
         self.url= 'http://ceur-ws.org'
+        
+    def checkVolumes(self,volumes):
+        volumeCount=len(volumes)
+        print(f"{volumeCount} volumes found")
+        for index,volume in enumerate(volumes.values()):
+            volumeNumber=volume["number"]
+            expectedVolumeNumber=volumeCount-index
+            print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')
     
     def testReadingHtml(self):
         '''
@@ -27,7 +35,7 @@ class TestIndexHtml(Basetest):
             logging.basicConfig(level=logging.DEBUG)
         vm=VolumeManager()
         htmlText=vm.getIndexHtml(force=False)
-        indexParser=IndexHtmlParser(htmlText,debug=False) 
+        indexParser=IndexHtmlParser(htmlText,debug=debug) 
         lineCount=len(indexParser.lines)
         self.assertTrue(lineCount>89500)
         if debug:
@@ -35,9 +43,5 @@ class TestIndexHtml(Basetest):
         #limit=10
         # volumes=indexParser.parse(limit=10,verbose=True)
         volumes=indexParser.parse()
-        volumeCount=len(volumes)
-        print(f"{volumeCount} volumes found")
-        for index,volume in enumerate(volumes.values()):
-            volumeNumber=volume["number"]
-            expectedVolumeNumber=volumeCount-index
-            print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')
+        #self.checkVolumes(volumes)
+       

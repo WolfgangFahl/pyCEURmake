@@ -6,6 +6,7 @@ Created on 2022-08-11
 from tests.basetest import Basetest
 from ceurws.ceur_ws import VolumeManager
 from ceurws.indexparser import IndexHtmlParser
+import logging
 
 class TestIndexHtml(Basetest):
     '''
@@ -22,11 +23,14 @@ class TestIndexHtml(Basetest):
         '''
         debug=self.debug
         debug=True
+        if debug:
+            logging.basicConfig(level=logging.DEBUG)
         vm=VolumeManager()
         htmlText=vm.getIndexHtml(force=False)
-        indexParser=IndexHtmlParser( htmlText) 
+        indexParser=IndexHtmlParser(htmlText,debug=debug) 
         lineCount=len(indexParser.lines)
         self.assertTrue(lineCount>89500)
         if debug:
             print(f"{lineCount} lines found in CEUR-WS index.html")
+        #indexParser.parse(limit=3,verbose=True)
         indexParser.parse()

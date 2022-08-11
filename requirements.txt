@@ -13,3 +13,5 @@ PyDispatcher
 APScheduler
 # https://github.com/pyparsing/pyparsing
 pyparsing>=3.0.9
+# https://pypi.org/project/BeautifulSoup/
+BeautifulSoup~=3.2.2

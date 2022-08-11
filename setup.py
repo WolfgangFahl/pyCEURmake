@@ -1,9 +1,9 @@
 from setuptools import setup
 from collections import OrderedDict
-
-setup(name='pyCEURmake',
-      version='0.0.1',
-      description='python api providing access to view and add ceur-ws volumes',
+from ceurws.version import Version
+setup(name=Version.name,
+      version=Version.version,
+      description=Version.description,
       long_description_content_type='text/markdown',
       url='https://github.com/WolfgangFahl/pyCEURmake',
       download_url='https://github.com/WolfgangFahl/pyCEURmake',

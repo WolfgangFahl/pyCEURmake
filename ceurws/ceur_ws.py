@@ -4,10 +4,10 @@ import os
 from lodstorage.entity import EntityManager
 from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 from pathlib import Path
-from lxml import etree
+#from lxml import etree
 
 class CEURWS:
     '''

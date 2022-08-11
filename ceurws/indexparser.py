@@ -6,8 +6,7 @@ Created on 11.08.2022
 #from pyparsing import makeHTMLTags, SkipTo, htmlComment
 import html
 import re
-
-import logging
+# import logging
 
 class IndexHtmlParser():
     '''
@@ -31,9 +30,15 @@ class IndexHtmlParser():
         #self.tr = trStart + SkipTo(trEnd).setResultsName("tr") + trEnd.suppress()
         self.linkPattern=re.compile(r'''.*href=[\'"]?([^\'" >]+).*''',re.I)
         self.volPattern=re.compile("http://ceur-ws.org/Vol-([0-9]+)")
-        self.volLinkPattern=re.compile(r'''<a href=[\'"]http://ceur-ws.org/Vol-([0-9]+)[\'"]>(.*)</a>''',re.I)
+        self.volLinkPattern=re.compile(r'''.*<a\s+href=[\'"]http://ceur-ws.org/Vol-([0-9]+)[/]?[\'"]>([^<]*)</a>.*''',re.I | re.DOTALL)
          
     def log(self,msg:str):
+        '''
+        log the given message if debug is on
+        
+        Args:
+            msg(str): the message to log
+        '''
         if self.debug:
             print(msg)
             
@@ -101,7 +106,17 @@ class IndexHtmlParser():
                         return trStartLine,trEndLine
         return None,None 
     
-    def getInfo(self,volume,info,pattern,line):
+    def getInfo(self,volume:dict,info:str,pattern,line:str):
+        '''
+        get the info info for the given patterns trying to match the pattern on
+        the given line
+        
+        Args:
+            volume(dict): the result dict
+            info(str): the name of the dict key to fill
+            pattern(regexp): the regular expression to check
+            line(str): the line to check
+        '''
         infoValue=self.getMatch(pattern, line, 1)
         if infoValue is not None:
             infoValue=infoValue.replace("<BR>","")
@@ -126,7 +141,6 @@ class IndexHtmlParser():
         parse a volume from the given line range
         '''
         lineCount=toLine-fromLine
-        self.log(f"{volCount:3}:{fromLine}+{lineCount}")
         volume={}
         volume["fromLine"]=fromLine
         volume["toLine"]=toLine
@@ -139,15 +153,19 @@ class IndexHtmlParser():
             ("Edited by","editors"),
             ("Published on CEUR-WS","pubDate")]:
             infoPattern[info]=re.compile(f"^\s*{prefix}:(.*)")
-        for line in range(fromLine,toLine):
-            line=self.lines[line]
+        for lineIndex in range(fromLine,toLine):
+            line=self.lines[lineIndex]
             for info,pattern in infoPattern.items():
                 self.getInfo(volume,info,pattern,line)
             volName=self.getMatch(self.volLinkPattern, line, 2)
             if volName is not None:
-                volume["volname"]=volName
+                if not volName.startswith("http:"):
+                    volume["acronym"]=html.unescape(volName)
             if verbose:
-                print(line)         
+                print(line)        
+        volumeNumber=volume.get('number','?')
+        acronym=volume.get('acronym','?')
+        self.log(f"{volumeNumber:4}-{volCount:4}:{fromLine}+{lineCount} {acronym}")
         return volume
         
     def parse(self,limit:int=1000000,verbose:bool=False):
@@ -170,7 +188,7 @@ class IndexHtmlParser():
                 if "number" in volume:
                     volumes[volume["number"]]=volume
                 else:
-                    print(f"volume not found for volume at {volStartLine}")
+                    self.log(f"volume not found for volume at {volStartLine}")
         return volumes
        
             

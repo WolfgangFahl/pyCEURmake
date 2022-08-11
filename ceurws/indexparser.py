@@ -105,10 +105,10 @@ class IndexHtmlParser():
             infoValue=infoValue.replace("<BR>","")
             if info=="editors":
                 infoValue=html.unescape(infoValue)
-            if info=="urn":
-                urn=self.getMatch(self.linkPattern, infoValue, 1)
-                if urn is not None:
-                    infoValue=urn.replace("https://nbn-resolving.org/","")
+            if info in ["urn","url"]:
+                href=self.getMatch(self.linkPattern, infoValue, 1)
+                if href is not None:
+                    infoValue=href.replace("https://nbn-resolving.org/","")
             volume[info]=infoValue
             
     
@@ -125,7 +125,7 @@ class IndexHtmlParser():
         volPattern=re.compile("http://ceur-ws.org/Vol-([0-9]+)")
         
         infoPattern={}
-        for prefix,info in [("URN","urn"),("Edited by","editors")]:
+        for prefix,info in [("URN","urn"),("ONLINE","url"),("Edited by","editors")]:
             infoPattern[info]=re.compile(f"{prefix}:(.*)")
         for line in range(fromLine,toLine):
             line=self.lines[line]

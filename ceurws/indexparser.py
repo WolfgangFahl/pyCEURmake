@@ -4,7 +4,9 @@ Created on 11.08.2022
 @author: wf
 '''
 #from pyparsing import makeHTMLTags, SkipTo, htmlComment
+import html
 import re
+
 import logging
 
 class IndexHtmlParser():
@@ -27,7 +29,8 @@ class IndexHtmlParser():
         self.lines=htmlText.split("\n")
         #trStart, trEnd = makeHTMLTags("tr")
         #self.tr = trStart + SkipTo(trEnd).setResultsName("tr") + trEnd.suppress()
-        
+        self.linkPattern=re.compile(r'''.*href=[\'"]?([^\'" >]+).*''',re.I)
+         
     def log(self,msg:str):
         if self.debug:
             print(msg)
@@ -96,19 +99,50 @@ class IndexHtmlParser():
                         return trStartLine,trEndLine
         return None,None 
     
+    def getInfo(self,volume,info,pattern,line):
+        infoValue=self.getMatch(pattern, line, 1)
+        if infoValue is not None:
+            infoValue=infoValue.replace("<BR>","")
+            if info=="editors":
+                infoValue=html.unescape(infoValue)
+            if info=="urn":
+                urn=self.getMatch(self.linkPattern, infoValue, 1)
+                if urn is not None:
+                    infoValue=urn.replace("https://nbn-resolving.org/","")
+            volume[info]=infoValue
+            
+    
     def parseVolume(self,volCount:int,fromLine:int,toLine:int,verbose:bool):
+        '''
+        parse a volume from the given line range
+        '''
         lineCount=toLine-fromLine
         self.log(f"{volCount:3}:{fromLine}+{lineCount}")
         volume={}
-        linkPattern=re.compile(r'''.*href=[\'"]?([^\'" >]+).*''')
-        if verbose:
-            for line in range(fromLine,toLine):
-                line=self.lines[line]
+        volume["fromLine"]=fromLine
+        volume["toLine"]=toLine
+       
+        volPattern=re.compile("http://ceur-ws.org/Vol-([0-9]+)")
+        
+        infoPattern={}
+        for prefix,info in [("URN","urn"),("Edited by","editors")]:
+            infoPattern[info]=re.compile(f"{prefix}:(.*)")
+        for line in range(fromLine,toLine):
+            line=self.lines[line]
+            for info,pattern in infoPattern.items():
+                self.getInfo(volume,info,pattern,line)
+            if verbose:
                 print(line)
-                href=self.getMatch(linkPattern, line, 1)
-                if href is not None:
+            href=self.getMatch(self.linkPattern, line, 1)
+            if href is not None:
+                if verbose:
                     print(href)
-                
+                volNumber=self.getMatch(volPattern, href, 1)
+                if volNumber is not None:
+                    volume["number"]=volNumber
+                    if verbose:
+                        print(volNumber)
+            
         return volume
         
     def parse(self,limit:int=1000000,verbose:bool=False):
@@ -117,6 +151,7 @@ class IndexHtmlParser():
         '''
         lineNo=self.find(1, '<TABLE id="MAINTABLE"')
         volCount=0
+        volumes={}
         while lineNo<len(self.lines):
             volStartLine,volEndLine=self.findVolume(lineNo)
             if volStartLine is None or volCount>=limit:
@@ -125,5 +160,10 @@ class IndexHtmlParser():
                 volCount+=1
                 volume=self.parseVolume(volCount,volStartLine, volEndLine,verbose=verbose)
                 lineNo=volEndLine+1
+                if "number" in volume:
+                    volumes[volume["number"]]=volume
+                else:
+                    print(f"volume not found for volume at {volStartLine}")
+        return volumes
        
             

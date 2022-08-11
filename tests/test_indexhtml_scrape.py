@@ -27,10 +27,15 @@ class TestIndexHtml(Basetest):
             logging.basicConfig(level=logging.DEBUG)
         vm=VolumeManager()
         htmlText=vm.getIndexHtml(force=False)
-        indexParser=IndexHtmlParser(htmlText,debug=debug) 
+        indexParser=IndexHtmlParser(htmlText,debug=False) 
         lineCount=len(indexParser.lines)
         self.assertTrue(lineCount>89500)
         if debug:
             print(f"{lineCount} lines found in CEUR-WS index.html")
-        #indexParser.parse(limit=3,verbose=True)
-        indexParser.parse()
+        #limit=10
+        # volumes=indexParser.parse(limit=10,verbose=True)
+        volumes=indexParser.parse()
+        volumeCount=len(volumes)
+        print(f"{volumeCount} volumes found")
+        for number,volume in enumerate(volumes.values()):
+            print (f'{volumeCount-number}:{volume}')

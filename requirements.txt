@@ -1,13 +1,15 @@
 #https://github.com/martinblech/xmltodict
 xmltodict
 # web server with Flask and Bootstrap4
-pyFlaskBootstrap4>=0.2.17
+pyFlaskBootstrap4>=0.5.1
 flask-dropzone
 # https://github.com/SmartDataAnalytics/OpenResearch
 ConferenceCorpus>=0.0.26
 # https://pypi.org/project/pylodstorage/
-pylodstorage>=0.0.80
+pylodstorage>=0.4.6
 # http://pydispatcher.sourceforge.net/
 PyDispatcher
 # https://pypi.org/project/APScheduler/
 APScheduler
+# https://github.com/pyparsing/pyparsing
+pyparsing>=3.0.9

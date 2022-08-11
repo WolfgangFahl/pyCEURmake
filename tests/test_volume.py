@@ -4,8 +4,8 @@ from unittest import TestCase
 
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
 
-from ceurws.ceurws import Conference, Editor, Session, Paper, Volume
-from ceurws.ceurws import SessionManager
+from ceurws.ceur_ws import Conference, Editor, Session, Paper, Volume
+from ceurws.ceur_ws import SessionManager
 import getpass
 
 class TestSessions(TestCase):

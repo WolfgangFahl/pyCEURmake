@@ -37,5 +37,7 @@ class TestIndexHtml(Basetest):
         volumes=indexParser.parse()
         volumeCount=len(volumes)
         print(f"{volumeCount} volumes found")
-        #for number,volume in enumerate(volumes.values()):
-        #    print (f'{volumeCount-number:4}:{volume["number"]:4}->{volume}')
+        for index,volume in enumerate(volumes.values()):
+            volumeNumber=volume["number"]
+            expectedVolumeNumber=volumeCount-index
+            print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')

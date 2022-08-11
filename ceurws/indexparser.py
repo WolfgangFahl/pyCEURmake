@@ -31,6 +31,7 @@ class IndexHtmlParser():
         #self.tr = trStart + SkipTo(trEnd).setResultsName("tr") + trEnd.suppress()
         self.linkPattern=re.compile(r'''.*href=[\'"]?([^\'" >]+).*''',re.I)
         self.volPattern=re.compile("http://ceur-ws.org/Vol-([0-9]+)")
+        self.volLinkPattern=re.compile(r'''<a href=[\'"]http://ceur-ws.org/Vol-([0-9]+)[\'"]>(.*)</a>''',re.I)
          
     def log(self,msg:str):
         if self.debug:
@@ -113,7 +114,7 @@ class IndexHtmlParser():
                     if info=="url":
                         volNumber=self.getMatch(self.volPattern, href, 1)
                         if volNumber is not None:
-                            volume["number"]=volNumber
+                            volume["number"]=int(volNumber)
                     if info=="urn":
                         infoValue=href.replace("https://nbn-resolving.org/","")
               
@@ -142,6 +143,9 @@ class IndexHtmlParser():
             line=self.lines[line]
             for info,pattern in infoPattern.items():
                 self.getInfo(volume,info,pattern,line)
+            volName=self.getMatch(self.volLinkPattern, line, 2)
+            if volName is not None:
+                volume["volname"]=volName
             if verbose:
                 print(line)         
         return volume
@@ -161,7 +165,8 @@ class IndexHtmlParser():
             else:
                 volCount+=1
                 volume=self.parseVolume(volCount,volStartLine, volEndLine,verbose=verbose)
-                lineNo=volEndLine+1
+                # synchronize on <tr><th and not on end since trailing TR might be missing
+                lineNo=volStartLine+1
                 if "number" in volume:
                     volumes[volume["number"]]=volume
                 else:

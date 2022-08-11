@@ -14,4 +14,4 @@ APScheduler
 # https://github.com/pyparsing/pyparsing
 pyparsing>=3.0.9
 # https://pypi.org/project/beautifulsoup4/
-BeautifulSoup~=4.11.1
+BeautifulSoup4~=4.11.1

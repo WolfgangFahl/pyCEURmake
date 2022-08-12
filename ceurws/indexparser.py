@@ -109,6 +109,9 @@ class IndexHtmlParser():
         return None,None 
     
     def setVolumeNumber(self,volume,href):
+        '''
+        set the volumen number
+        '''
         if href is None:
             return
         volNumber=self.getMatch(self.volPattern, href, 1)
@@ -116,6 +119,9 @@ class IndexHtmlParser():
             volume["number"]=int(volNumber)
             
     def setVolumeName(self,volume,line):
+        '''
+        set the volume name
+        '''
         volName=self.getMatch(self.volLinkPattern, line, 2)
         if volName is not None:
             valid=True
@@ -154,7 +160,7 @@ class IndexHtmlParser():
                     title+=line+delim
                     delim=" "
                     tdIndex+=1
-                volume["title"]=html.unescape(title)
+                volume["title"]=html.unescape(title).strip()
 
     def getInfo(self,volume:dict,info:str,pattern,line:str):
         '''
@@ -244,5 +250,3 @@ class IndexHtmlParser():
                 else:
                     self.log(f"volume not found for volume at {volStartLine}")
         return volumes
-       
-            

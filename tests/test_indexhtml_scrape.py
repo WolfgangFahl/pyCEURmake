@@ -8,6 +8,7 @@ from ceurws.ceur_ws import VolumeManager, Volume
 import datetime
 from ceurws.indexparser import IndexHtmlParser
 import logging
+from lodstorage.lod import LOD
 
 class TestIndexHtml(Basetest):
     '''
@@ -66,4 +67,16 @@ class TestIndexHtml(Basetest):
         # volumes=indexParser.parse(limit=10,verbose=True)
         volumes=indexParser.parse()
         self.checkVolumes(volumes)
-        self.volumesAsCsv(volumes,16,20)       
+        self.volumesAsCsv(volumes,31,50)       
+        
+    def testReadVolumePages(self):
+        vm=VolumeManager()
+        vm.loadFromIndexHtml(force=False)
+        volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), 'number')
+        debug=True
+        for number in range(35,36):
+            volume=volumesByNumber[number]
+            volume.extractValuesFromVolumePage(debug=debug,withPapers=False)
+            if debug:
+                print(f"{volume.url}:{volume.acronym}:{volume.title}")
+        vm.store()

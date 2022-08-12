@@ -27,12 +27,12 @@ class TestIndexHtml(Basetest):
             if volumeNumber!=expectedVolumeNumber:
                 print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')
     
-    def volumesAsCsv(self,volumes,maxVolumeNumber):
+    def volumesAsCsv(self,volumes,minVolumeNumber,maxVolumeNumber):
         for volumeRecord in volumes.values():
             volume=Volume()
             volume.fromDict(volumeRecord)
-            if volume.number<=maxVolumeNumber:
-                print(f"{volume.number}    {volume.acronym}    {volume.pubDate}    {volume.urn}")
+            if volume.number>=minVolumeNumber and volume.number<=maxVolumeNumber:
+                print(f"{volume.number}\t{volume.acronym}\t{volume.title}\tQ1860\t{volume.published}\t{volume.urn}\t{volume.url}")
             
     def testVolumeManagerFromHtml(self):
         vm=VolumeManager()
@@ -56,7 +56,7 @@ class TestIndexHtml(Basetest):
         if debug:
             logging.basicConfig(level=logging.DEBUG)
         vm=VolumeManager()
-        htmlText=vm.getIndexHtml(force=True)
+        htmlText=vm.getIndexHtml(force=False)
         indexParser=IndexHtmlParser(htmlText,debug=debug) 
         lineCount=len(indexParser.lines)
         self.assertTrue(lineCount>89500)
@@ -66,4 +66,4 @@ class TestIndexHtml(Basetest):
         # volumes=indexParser.parse(limit=10,verbose=True)
         volumes=indexParser.parse()
         self.checkVolumes(volumes)
-        self.volumesAsCsv(volumes,5)       
+        self.volumesAsCsv(volumes,16,20)       

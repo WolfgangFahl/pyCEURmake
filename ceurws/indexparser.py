@@ -61,24 +61,25 @@ class IndexHtmlParser():
         else:
             return None
         
-    def find(self,startLine:int,needleRegex:str)->int:
+    def find(self,startLine:int,needleRegex:str,step:int=1)->int:
         '''
         find the next line with the given regular expression
         
         Args:
             startLine(int): index of the line to start search
             needleRegex(str): the regular expression to search for
+            step(int): the steps to take e.g. +1 for forward -1 for backwards
             
         Return:
             int: the line number of the line or None if nothing was found
         '''
         pattern=re.compile(needleRegex,re.I)
         lineNo=startLine
-        while lineNo<len(self.lines)+1:
+        while lineNo>=1 and lineNo<len(self.lines)+1:
             line=self.lines[lineNo-1]
             if pattern.match(line):
                 return lineNo
-            lineNo+=1
+            lineNo+=step
         return None
     
     def findVolume(self,startLine:int,expectedTr:int=3)->int:
@@ -113,6 +114,47 @@ class IndexHtmlParser():
         volNumber=self.getMatch(self.volPattern, href, 1)
         if volNumber is not None:
             volume["number"]=int(volNumber)
+            
+    def setVolumeName(self,volume,line):
+        volName=self.getMatch(self.volLinkPattern, line, 2)
+        if volName is not None:
+            valid=True
+            if not volName.startswith("http:"):
+                invalidKeys=["deleted upon editor request","Not used"]
+                for invalidKey in invalidKeys:
+                    if invalidKey in volName:
+                        href=self.getMatch(self.linkPattern, line, 1)
+                        self.setVolumeNumber(volume, href)
+                    valid=False
+                else:
+                    volume["acronym"]=html.unescape(volName)
+                volume["valid"]=valid
+                
+    def setVolumeTitle(self,volume:dict,lineIndex:int):
+        '''
+        set the volume title
+        
+        Args:
+            volume(dict): the volumeRecord to modify
+            lineIndex: where to start setting the volumeTitle
+        '''
+        editedByLine=self.find(lineIndex, "Edited by:")
+        if editedByLine is not None:
+            tdLine=self.find(editedByLine,"<td bgcolor",step=-1)
+            if tdLine is not None:
+                tdIndex=tdLine-1
+                title=""
+                delim=""
+                while tdIndex < len(self.lines):
+                    line=self.lines[tdIndex]
+                    if line.startswith("Edited by:"):
+                        break
+                    for tag in ['<TD bgcolor="#FFFFFF">&nbsp;</TD><TD bgcolor="#FFFFFF">', '<td bgcolor="#FFFFFF">',"<BR>","<br>"]:
+                        line=line.replace(tag,"")
+                    title+=line+delim
+                    delim=" "
+                    tdIndex+=1
+                volume["title"]=html.unescape(title)
 
     def getInfo(self,volume:dict,info:str,pattern,line:str):
         '''
@@ -147,9 +189,7 @@ class IndexHtmlParser():
                         self.setVolumeNumber(volume,href)
                     if info=="urn":
                         infoValue=href.replace("https://nbn-resolving.org/","")
-              
             volume[info]=infoValue
-            
     
     def parseVolume(self,volCount:int,fromLine:int,toLine:int,verbose:bool):
         '''
@@ -159,6 +199,7 @@ class IndexHtmlParser():
         volume={}
         volume["fromLine"]=fromLine
         volume["toLine"]=toLine
+        self.setVolumeTitle(volume, fromLine)
         
         infoPattern={}
         for prefix,info in [
@@ -166,25 +207,14 @@ class IndexHtmlParser():
             ("ONLINE","url"),
             ("ARCHIVE","archive"),
             ("Edited by","editors"),
+            ("Submitted by","submittedBy"),
             ("Published on CEUR-WS","pubDate")]:
             infoPattern[info]=re.compile(f"^\s*{prefix}:(.*)")
         for lineIndex in range(fromLine,toLine):
             line=self.lines[lineIndex]
             for info,pattern in infoPattern.items():
                 self.getInfo(volume,info,pattern,line)
-            volName=self.getMatch(self.volLinkPattern, line, 2)
-            if volName is not None:
-                valid=True
-                if not volName.startswith("http:"):
-                    invalidKeys=["deleted upon editor request","Not used"]
-                    for invalidKey in invalidKeys:
-                        if invalidKey in volName:
-                            href=self.getMatch(self.linkPattern, line, 1)
-                            self.setVolumeNumber(volume, href)
-                        valid=False
-                    else:
-                        volume["acronym"]=html.unescape(volName)
-                    volume["valid"]=valid
+            self.setVolumeName(volume,line)
             if verbose:
                 print(line)        
         volumeNumber=volume.get('number','?')

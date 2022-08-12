@@ -1,15 +1,12 @@
 import datetime
 import os
-import requests
-from lxml import html
 from lodstorage.entity import EntityManager
 from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
-#from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 from pathlib import Path
-#from lxml import etree
-from ceurws.indexparser import IndexHtmlParser
+from ceurws.indexparser import IndexHtmlParser, Text
+from ceurws.webscrape import WebScrape
 
 class CEURWS:
     '''
@@ -93,27 +90,38 @@ class Volume(JSONAble):
         """
         return
     
-    def extractValuesFromVolumePage(self,withPapers:bool=False,debug:bool=False):
-
-        EDITED_BY = '//b/following-sibling::h3[1]/a/text()'
-        PAPER = '//ol/li'
-        PAPER_URL = './a/@href'
-        PAPER_TITLE = './a/text()'
-        PAPER_AUTHOR = './i/text()'
-        H1="//h1/text()"
-
-
-        page = requests.get(self.url)
-        if debug:
-            print(page.text)
-        root = html.fromstring(page.text)
+    def extractValuesFromVolumePage(self,timeout=3,withPapers:bool=False,debug:bool=False):
+        self.desc="?"
+        self.h1="?"
+        if self.url is None:
+            return
+    
+        scrape=WebScrape(timeout=timeout)
+        soup=scrape.getSoup(self.url, showHtml=debug)
+        for descValue in ["description","descripton"]:
+            # descripton is a typo in the Volume index files not here!
+            firstDesc=soup.find("meta", {"name" : descValue})
+            if firstDesc is not None:
+                self.desc=firstDesc["content"]
+                self.desc=Text.sanitize(self.desc,["CEUR Workshop Proceedings "])
+                break
+            
         # first H1 is acronym
-        h1List=root.xpath(H1)
-        if len(h1List)>0:
-            self.acronym=h1List[0].strip()
+        firstH1=soup.find('h1')
+        if firstH1 is not None:
+            self.h1=firstH1.text
+            self.h1=Text.sanitize(self.h1,['<TD bgcolor="#FFFFFF">'])
         
         if withPapers:
-            
+            pass
+        '''
+        #EDITED_BY = '//b/following-sibling::h3[1]/a/text()'
+        #PAPER = '//ol/li'
+        #PAPER_URL = './a/@href'
+        #PAPER_TITLE = './a/text()'
+        #PAPER_AUTHOR = './i/text()'
+        #H1="//h1/text()"
+       
             paperRecords = root.xpath(PAPER)
             papers=[]
             for paperRecord in paperRecords:
@@ -126,7 +134,7 @@ class Volume(JSONAble):
                     papers.append(paper)
             if debug:
                 for p in papers:
-                    print(p)
+                    print(p)'''
 
     def getSubmittingEditor(self):
         """

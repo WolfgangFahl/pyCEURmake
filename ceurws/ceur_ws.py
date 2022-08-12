@@ -1,6 +1,7 @@
 import datetime
 import os
-
+import requests
+from lxml import html
 from lodstorage.entity import EntityManager
 from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
@@ -91,10 +92,45 @@ class Volume(JSONAble):
         papers of this volume
         """
         return
+    
+    def extractValuesFromVolumePage(self,withPapers:bool=False,debug:bool=False):
+
+        EDITED_BY = '//b/following-sibling::h3[1]/a/text()'
+        PAPER = '//ol/li'
+        PAPER_URL = './a/@href'
+        PAPER_TITLE = './a/text()'
+        PAPER_AUTHOR = './i/text()'
+        H1="//h1/text()"
+
+
+        page = requests.get(self.url)
+        if debug:
+            print(page.text)
+        root = html.fromstring(page.text)
+        # first H1 is acronym
+        h1List=root.xpath(H1)
+        if len(h1List)>0:
+            self.acronym=h1List[0].strip()
+        
+        if withPapers:
+            
+            paperRecords = root.xpath(PAPER)
+            papers=[]
+            for paperRecord in paperRecords:
+                paperTitleRecord=paperRecord.xpath(PAPER_TITLE)
+                if len(paperTitleRecord)>0:
+                    paper=Paper()
+                    paper.title=paperTitleRecord[0].strip()
+                    paper.url=f"{self.url}{paperRecord.xpath(PAPER_URL)[0].strip()}"
+                    paper.authors=','.join(paperRecord.xpath(PAPER_AUTHOR))
+                    papers.append(paper)
+            if debug:
+                for p in papers:
+                    print(p)
 
     def getSubmittingEditor(self):
         """
-        Retruns the Editor that sumbitted the volume
+        Returns the Editor that submitted the volume
         """
         submitter=None
         if hasattr(self, "editors"):
@@ -192,6 +228,10 @@ class Paper(JSONAble):
                 "authors": ["Alexandru Mara", "Jefrey Lijffijt", "Tijl De Bie"]
             }
         ]
+        
+    def __str__(self):
+        text=self.title
+        return text
 
 
 class PaperManager(EntityManager):

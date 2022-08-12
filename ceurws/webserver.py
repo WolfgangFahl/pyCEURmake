@@ -12,10 +12,10 @@ from ceurws.ceur_ws import VolumeManager
 
 class WebServer(AppWrap):
     """
-    RESTful api to access and modify OPENRESAECH data
+    RESTful API to access CEUR-WS
     """
 
-    def __init__(self, host='0.0.0.0', port=5885, verbose=True, debug=False):
+    def __init__(self, host='0.0.0.0', port=6001, verbose=True, debug=False):
         '''
         constructor
 
@@ -38,7 +38,7 @@ class WebServer(AppWrap):
 
         @self.app.route('/')
         def home():
-            return redirect(url_for('series'))
+            return redirect(url_for('volumeTable'))
 
         @self.app.route('/ceur-ws.css')
         def ceur_ws_css():
@@ -49,21 +49,21 @@ class WebServer(AppWrap):
             return send_from_directory(f'{os.path.dirname(os.path.abspath(__file__))}resources/css', 'ceur-ws-semantic.css')
 
         @self.app.route('/volumes', methods=['GET'])
-        def series():
+        def volumeTable():
             valueMap={
-                "homepage": lambda value: Link(url=value, title=value),
-                "archive": lambda volume: Link(url=f"http://sunsite.informatik.rwth-aachen.de/ftp/pub/publications/CEUR-WS/Vol-{volume.get('number')}.zip", title=f"Vol-{volume.get('number')}.zip"),
-                "urn": lambda value: Link(url=f"https://nbn-resolving.org/{value}", title=value),
+                "url":     lambda volume: Link(url=volume.url, title=volume.url),
+                "archive": lambda volume: Link(url=f"http://sunsite.informatik.rwth-aachen.de/ftp/pub/publications/CEUR-WS/Vol-{volume.number}.zip", title=f"Vol-{volume.number}.zip"),
+                "urn":     lambda volume: Link(url=f"https://nbn-resolving.org/{volume.urn}", title=volume.urn),
             }
-            values=[v.__dict__.copy() for v in self.ceurws.getList()]
-            for volume in values:
+            volumeRecords=[]
+            for volume in self.ceurws.getList():
+                volumeRecord=volume.__dict__.copy()
+                volumeRecords.append(volumeRecord)
                 for key, function in valueMap.items():
-                    if key in volume:
-                        volume[key]=function(volume[key])
-                    else:
-                        volume[key]=function(volume)
-            headers = {v:v for v in LOD.getFields(values)}
-            volumes=LodTable(values, headers=headers, name="Volumes", isDatatable=True)
+                    if key in volumeRecord:
+                        volumeRecord[key]=function(volume)
+            headers = {v:v for v in LOD.getFields(volumeRecords)}
+            volumes=LodTable(volumeRecords, headers=headers, name="Volumes", isDatatable=True)
             return render_template('volumes.html', volumes=volumes)
 
 

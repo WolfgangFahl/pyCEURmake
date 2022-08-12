@@ -8,6 +8,7 @@ from lodstorage.storageconfig import StorageConfig
 from urllib.request import Request, urlopen
 from pathlib import Path
 #from lxml import etree
+from ceurws.indexparser import IndexHtmlParser
 
 class CEURWS:
     '''
@@ -52,6 +53,10 @@ class Volume(JSONAble):
             }
         ]
         return samples
+    
+    def __str__(self):
+        text=f"Vol-{self.number}"
+        return text
 
     @property
     def year(self):
@@ -118,6 +123,18 @@ class VolumeManager(EntityManager):
 
     def loadFromBackup(self):
         self.fromStore(cacheFile=CEURWS.CACHE_FILE)
+        
+    def loadFromIndexHtml(self,force:bool=False):
+        '''
+        load my content from the index.html file
+        '''
+        htmlText=self.getIndexHtml(force=force)
+        indexParser=IndexHtmlParser(htmlText,debug=self.debug)
+        volumeRecords=indexParser.parse() 
+        for volumeRecord in volumeRecords.values():
+            volume=Volume()
+            volume.fromDict(volumeRecord)
+            self.volumes.append(volume)
         
     def getIndexHtml(self,force:bool=False):
         '''
@@ -339,5 +356,9 @@ class ConferenceManager(EntityManager):
 
 if __name__ == '__main__':
     manager=VolumeManager()
-    manager.loadFromBackup()
-    print(manager.getList())
+    try:
+        manager.loadFromBackup()
+        for volume in manager.getList():
+            print(volume)
+    except Exception as ex:
+        print(ex)

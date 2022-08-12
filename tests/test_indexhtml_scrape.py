@@ -4,7 +4,7 @@ Created on 2022-08-11
 @author: wf
 '''
 from tests.basetest import Basetest
-from ceurws.ceur_ws import VolumeManager
+from ceurws.ceur_ws import VolumeManager, Volume
 from ceurws.indexparser import IndexHtmlParser
 import logging
 
@@ -25,6 +25,18 @@ class TestIndexHtml(Basetest):
             expectedVolumeNumber=volumeCount-index
             print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')
     
+    def volumesAsCsv(self,volumes,maxVolumeNumber):
+        for volumeRecord in volumes.values():
+            volume=Volume()
+            volume.fromDict(volumeRecord)
+            if volume.number<=maxVolumeNumber:
+                print(f"{volume.number}    {volume.acronym}    {volume.pubDate}    {volume.urn}")
+            
+    def testVolumeManagerFromHtml(self):
+        vm=VolumeManager()
+        vm.loadFromIndexHtml(force=True)
+        vm.store()
+        
     def testReadingHtml(self):
         '''
         test reading the HTML file
@@ -44,4 +56,8 @@ class TestIndexHtml(Basetest):
         # volumes=indexParser.parse(limit=10,verbose=True)
         volumes=indexParser.parse()
         #self.checkVolumes(volumes)
+        self.volumesAsCsv(volumes,5)
+        withStore=True
+        
+            
        

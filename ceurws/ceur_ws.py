@@ -47,6 +47,7 @@ class Volume(JSONAble):
                 "pubYear":2019,
                 "pubDate":"2019-09-08",
                 "submitDate":"2019-07-28",
+                "valid": True,
                 "conference": Conference,
                 "editors":[Editor],
                 "sessions":[Session]

@@ -6,6 +6,7 @@ Created on 11.08.2022
 #from pyparsing import makeHTMLTags, SkipTo, htmlComment
 import html
 import re
+import datetime
 # import logging
 
 class IndexHtmlParser():
@@ -106,6 +107,13 @@ class IndexHtmlParser():
                         return trStartLine,trEndLine
         return None,None 
     
+    def setVolumeNumber(self,volume,href):
+        if href is None:
+            return
+        volNumber=self.getMatch(self.volPattern, href, 1)
+        if volNumber is not None:
+            volume["number"]=int(volNumber)
+
     def getInfo(self,volume:dict,info:str,pattern,line:str):
         '''
         get the info info for the given patterns trying to match the pattern on
@@ -119,17 +127,24 @@ class IndexHtmlParser():
         '''
         infoValue=self.getMatch(pattern, line, 1)
         if infoValue is not None:
-            infoValue=infoValue.replace("<BR>","")
+            for delim in ["<BR>","<br>"]:
+                infoValue=infoValue.replace(delim,"")
+            infoValue=infoValue.strip()
             if info=="editors":
                 infoValue=html.unescape(infoValue)
+            if info=="pubDate":
+                try:
+                    infoValue=datetime.datetime.strptime(infoValue, '%d-%b-%Y')
+                    volume["published"]=infoValue.strftime("%Y-%m-%d")
+                except ValueError as ve:
+                    msg=f"pubDate: {infoValue} of {volume} parsing failed with {ve}"
+                    self.log(msg)
             if info in ["urn","url","archive"]:
                 href=self.getMatch(self.linkPattern, infoValue, 1)
                 if href is not None:
                     infoValue=href
                     if info=="url":
-                        volNumber=self.getMatch(self.volPattern, href, 1)
-                        if volNumber is not None:
-                            volume["number"]=int(volNumber)
+                        self.setVolumeNumber(volume,href)
                     if info=="urn":
                         infoValue=href.replace("https://nbn-resolving.org/","")
               
@@ -159,8 +174,17 @@ class IndexHtmlParser():
                 self.getInfo(volume,info,pattern,line)
             volName=self.getMatch(self.volLinkPattern, line, 2)
             if volName is not None:
+                valid=True
                 if not volName.startswith("http:"):
-                    volume["acronym"]=html.unescape(volName)
+                    invalidKeys=["deleted upon editor request","Not used"]
+                    for invalidKey in invalidKeys:
+                        if invalidKey in volName:
+                            href=self.getMatch(self.linkPattern, line, 1)
+                            self.setVolumeNumber(volume, href)
+                        valid=False
+                    else:
+                        volume["acronym"]=html.unescape(volName)
+                    volume["valid"]=valid
             if verbose:
                 print(line)        
         volumeNumber=volume.get('number','?')

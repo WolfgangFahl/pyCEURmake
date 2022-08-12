@@ -5,6 +5,7 @@ Created on 2022-08-11
 '''
 from tests.basetest import Basetest
 from ceurws.ceur_ws import VolumeManager, Volume
+import datetime
 from ceurws.indexparser import IndexHtmlParser
 import logging
 
@@ -23,7 +24,8 @@ class TestIndexHtml(Basetest):
         for index,volume in enumerate(volumes.values()):
             volumeNumber=volume["number"]
             expectedVolumeNumber=volumeCount-index
-            print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')
+            if volumeNumber!=expectedVolumeNumber:
+                print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')
     
     def volumesAsCsv(self,volumes,maxVolumeNumber):
         for volumeRecord in volumes.values():
@@ -37,6 +39,14 @@ class TestIndexHtml(Basetest):
         vm.loadFromIndexHtml(force=True)
         vm.store()
         
+    def testDates(self):
+        dateFormat='%d-%b-%Y'
+        now=datetime.datetime.now()
+        nows=now.strftime(dateFormat)
+        print(f"testing {nows} with {dateFormat}")
+        _pdate=datetime.datetime.strptime(nows, dateFormat)
+        
+        
     def testReadingHtml(self):
         '''
         test reading the HTML file
@@ -46,7 +56,7 @@ class TestIndexHtml(Basetest):
         if debug:
             logging.basicConfig(level=logging.DEBUG)
         vm=VolumeManager()
-        htmlText=vm.getIndexHtml(force=False)
+        htmlText=vm.getIndexHtml(force=True)
         indexParser=IndexHtmlParser(htmlText,debug=debug) 
         lineCount=len(indexParser.lines)
         self.assertTrue(lineCount>89500)
@@ -55,9 +65,5 @@ class TestIndexHtml(Basetest):
         #limit=10
         # volumes=indexParser.parse(limit=10,verbose=True)
         volumes=indexParser.parse()
-        #self.checkVolumes(volumes)
-        self.volumesAsCsv(volumes,5)
-        withStore=True
-        
-            
-       
+        self.checkVolumes(volumes)
+        self.volumesAsCsv(volumes,5)       

@@ -29,16 +29,16 @@ class TestIndexHtml(Basetest):
                 print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')
     
     def volumesAsCsv(self,volumes,minVolumeNumber,maxVolumeNumber):
-        for volumeRecord in volumes.values():
-            volume=Volume()
-            volume.fromDict(volumeRecord)
+        for volume in volumes:
             if volume.number>=minVolumeNumber and volume.number<=maxVolumeNumber:
                 print(f"{volume.number}\t{volume.acronym}\t{volume.title}\tQ1860\t{volume.published}\t{volume.urn}\t{volume.url}")
             
     def testVolumeManagerFromHtml(self):
         vm=VolumeManager()
         vm.loadFromIndexHtml(force=True)
-        vm.store()
+        withStore=False
+        if withStore:
+            vm.store()
         
     def testDates(self):
         dateFormat='%d-%b-%Y'
@@ -67,16 +67,28 @@ class TestIndexHtml(Basetest):
         # volumes=indexParser.parse(limit=10,verbose=True)
         volumes=indexParser.parse()
         self.checkVolumes(volumes)
+        
+    def testVolumesAsCsv(self):
+        vm=VolumeManager()
+        vm.loadFromBackup()
+        volumes=vm.getList()
         self.volumesAsCsv(volumes,31,50)       
         
     def testReadVolumePages(self):
+        '''
+        test reading the volume pages
+        '''
         vm=VolumeManager()
         vm.loadFromIndexHtml(force=False)
         volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), 'number')
         debug=True
-        for number in range(35,36):
+        #limit=len(volumesByNumber)+1
+        limit=10
+        for number in range(1,limit):
             volume=volumesByNumber[number]
-            volume.extractValuesFromVolumePage(debug=debug,withPapers=False)
-            if debug:
-                print(f"{volume.url}:{volume.acronym}:{volume.title}")
-        vm.store()
+            volume.extractValuesFromVolumePage(debug=False,withPapers=False)
+            if debug and volume.valid:
+                print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
+        withStore=False
+        if withStore:
+            vm.store()

@@ -9,6 +9,19 @@ import re
 import datetime
 # import logging
 
+class Text():
+    @classmethod
+    def sanitize(cls,text,replaceList=[]):
+        sanitizeChars="\n\t\r., "
+        text=text.strip(sanitizeChars)
+        text=text.replace("\n"," ")
+        text=text.replace("\r","")
+        for replace in replaceList:
+            text=text.replace(replace,"")
+        # compress multiple spaces
+        text=' '.join(text.split())
+        return text
+
 class IndexHtmlParser():
     '''
     CEUR-WS Index.html parser
@@ -131,10 +144,12 @@ class IndexHtmlParser():
                     if invalidKey in volName:
                         href=self.getMatch(self.linkPattern, line, 1)
                         self.setVolumeNumber(volume, href)
-                    valid=False
-                else:
-                    volume["acronym"]=html.unescape(volName)
+                        valid=False
                 volume["valid"]=valid
+                if valid:
+                    acronym=html.unescape(volName)
+                    acronym=Text.sanitize(acronym)
+                    volume["acronym"]=acronym
                 
     def setVolumeTitle(self,volume:dict,lineIndex:int):
         '''
@@ -155,8 +170,9 @@ class IndexHtmlParser():
                     line=self.lines[tdIndex]
                     if line.startswith("Edited by:"):
                         break
-                    for tag in ['<TD bgcolor="#FFFFFF">&nbsp;</TD><TD bgcolor="#FFFFFF">', '<td bgcolor="#FFFFFF">',"<BR>","<br>"]:
+                    for tag in ['<TD bgcolor="#FFFFFF">&nbsp;</TD><TD bgcolor="#FFFFFF">','<TD bgcolor="#FFFFFF">', '<td bgcolor="#FFFFFF">',"<BR>","<br>"]:
                         line=line.replace(tag,"")
+                    line=line.replace("\r"," ")
                     title+=line+delim
                     delim=" "
                     tdIndex+=1
@@ -205,6 +221,8 @@ class IndexHtmlParser():
         volume={}
         volume["fromLine"]=fromLine
         volume["toLine"]=toLine
+        volume["valid"]=False
+        volume["url"]=None
         self.setVolumeTitle(volume, fromLine)
         
         infoPattern={}

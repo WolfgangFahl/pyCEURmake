@@ -31,7 +31,7 @@ class TestIndexHtml(Basetest):
     def volumesAsCsv(self,volumes,minVolumeNumber,maxVolumeNumber):
         for volume in volumes:
             if volume.number>=minVolumeNumber and volume.number<=maxVolumeNumber:
-                print(f"{volume.number}\t{volume.acronym}\t{volume.title}\tQ1860\t{volume.published}\t{volume.urn}\t{volume.url}")
+                print(f"{volume.number}\t{volume.acronym}\t{volume.desc}\t{volume.h1}\t{volume.title}\tQ1860\t{volume.published}\t{volume.urn}\t{volume.url}")
             
     def testVolumeManagerFromHtml(self):
         vm=VolumeManager()

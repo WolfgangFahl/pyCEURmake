@@ -1,0 +1,77 @@
+#
+# Sample Queries for CEUR-WS library
+#
+# WF 2022-08-13
+'Proceedings':
+  sparql: |
+    # 
+    # get Proceedings records 
+    #  
+    PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+    PREFIX p: <http://www.wikidata.org/prop/>
+    PREFIX schema: <http://schema.org/>
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT ?item ?itemLabel ?itemDescription
+      ?sVolume
+      ?Volume
+      ?short_name
+      ?title
+      ?language_of_work_or_name ?language_of_work_or_nameLabel
+      ?URN_NBN ?URN_NBNUrl
+      ?publication_date
+      ?described_at_URL
+    WHERE {
+      ?item rdfs:label ?itemLabel.
+      FILTER(LANG(?itemLabel) = "en")
+      OPTIONAL { 
+        ?item schema:description ?itemDescription.
+        FILTER(LANG(?itemDescription) = "en")
+      }
+    
+      ?item wdt:P31 wd:Q1143604.
+      ?item wdt:P179 wd:Q27230297.
+      OPTIONAL {
+        ?item wdt:P478 ?Volume.
+      }
+      ?item p:P179 ?ceurwspart.
+      OPTIONAL {
+        ?ceurwspart pq:P478 ?sVolume.
+      }
+      OPTIONAL {
+        ?item wdt:P1813 ?short_name.
+      }
+      OPTIONAL {
+        ?item wdt:P1476 ?title.
+      }
+      OPTIONAL {
+        ?item wdt:P407 ?language_of_work_or_name.
+        ?language_of_work_or_name rdfs:label ?language_of_work_or_nameLabel.
+        FILTER(LANG(?language_of_work_or_nameLabel) = "en")
+      }
+      #OPTIONAL {
+        ?item wdt:P4109 ?URN_NBN.
+        wd:P4109 wdt:P1630 ?URN_NBNFormatterUrl.
+        BIND(IRI(REPLACE(?URN_NBN, '^(.+)$', ?URN_NBNFormatterUrl)) AS ?URN_NBNUrl).
+      #}
+      OPTIONAL {
+        ?item wdt:P577 ?publication_date.
+      }
+      OPTIONAL {
+        ?item wdt:P973 ?described_at_URL.
+      }
+    } ORDER BY xsd:integer(?sVolume)
+'VolumesWithoutDescription':
+  sql: |
+    select count(*) from volumes where desc ="?"
+'AcronymLen':
+  sql: |
+    select
+     count(*) as count,
+     length(desc) as acronymLen
+    from volumes
+    where acronymlen < 20
+    group by acronymlen
+    order by 2 desc

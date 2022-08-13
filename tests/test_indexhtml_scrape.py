@@ -4,10 +4,11 @@ Created on 2022-08-11
 @author: wf
 '''
 from tests.basetest import Basetest
-from ceurws.ceur_ws import VolumeManager, Volume
+from ceurws.ceur_ws import VolumeManager, Volume, CEURWS
 import datetime
 from ceurws.indexparser import IndexHtmlParser
 import logging
+import os
 from lodstorage.lod import LOD
 
 class TestIndexHtml(Basetest):
@@ -69,10 +70,16 @@ class TestIndexHtml(Basetest):
         self.checkVolumes(volumes)
         
     def testVolumesAsCsv(self):
+        '''
+        test getting volumes from CSV
+        '''
         vm=VolumeManager()
-        vm.loadFromBackup()
+        if os.path.isFile(CEURWS.CACHE_FILE):
+            vm.loadFromBackup()
+        else:
+            vm.loadFromIndexHtml(force=True)
         volumes=vm.getList()
-        self.volumesAsCsv(volumes,31,50)       
+        self.volumesAsCsv(volumes,2053,2054)       
         
     def testReadVolumePages(self):
         '''
@@ -82,8 +89,8 @@ class TestIndexHtml(Basetest):
         vm.loadFromIndexHtml(force=False)
         volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), 'number')
         debug=True
-        #limit=len(volumesByNumber)+1
-        limit=10
+        limit=len(volumesByNumber)+1
+        #limit=10
         for number in range(1,limit):
             volume=volumesByNumber[number]
             volume.extractValuesFromVolumePage(debug=False,withPapers=False)

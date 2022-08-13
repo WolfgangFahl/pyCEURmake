@@ -1,0 +1,11 @@
+#!/bin/bash
+# get query results
+# WF 2022-08-13
+script=$(dirname $0)
+yaml="$script/../ceurws/resources/queries/ceurws.yaml"
+ls -l $yaml
+sqlquery -en ceurws -qp $yaml -li
+for query in VolumesWithoutDescription
+do
+  sqlquery -en ceurws -qp $yaml  -qn $query -f mediawiki > /tmp/$query.wiki
+done

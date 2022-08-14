@@ -79,7 +79,7 @@ class TestIndexHtml(Basetest):
         else:
             vm.loadFromIndexHtml(force=True)
         volumes=vm.getList()
-        self.volumesAsCsv(volumes,2053,2054)       
+        self.volumesAsCsv(volumes,33,51)       
         
     def testReadVolumePages(self):
         '''
@@ -88,9 +88,11 @@ class TestIndexHtml(Basetest):
         vm=VolumeManager()
         vm.loadFromIndexHtml(force=False)
         volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), 'number')
-        debug=True
-        limit=len(volumesByNumber)+1
-        #limit=10
+        debug=self.debug
+        if self.inPublicCI():
+            limit=10
+        else:
+            limit=len(volumesByNumber)+1
         for number in range(1,limit):
             volume=volumesByNumber[number]
             volume.extractValuesFromVolumePage(debug=False,withPapers=False)
@@ -99,3 +101,8 @@ class TestIndexHtml(Basetest):
         withStore=False
         if withStore:
             vm.store()
+            
+    def testUpdateFromWikiData(self):
+        '''
+        
+        '''

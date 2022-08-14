@@ -9,6 +9,8 @@ from ceurws.ceur_ws import  Volume
 from ceurws.querydisplay import QueryDisplay
 import sys
 from ceurws.wikidatasync import WikidataSync
+import pprint
+from jpwidgets.widgets import LodGrid
 
 class Version(object):
     '''
@@ -67,15 +69,6 @@ class VolumeSearch():
         html=f"<a href='{volume.url}'>{volume.acronym}<a>:{volume.desc}:{volume.h1}:{volume.title}"
         self.volumeDiv.inner_html=html
         
-    def updateWikidata(self):
-        '''
-        update Wikidata
-        '''
-        self.app.pdQueryDisplay.showSyntaxHighlightedQuery(self.wdSync.wdQuery)
-        wdRecords=self.wdSync.update()
-        self.app.showFeedback(f"found {len(wdRecords)} wikidata records")
-        pass
-        
             
     async def onVolumeChange(self,msg):
         '''
@@ -94,6 +87,96 @@ class VolumeSearch():
                 self.updateVolume(volume)
         except Exception as ex:
             self.app.handleException(ex)
+            
+class WikidataDisplay:
+    '''
+    display wiki data query results
+    '''
+    
+    def __init__(self,app,debug:bool=False):
+        self.app=app
+        self.debug=debug
+        self.agGrid =None
+        self.wdSync=WikidataSync()
+        self.app.addMenuLink(text='Endpoint',icon='web',href=self.wdSync.endpointConf.website,target="_blank")
+        self.pdQueryDisplay=self.createQueryDisplay("Proceedings", self.app.rowA)
+        self.wikidataRefreshButton=jp.Button(text="refresh wikidata",classes="btn btn-primary",a=self.app.colA1,click=self.onWikidataRefreshButtonClick)
+
+    def createQueryDisplay(self,name,a)->QueryDisplay:
+        '''
+        Args:
+            name(str): the name of the query
+            a(jp.Component): the ancestor
+
+        Returns:
+            QueryDisplay: the created QueryDisplay
+        '''
+        filenameprefix=f"{name}"
+        qd=QueryDisplay(app=self.app,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.wdSync.sparql,endpointConf=self.wdSync.endpointConf)
+        return qd    
+    
+    async def onWikidataRefreshButtonClick(self,_msg):
+        '''
+        wikidata Refresh button has been clicked
+        '''
+        try:
+            self.updateWikidata()
+            await self.app.wp.update()
+        except Exception as ex:
+            self.app.handleException(ex)
+
+    def updateWikidata(self):
+        '''
+        update Wikidata
+        '''
+        self.pdQueryDisplay.showSyntaxHighlightedQuery(self.wdSync.wdQuery)
+        wdRecords=self.wdSync.update()
+        self.app.showFeedback(f"found {len(wdRecords)} wikidata records")
+        self.reloadAgGrid(wdRecords)
+        pass
+    
+    def createLink(self,url,text):
+        '''
+        create a link from the given url and text
+        
+        Args:
+            url(str): the url to create a link for
+            text(str): the text to add for the link
+        '''
+        link=f"<a href='{url}' style='color:blue'>{text}</a>"
+        return link
+    
+    
+    def reloadAgGrid(self,olod:list,showLimit=10):
+        '''
+        reload the given grid
+        '''
+        if self.debug:
+            pprint.pprint(olod[:showLimit])
+        if self.agGrid is None:
+            self.agGrid=LodGrid(a=self.app.rowB) 
+        lod=[]
+        for row in olod:
+            if "sVolume" in row:
+                volume=row["sVolume"]
+            if "Volume" in row:
+                volume=row["Volume"]
+            itemLabel=row["itemLabel"]
+            item=row["item"]
+            itemLink=self.createLink(item,itemLabel)
+            volumeLink=self.createLink(f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volume}")
+            lod.append(
+                {
+                    "item": itemLink,
+                    "volume": volumeLink,
+                    "acronym":row.get("short_name","?"),
+                    "title":row.get("title","?"),
+                    
+                })
+        self.agGrid.load_lod(lod)
+        self.agGrid.options.columnDefs[0].checkboxSelection = True
+        self.agGrid.html_columns=[0,1]
+    
   
 class VolumeBrowser(App):
     '''
@@ -109,6 +192,7 @@ class VolumeBrowser(App):
         '''
         App.__init__(self, version,title="CEUR-WS Volume Browser")
         self.addMenuLink(text='Home',icon='home', href="/")
+        self.addMenuLink(text='Wikidata Sync',icon='refresh-circle',href="/wikidatasync")
         self.addMenuLink(text='Settings',icon='cog',href="/settings")
         self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake/issues/16")
         self.addMenuLink(text='Documentation',icon='file-document',href="https://ceur-ws.bitplan.com/index.php/Volume_Browser")
@@ -116,6 +200,7 @@ class VolumeBrowser(App):
         
         # Routes
         jp.Route('/settings',self.settings)
+        jp.Route('/wikidatasync',self.wikidatasync)
         
         
     def setupRowsAndCols(self):
@@ -138,38 +223,16 @@ class VolumeBrowser(App):
     def showFeedback(self,html):
         self.feedback.inner_html=html
     
-        
-    async def onWikidataRefreshButtonClick(self,msg):
-        '''
-        wikidata Refresh button has been clicked
-        '''
-        print(msg)
-        try:
-            self.volumeSearch.updateWikidata()
-        except Exception as ex:
-            self.handleException(ex)
-            
-    def createQueryDisplay(self,name,a)->QueryDisplay:
-        '''
-        Args:
-            name(str): the name of the query
-            a(jp.Component): the ancestor
-
-        Returns:
-            QueryDisplay: the created QueryDisplay
-        '''
-        filenameprefix=f"{name}"
-        qd=QueryDisplay(app=self,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.wdSync.sparql,endpointConf=self.wdSync.endpointConf)
-        return qd
+    async def wikidatasync(self):
+        self.setupRowsAndCols()
+        self.wikidataDisplay=WikidataDisplay(self,debug=True)
+        return self.wp
         
     async def settings(self):
         '''
         settings
         '''
         self.setupRowsAndCols()
-        self.wdSync=WikidataSync()
-        self.pdQueryDisplay=self.createQueryDisplay("Proceedings", self.rowA)
-        self.wikidataRefreshButton=jp.Button(text="refresh wikidata",classes="btn btn-primary",a=self.colA1,click=self.onWikidataRefreshButtonClick)
         return self.wp
     
     async def content(self):

@@ -4,9 +4,13 @@ Created on 2022-08-14
 @author: wf
 '''
 import justpy as jp
-from jpwidgets.bt5widgets import App, ProgressBar, Spinner, Alert
-from ceurws.ceur_ws import VolumeManager, Volume, CEURWS
+from jpwidgets.bt5widgets import App
+from ceurws.ceur_ws import VolumeManager, Volume
+from ceurws.querydisplay import QueryDisplay
 from lodstorage.lod import LOD
+from lodstorage.sparql import SPARQL
+from lodstorage.query import QueryManager,EndpointManager
+import os
 import sys
 
 class Version(object):
@@ -112,7 +116,13 @@ class VolumeBrowser(App):
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py")
         # Routes
         jp.Route('/settings',self.settings)
-        
+        self.endpoints=EndpointManager.getEndpoints(lang="sparql")
+        self.endpointConf=self.endpoints.get("wikidata")
+        self.sparql=SPARQL(self.endpointConf.endpoint)
+        path=os.path.dirname(__file__)
+        qYamlFile=f"{path}/resources/queries/ceurws.yaml"
+        if os.path.isfile(qYamlFile):
+            self.qm=QueryManager(lang="sparql",queriesPath=qYamlFile)
         
     def setupRowsAndCols(self):
         head="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">
@@ -130,12 +140,44 @@ class VolumeBrowser(App):
         
         self.feedback=jp.Div(a=self.colC1)
         self.errors=jp.Span(a=self.colD1,style='color:red')
+    
+    def updateWikidata(self):
+        '''
+        update Wikidata
+        '''
+        wdQuery=self.qm.queriesByName["Proceedings"]
+        self.pdQueryDisplay.showSyntaxHighlightedQuery(wdQuery)
+        
+    async def onWikidataRefreshButtonClick(self,msg):
+        '''
+        wikidata Refresh button has been clicked
+        '''
+        print(msg)
+        try:
+            self.updateWikidata()
+        except Exception as ex:
+            self.handleException(ex)
+            
+    def createQueryDisplay(self,name,a)->QueryDisplay:
+        '''
+        Args:
+            name(str): the name of the query
+            a(jp.Component): the ancestor
+
+        Returns:
+            QueryDisplay: the created QueryDisplay
+        '''
+        filenameprefix=f"{name}"
+        qd=QueryDisplay(app=self,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.sparql,endpointConf=self.endpointConf)
+        return qd
         
     async def settings(self):
         '''
         settings
         '''
         self.setupRowsAndCols()
+        self.pdQueryDisplay=self.createQueryDisplay("Proceedings", self.rowA)
+        self.wikidataRefreshButton=jp.Button(text="refresh wikidata",classes="btn btn-primary",a=self.colA1,click=self.onWikidataRefreshButtonClick)
         return self.wp
     
     async def content(self):

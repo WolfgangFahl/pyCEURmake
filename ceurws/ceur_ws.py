@@ -179,6 +179,9 @@ class VolumeManager(EntityManager):
         for volumeRecord in volumeRecords.values():
             volume=Volume()
             volume.fromDict(volumeRecord)
+            for attr in ["desc","h1"]:
+                if not hasattr(volume, attr):
+                    setattr(volume, attr, "?")
             self.volumes.append(volume)
         
     def getIndexHtml(self,force:bool=False):

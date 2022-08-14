@@ -77,10 +77,7 @@ class TestIndexHtml(Basetest):
         test getting volumes from CSV
         '''
         vm=VolumeManager()
-        if Download.needsDownload(CEURWS.CACHE_FILE):
-            vm.loadFromIndexHtml(force=True)
-        else:
-            vm.loadFromBackup()
+        vm.load()
         volumes=vm.getList()
         self.volumesAsCsv(volumes,3183,3184)       
         

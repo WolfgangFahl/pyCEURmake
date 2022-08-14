@@ -90,7 +90,7 @@ class VolumeSearch():
                 # ignore invalid values
                 pass      
             if volumeNumber in self.wdSync.volumesByNumber:    
-                volume=self.volumesByNumber[volumeNumber]
+                volume=self.wdSync.volumesByNumber[volumeNumber]
                 self.updateVolume(volume)
         except Exception as ex:
             self.app.handleException(ex)

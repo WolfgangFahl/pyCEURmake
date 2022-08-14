@@ -133,6 +133,7 @@ class VolumesDisplay(Display):
                         "Vol": self.createLink(volume.url,f"Vol-{volume.number:04}"),
                         "Acronym": self.getValue(volume,"acronym"),
                         "Title": volume.title,
+                        "Loctime": self.getValue(volume,"loctime"),
                         "Published": self.getValue(volume,"published"),
                         "valid": validMark
                     }

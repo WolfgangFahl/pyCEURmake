@@ -5,6 +5,8 @@ Created on 2022-08-14
 '''
 from tests.basetest import Basetest
 from ceurws.volumeparser import VolumeParser
+from ceurws.ceur_ws import VolumeManager
+from lodstorage.lod import LOD
 
 class TestVolumeParser(Basetest):
     '''
@@ -17,8 +19,23 @@ class TestVolumeParser(Basetest):
         
         
     def testVolumeParser(self):
+        '''
+        test the volumeparser
+        '''
         volumeParser=VolumeParser(self.url)
-        for volnumber in ["2635"]:
-            valid,err,scrapedDict=volumeParser.parse(volnumber)
-            print (valid,err,scrapedDict)
+        vm=VolumeManager()
+        vm.load()
+        volumeList=vm.getList()
+        volumesByNumber, _duplicates = LOD.getLookup(volumeList, 'number')
+        # title >=559
+        # acronym > = 901
+        for volnumber in range(775,len(volumeList)+1):
+            valid,err,scrapedDict=volumeParser.parseRDFa(str(volnumber))
+            print (volnumber,valid,err,scrapedDict)
+            if valid:
+                volume=volumesByNumber[volnumber]
+                volume.loctime=scrapedDict["loctime"]
+        withStore=True
+        if withStore:
+            vm.store()
             

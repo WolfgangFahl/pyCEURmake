@@ -7,6 +7,7 @@ from urllib.request import Request, urlopen
 from pathlib import Path
 from ceurws.indexparser import IndexHtmlParser, Text
 from utils.webscrape import WebScrape
+from utils.download import Download
 
 class CEURWS:
     '''
@@ -91,6 +92,9 @@ class Volume(JSONAble):
         return
     
     def extractValuesFromVolumePage(self,timeout=3,withPapers:bool=False,debug:bool=False):
+        '''
+        extract values from the given volume page
+        '''
         self.desc="?"
         self.h1="?"
         if self.url is None:
@@ -166,6 +170,12 @@ class VolumeManager(EntityManager):
                                             name=self.__class__.__name__)
 
 
+    def load(self):
+        if Download.needsDownload(CEURWS.CACHE_FILE):
+            self.loadFromIndexHtml(force=True)
+        else:
+            self.loadFromBackup()
+            
     def loadFromBackup(self):
         self.fromStore(cacheFile=CEURWS.CACHE_FILE)
         

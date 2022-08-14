@@ -5,7 +5,12 @@
 'Proceedings':
   sparql: |
     # 
-    # get Proceedings records 
+    # get CEUR-WS Proceedings records by Volume
+    # 
+    # WF 2022-08-13
+    #
+    # the Volume number P478 is sometimes available with the proceedings item and sometimes as a qualifier
+    # of 
     #  
     PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
     PREFIX p: <http://www.wikidata.org/prop/>
@@ -15,14 +20,20 @@
     PREFIX wikibase: <http://wikiba.se/ontology#>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     SELECT ?item ?itemLabel ?itemDescription
+      ?ceurwspart
       ?sVolume
       ?Volume
       ?short_name
+      ?event
+      ?eventLabel
       ?title
       ?language_of_work_or_name ?language_of_work_or_nameLabel
       ?URN_NBN ?URN_NBNUrl
       ?publication_date
+      ?fullWorkUrl
       ?described_at_URL
+      ?homePage
+    
     WHERE {
       ?item rdfs:label ?itemLabel.
       FILTER(LANG(?itemLabel) = "en")
@@ -31,36 +42,61 @@
         FILTER(LANG(?itemDescription) = "en")
       }
     
+      # Instance of Proceedings
       ?item wdt:P31 wd:Q1143604.
-      ?item wdt:P179 wd:Q27230297.
+      # Part of the series
+      ?item p:P179 ?partOfTheSeries.
+      # CEUR Workshop proceedings
+      ?partOfTheSeries ps:P179 wd:Q27230297.
+      
+      # Volume directly with the proceeedings
       OPTIONAL {
         ?item wdt:P478 ?Volume.
       }
-      ?item p:P179 ?ceurwspart.
+      # Volumes via a a qualifier of the part of the series relation
       OPTIONAL {
-        ?ceurwspart pq:P478 ?sVolume.
+        ?partOfTheSeries pq:P478 ?sVolume.
       }
+      # Acronym
       OPTIONAL {
         ?item wdt:P1813 ?short_name.
       }
       OPTIONAL {
+        ?item wdt:P4745 ?event.
+        ?event rdfs:label ?eventLabel.
+        FILTER(LANG(?eventLabel) = "en")
+      }
+      # Title
+      OPTIONAL {
         ?item wdt:P1476 ?title.
       }
+      # Language
       OPTIONAL {
         ?item wdt:P407 ?language_of_work_or_name.
         ?language_of_work_or_name rdfs:label ?language_of_work_or_nameLabel.
         FILTER(LANG(?language_of_work_or_nameLabel) = "en")
       }
-      #OPTIONAL {
+      # The URN shouldn't be optional
+      OPTIONAL {
         ?item wdt:P4109 ?URN_NBN.
         wd:P4109 wdt:P1630 ?URN_NBNFormatterUrl.
         BIND(IRI(REPLACE(?URN_NBN, '^(.+)$', ?URN_NBNFormatterUrl)) AS ?URN_NBNUrl).
-      #}
+      }
+      # publication date
       OPTIONAL {
         ?item wdt:P577 ?publication_date.
       }
+      # full work available at
+      OPTIONAL {
+        ?item wdt:P953 ?fullWorkUrl
+      } 
+      # described at url
       OPTIONAL {
         ?item wdt:P973 ?described_at_URL.
+      }
+      # homepage -> replace with full work available at
+      OPTIONAL {
+        ?item wdt:P856 ?homePage
       }
     } ORDER BY xsd:integer(?sVolume)
 'VolumesWithoutDescription':

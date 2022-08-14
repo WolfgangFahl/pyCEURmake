@@ -104,8 +104,3 @@ class TestIndexHtml(Basetest):
         withStore=False
         if withStore:
             vm.store()
-            
-    def testUpdateFromWikiData(self):
-        '''
-        test updating from wikidata
-        '''

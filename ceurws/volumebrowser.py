@@ -5,13 +5,10 @@ Created on 2022-08-14
 '''
 import justpy as jp
 from jpwidgets.bt5widgets import App
-from ceurws.ceur_ws import VolumeManager, Volume
+from ceurws.ceur_ws import  Volume
 from ceurws.querydisplay import QueryDisplay
-from lodstorage.lod import LOD
-from lodstorage.sparql import SPARQL
-from lodstorage.query import QueryManager,EndpointManager
-import os
 import sys
+from ceurws.wikidatasync import WikidataSync
 
 class Version(object):
     '''
@@ -52,16 +49,10 @@ class VolumeSearch():
         '''
         self.app=app
         self.debug=debug
-        self.vm=VolumeManager()
-        self.vm.loadFromIndexHtml(force=True)
-        self.volumesByNumber, _duplicates = LOD.getLookup(self.vm.getList(), 'number')
-        self.volumeList=self.vm.getList()
-        self.volumeCount=len(self.volumeList)
+        self.wdSync=WikidataSync()
+        self.app.addMenuLink(text='Endpoint',icon='web',href=self.wdSync.endpointConf.website,target="_blank")
         self.volumeInput=self.app.createComboBox(labelText="Volume", a=a,placeholder='Please type here to search ...',size="120",change=self.onVolumeChange)
-        for volume in self.vm.getList():
-            for attr in ["desc","h1"]:
-                if not hasattr(volume, attr):
-                    setattr(volume, attr, "?")
+        for volume in self.wdSync.vm.getList():
             title=f"Vol-{volume.number}:{volume.title}"
             self.volumeInput.dataList.addOption(title,volume.number)
         self.volumeDiv=jp.Div(a=volA)
@@ -76,6 +67,15 @@ class VolumeSearch():
         html=f"<a href='{volume.url}'>{volume.acronym}<a>:{volume.desc}:{volume.h1}:{volume.title}"
         self.volumeDiv.inner_html=html
         
+    def updateWikidata(self):
+        '''
+        update Wikidata
+        '''
+        self.app.pdQueryDisplay.showSyntaxHighlightedQuery(self.wdSync.wdQuery)
+        wdRecords=self.wdSync.update()
+        self.app.showFeedback(f"found {len(wdRecords)} wikidata records")
+        pass
+        
             
     async def onVolumeChange(self,msg):
         '''
@@ -89,7 +89,7 @@ class VolumeSearch():
             except ValueError as _ve:
                 # ignore invalid values
                 pass      
-            if volumeNumber in self.volumesByNumber:    
+            if volumeNumber in self.wdSync.volumesByNumber:    
                 volume=self.volumesByNumber[volumeNumber]
                 self.updateVolume(volume)
         except Exception as ex:
@@ -99,7 +99,6 @@ class VolumeBrowser(App):
     '''
     CEUR-WS Volume Browser
     '''
-
 
     def __init__(self,version):
         '''
@@ -114,15 +113,10 @@ class VolumeBrowser(App):
         self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake/issues/16")
         self.addMenuLink(text='Documentation',icon='file-document',href="https://ceur-ws.bitplan.com/index.php/Volume_Browser")
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py")
+        
         # Routes
         jp.Route('/settings',self.settings)
-        self.endpoints=EndpointManager.getEndpoints(lang="sparql")
-        self.endpointConf=self.endpoints.get("wikidata")
-        self.sparql=SPARQL(self.endpointConf.endpoint)
-        path=os.path.dirname(__file__)
-        qYamlFile=f"{path}/resources/queries/ceurws.yaml"
-        if os.path.isfile(qYamlFile):
-            self.qm=QueryManager(lang="sparql",queriesPath=qYamlFile)
+        
         
     def setupRowsAndCols(self):
         head="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">
@@ -140,13 +134,10 @@ class VolumeBrowser(App):
         
         self.feedback=jp.Div(a=self.colC1)
         self.errors=jp.Span(a=self.colD1,style='color:red')
+        
+    def showFeedback(self,html):
+        self.feedback.inner_html=html
     
-    def updateWikidata(self):
-        '''
-        update Wikidata
-        '''
-        wdQuery=self.qm.queriesByName["Proceedings"]
-        self.pdQueryDisplay.showSyntaxHighlightedQuery(wdQuery)
         
     async def onWikidataRefreshButtonClick(self,msg):
         '''
@@ -154,7 +145,7 @@ class VolumeBrowser(App):
         '''
         print(msg)
         try:
-            self.updateWikidata()
+            self.volumeSearch.updateWikidata()
         except Exception as ex:
             self.handleException(ex)
             
@@ -168,7 +159,7 @@ class VolumeBrowser(App):
             QueryDisplay: the created QueryDisplay
         '''
         filenameprefix=f"{name}"
-        qd=QueryDisplay(app=self,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.sparql,endpointConf=self.endpointConf)
+        qd=QueryDisplay(app=self,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.wdSync.sparql,endpointConf=self.wdSync.endpointConf)
         return qd
         
     async def settings(self):
@@ -176,6 +167,7 @@ class VolumeBrowser(App):
         settings
         '''
         self.setupRowsAndCols()
+        self.wdSync=WikidataSync()
         self.pdQueryDisplay=self.createQueryDisplay("Proceedings", self.rowA)
         self.wikidataRefreshButton=jp.Button(text="refresh wikidata",classes="btn btn-primary",a=self.colA1,click=self.onWikidataRefreshButtonClick)
         return self.wp
@@ -186,6 +178,7 @@ class VolumeBrowser(App):
         '''
         self.setupRowsAndCols()
         self.volumeSearch=VolumeSearch(self,self.colA1,self.rowB)
+        self.wdSync=self.volumeSearch.wdSync
         return self.wp
         
         

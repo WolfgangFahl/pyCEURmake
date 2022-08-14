@@ -17,3 +17,8 @@ pyparsing>=3.0.9
 BeautifulSoup4~=4.11.1
 # https://pypi.org/project/lxml/
 lxml~=4.9.1
+# pyjustpywidgets
+# https://pypi.org/project/pyJustpyWidgets/
+pyJustpyWidgets~=0.0.23 
+# https://pypi.org/project/justpy/
+justpy~=0.2.3

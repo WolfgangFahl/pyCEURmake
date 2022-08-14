@@ -103,6 +103,12 @@ class Display:
         '''
         link=f"<a href='{url}' style='color:blue'>{text}</a>"
         return link
+    
+    def getValue(self,obj,attr):
+        value=getattr(obj,attr,"?")
+        if value is None:
+            value="?"
+        return value
             
 class VolumesDisplay(Display):
     '''
@@ -119,18 +125,23 @@ class VolumesDisplay(Display):
             self.agGrid=LodGrid(a=self.app.rowB) 
             self.wdSync=WikidataSync()
             lod=[]
-            for volume in self.wdSync.vm.getList():
+            volumeList=self.wdSync.vm.getList()
+            for volume in volumeList:
+                published=getattr(volume,"published","?")
+                if published is None:
+                    published="?"
                 lod.append(
                     {
-                        "Vol": self.createLink(volume.url,f"Vol-{volume.number}"),
-                        #"Acronym": volume.acronym,
-                        "Title": volume.title
+                        "Vol": self.createLink(volume.url,f"Vol-{volume.number:04}"),
+                        "Acronym": self.getValue(volume,"acronym"),
+                        "Title": volume.title,
+                        "Published": self.getValue(volume,"published")
                     }
                 )  
             self.agGrid.load_lod(lod)
             self.agGrid.options.defaultColDef.sortable=True
             self.agGrid.options.columnDefs[0].checkboxSelection = True
-            self.agGrid.html_columns=[0,1]
+            self.agGrid.html_columns=[0,1,2]
         except Exception as ex:
             self.app.handleException(ex)
     

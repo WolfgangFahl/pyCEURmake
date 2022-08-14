@@ -4,12 +4,11 @@ Created on 2022-08-11
 @author: wf
 '''
 from tests.basetest import Basetest
-from ceurws.ceur_ws import VolumeManager, Volume, CEURWS
+from ceurws.ceur_ws import VolumeManager, CEURWS
 import datetime
 from ceurws.indexparser import IndexHtmlParser
 from utils.download import Download
 import logging
-import os
 from lodstorage.lod import LOD
 
 class TestIndexHtml(Basetest):
@@ -31,6 +30,9 @@ class TestIndexHtml(Basetest):
                 print (f'{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}')
     
     def volumesAsCsv(self,volumes,minVolumeNumber,maxVolumeNumber):
+        '''
+        show the given range of volumes in CSV format
+        '''
         for volume in volumes:
             if volume.number>=minVolumeNumber and volume.number<=maxVolumeNumber:
                 print(f"{volume.number}\t{volume.acronym}\t{volume.desc}\t{volume.h1}\t{volume.title}\tQ1860\t{volume.published}\t{volume.urn}\t{volume.url}")
@@ -105,5 +107,5 @@ class TestIndexHtml(Basetest):
             
     def testUpdateFromWikiData(self):
         '''
-        
+        test updating from wikidata
         '''

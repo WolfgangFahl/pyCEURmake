@@ -127,15 +127,14 @@ class VolumesDisplay(Display):
             lod=[]
             volumeList=self.wdSync.vm.getList()
             for volume in volumeList:
-                published=getattr(volume,"published","?")
-                if published is None:
-                    published="?"
+                validMark= "✅" if volume.valid else "❌"
                 lod.append(
                     {
                         "Vol": self.createLink(volume.url,f"Vol-{volume.number:04}"),
                         "Acronym": self.getValue(volume,"acronym"),
                         "Title": volume.title,
-                        "Published": self.getValue(volume,"published")
+                        "Published": self.getValue(volume,"published"),
+                        "valid": validMark
                     }
                 )  
             self.agGrid.load_lod(lod)

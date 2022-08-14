@@ -7,6 +7,7 @@ from tests.basetest import Basetest
 from ceurws.ceur_ws import VolumeManager, Volume, CEURWS
 import datetime
 from ceurws.indexparser import IndexHtmlParser
+from utils.download import Download
 import logging
 import os
 from lodstorage.lod import LOD
@@ -74,12 +75,12 @@ class TestIndexHtml(Basetest):
         test getting volumes from CSV
         '''
         vm=VolumeManager()
-        if os.path.isfile(CEURWS.CACHE_FILE):
-            vm.loadFromBackup()
-        else:
+        if Download.needsDownload(CEURWS.CACHE_FILE):
             vm.loadFromIndexHtml(force=True)
+        else:
+            vm.loadFromBackup()
         volumes=vm.getList()
-        self.volumesAsCsv(volumes,33,51)       
+        self.volumesAsCsv(volumes,3183,3184)       
         
     def testReadVolumePages(self):
         '''

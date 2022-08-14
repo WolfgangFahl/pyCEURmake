@@ -6,7 +6,7 @@ from lodstorage.storageconfig import StorageConfig
 from urllib.request import Request, urlopen
 from pathlib import Path
 from ceurws.indexparser import IndexHtmlParser, Text
-from ceurws.webscrape import WebScrape
+from utils.webscrape import WebScrape
 
 class CEURWS:
     '''

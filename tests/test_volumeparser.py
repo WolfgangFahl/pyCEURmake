@@ -29,13 +29,17 @@ class TestVolumeParser(Basetest):
         volumesByNumber, _duplicates = LOD.getLookup(volumeList, 'number')
         # title >=559
         # acronym > = 901
-        for volnumber in range(775,len(volumeList)+1):
+        if self.inPublicCI(): 
+            limit=785 
+        else: 
+            limit=len(volumeList)+1
+        for volnumber in range(775,limit):
             valid,err,scrapedDict=volumeParser.parseRDFa(str(volnumber))
             print (volnumber,valid,err,scrapedDict)
             if valid:
                 volume=volumesByNumber[volnumber]
                 volume.loctime=scrapedDict["loctime"]
-        withStore=True
+        withStore=False
         if withStore:
             vm.store()
             

@@ -88,7 +88,53 @@ class VolumeSearch():
         except Exception as ex:
             self.app.handleException(ex)
             
-class WikidataDisplay:
+class Display:
+    '''
+    generic Display
+    '''
+    
+    def createLink(self,url,text):
+        '''
+        create a link from the given url and text
+        
+        Args:
+            url(str): the url to create a link for
+            text(str): the text to add for the link
+        '''
+        link=f"<a href='{url}' style='color:blue'>{text}</a>"
+        return link
+            
+class VolumesDisplay(Display):
+    '''
+    display all Volumes
+    '''
+    
+    def __init__(self,app,debug:bool=False):
+        '''
+        constructor
+        '''
+        self.app=app
+        self.debug=debug
+        try:
+            self.agGrid=LodGrid(a=self.app.rowB) 
+            self.wdSync=WikidataSync()
+            lod=[]
+            for volume in self.wdSync.vm.getList():
+                lod.append(
+                    {
+                        "Vol": self.createLink(volume.url,f"Vol-{volume.number}"),
+                        #"Acronym": volume.acronym,
+                        "Title": volume.title
+                    }
+                )  
+            self.agGrid.load_lod(lod)
+            self.agGrid.options.defaultColDef.sortable=True
+            self.agGrid.options.columnDefs[0].checkboxSelection = True
+            self.agGrid.html_columns=[0,1]
+        except Exception as ex:
+            self.app.handleException(ex)
+    
+class WikidataDisplay(Display):
     '''
     display wiki data query results
     '''
@@ -96,7 +142,7 @@ class WikidataDisplay:
     def __init__(self,app,debug:bool=False):
         self.app=app
         self.debug=debug
-        self.agGrid =None
+        self.agGrid=None
         self.wdSync=WikidataSync()
         self.app.addMenuLink(text='Endpoint',icon='web',href=self.wdSync.endpointConf.website,target="_blank")
         self.pdQueryDisplay=self.createQueryDisplay("Proceedings", self.app.rowA)
@@ -134,17 +180,6 @@ class WikidataDisplay:
         self.app.showFeedback(f"found {len(wdRecords)} wikidata records")
         self.reloadAgGrid(wdRecords)
         pass
-    
-    def createLink(self,url,text):
-        '''
-        create a link from the given url and text
-        
-        Args:
-            url(str): the url to create a link for
-            text(str): the text to add for the link
-        '''
-        link=f"<a href='{url}' style='color:blue'>{text}</a>"
-        return link
     
     
     def reloadAgGrid(self,olod:list,showLimit=10):
@@ -192,6 +227,7 @@ class VolumeBrowser(App):
         '''
         App.__init__(self, version,title="CEUR-WS Volume Browser")
         self.addMenuLink(text='Home',icon='home', href="/")
+        self.addMenuLink(text='Volumes',icon='table-large',href="/volumes")
         self.addMenuLink(text='Wikidata Sync',icon='refresh-circle',href="/wikidatasync")
         self.addMenuLink(text='Settings',icon='cog',href="/settings")
         self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake/issues/16")
@@ -200,6 +236,7 @@ class VolumeBrowser(App):
         
         # Routes
         jp.Route('/settings',self.settings)
+        jp.Route('/volumes',self.volumes)
         jp.Route('/wikidatasync',self.wikidatasync)
         
         
@@ -233,6 +270,11 @@ class VolumeBrowser(App):
         settings
         '''
         self.setupRowsAndCols()
+        return self.wp
+    
+    async def volumes(self):
+        self.setupRowsAndCols()
+        self.volumeDisplay=VolumesDisplay(self)
         return self.wp
     
     async def content(self):

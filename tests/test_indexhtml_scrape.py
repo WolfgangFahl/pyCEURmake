@@ -54,7 +54,7 @@ class TestIndexHtml(Basetest):
         test reading the HTML file
         '''
         debug=self.debug
-        debug=True
+        #debug=True
         if debug:
             logging.basicConfig(level=logging.DEBUG)
         vm=VolumeManager()
@@ -62,7 +62,7 @@ class TestIndexHtml(Basetest):
         indexParser=IndexHtmlParser(htmlText,debug=debug) 
         lineCount=len(indexParser.lines)
         self.assertTrue(lineCount>89500)
-        if debug:
+        if debug or self.inPublicCI():
             print(f"{lineCount} lines found in CEUR-WS index.html")
         #limit=10
         # volumes=indexParser.parse(limit=10,verbose=True)

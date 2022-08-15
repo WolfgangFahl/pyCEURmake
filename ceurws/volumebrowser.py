@@ -127,7 +127,8 @@ class VolumesDisplay(Display):
             lod=[]
             volumeList=self.wdSync.vm.getList()
             limitTitleLen=120
-            for volume in volumeList:
+            reverseVolumeList=sorted(volumeList, key=lambda volume:volume.number, reverse=True)
+            for volume in reverseVolumeList:
                 validMark= "✅" if volume.valid else "❌"
                 lod.append(
                     {

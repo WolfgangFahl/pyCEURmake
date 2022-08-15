@@ -201,7 +201,7 @@ class IndexHtmlParser():
                     infoValue=datetime.datetime.strptime(infoValue, '%d-%b-%Y')
                     published=infoValue.strftime("%Y-%m-%d")
                     volume["published"]=published
-                    volume["year"]=published.year
+                    volume["year"]=infoValue.year
                 except ValueError as ve:
                     msg=f"pubDate: {infoValue} of {volume} parsing failed with {ve}"
                     self.log(msg)

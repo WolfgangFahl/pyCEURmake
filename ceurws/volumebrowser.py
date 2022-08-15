@@ -241,8 +241,8 @@ class VolumesDisplay(Display):
                         if qId is not None:
                             alert = Alert(a=self.colA3, text=f"Proceedings entry for {volume} was created!")
                             jp.Br(a=alert)
-                            qId = qId.split("/")[-1]
-                            jp.Link(a=alert, href=qId, text=qId)
+                            href=f"https://www.wikidata.org/wiki/{qId}"
+                            jp.Link(a=alert, href=href, text=qId)
                         else:
                             alert = Alert(a=self.colA3, text=f"An error occured during the creation of the proceedings entry for {volume}")
                             jp.Br(a=alert)

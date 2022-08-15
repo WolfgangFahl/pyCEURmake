@@ -6,6 +6,8 @@ Created on 2022-08-14
 import os
 from typing import List
 
+from spreadsheet.wikidata import Wikidata
+
 from utils.download import Download
 from lodstorage.lod import LOD
 from ceurws.ceur_ws import VolumeManager, CEURWS
@@ -87,4 +89,90 @@ class WikidataSync(object):
         qres = self.sparql.queryAsListOfDicts(query)
         wdItems = [record.get("event") for record in qres]
         return wdItems
-        
+
+    def addProceedingToWikidata(self, record:dict):
+        """
+        Creates a wikidata entry for the given record
+        """
+        wdMetadata = [
+            {"Entity": "proceedings",
+             "Column": None,
+             "PropertyName": "instanceof",
+             "PropertyId": "P31",
+             "Value": "Q1143604",
+             "Type": None,
+             "Qualifier": None,
+             "Lookup": None
+             },
+            {"Entity": "proceedings",
+             "Column": "title",
+             "PropertyName": "title",
+             "PropertyId": "P1476",
+             "Type": "text",
+             "Qualifier": None,
+             "Lookup": ""
+             },
+            {"Entity": "proceedings",
+             "Column": "short name",
+             "PropertyName": "short name",
+             "PropertyId": "P1813",
+             "Type": "text",
+             "Qualifier": None,
+             "Lookup": ""
+             },
+            {"Entity": "proceedings",
+             "Column": None,
+             "PropertyName": "part of the series",
+             "PropertyId": "P179",
+             "Value": "Q27230297",
+             "Type": None,
+             "Qualifier": None,
+             "Lookup": None
+             },
+            {"Entity": "proceedings",
+             "Column": "volume",
+             "PropertyName": "volume",
+             "PropertyId": "P478",
+             "Type": None,
+             "Qualifier": "part of the series",
+             "Lookup": ""
+             },
+            {"Entity": "proceedings",
+             "Column": "pubDate",
+             "PropertyName": "publication date",
+             "PropertyId": "P577",
+             "Type": "date",
+             "Qualifier": None,
+             "Lookup": ""
+             },
+            {"Entity": "proceedings",
+             "Column": "ceurwsUrl",
+             "PropertyName": "described at URL",
+             "PropertyId": "P973",
+             "Type": "url",
+             "Qualifier": None,
+             "Lookup": ""
+             },
+            {"Entity": "proceedings",
+             "Column": "fullWorkUrl",
+             "PropertyName": "full work available at URL",
+             "PropertyId": "P953",
+             "Type": "url",
+             "Qualifier": None,
+             "Lookup": ""
+             },
+            {"Entity": "proceedings",
+             "Column": "urn",
+             "PropertyName": "URN-NBN",
+             "PropertyId": "P4109",
+             "Type": "extid",
+             "Qualifier": None,
+             "Lookup": ""
+             }
+        ]
+        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
+        wd = Wikidata(baseurl="https://www.wikidata.org")
+        wd.loginWithCredentials()
+        qId, errors = wd.addDict(row=record, mapDict=mapDict, write=True)
+        wd.logout()
+        return qId, errors

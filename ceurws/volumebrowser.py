@@ -194,6 +194,17 @@ class WikidataDisplay(Display):
         self.reloadAgGrid(wdRecords)
         pass
     
+    def createItemLink(self,row,key):
+        '''
+        
+        '''
+        if key in row:
+            item=row[key]
+            itemLabel=row[f"{key}Label"]
+            itemLink=self.createLink(item,itemLabel)
+        else:
+            itemLink="?"
+        return itemLink
     
     def reloadAgGrid(self,olod:list,showLimit=10):
         '''
@@ -209,21 +220,20 @@ class WikidataDisplay(Display):
                 volume=row["sVolume"]
             if "Volume" in row:
                 volume=row["Volume"]
-            itemLabel=row["itemLabel"]
-            item=row["item"]
-            itemLink=self.createLink(item,itemLabel)
+            itemLink=self.createItemLink(row, "item")
+            eventLink=self.createItemLink(row,"event")
             volumeLink=self.createLink(f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volume}")
             lod.append(
                 {
                     "item": itemLink,
                     "volume": volumeLink,
+                    "event": eventLink,
                     "acronym":row.get("short_name","?"),
                     "title":row.get("title","?"),
-                    
                 })
         self.agGrid.load_lod(lod)
         self.agGrid.options.columnDefs[0].checkboxSelection = True
-        self.agGrid.html_columns=[0,1]
+        self.agGrid.html_columns=[0,1,2]
     
   
 class VolumeBrowser(App):

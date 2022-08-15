@@ -7,7 +7,6 @@ from tests.basetest import Basetest
 from ceurws.ceur_ws import VolumeManager, CEURWS
 import datetime
 from ceurws.indexparser import IndexHtmlParser
-from utils.download import Download
 import logging
 from lodstorage.lod import LOD
 
@@ -85,10 +84,11 @@ class TestIndexHtml(Basetest):
         '''
         test reading the volume pages
         '''
+        withStore=True
         vm=VolumeManager()
-        vm.loadFromIndexHtml(force=False)
+        vm.loadFromIndexHtml(force=withStore)
         volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), 'number')
-        debug=self.debug
+        debug=self.debug or withStore
         if self.inPublicCI():
             limit=10
         else:
@@ -98,6 +98,5 @@ class TestIndexHtml(Basetest):
             volume.extractValuesFromVolumePage(debug=False,withPapers=False)
             if debug and volume.valid:
                 print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
-        withStore=False
         if withStore:
             vm.store()

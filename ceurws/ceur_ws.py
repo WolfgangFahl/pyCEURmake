@@ -5,8 +5,8 @@ from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
 from urllib.request import Request, urlopen
 from pathlib import Path
-from ceurws.indexparser import IndexHtmlParser, Text
-from utils.webscrape import WebScrape
+from ceurws.indexparser import IndexHtmlParser
+from ceurws.volumeparser import VolumeParser
 from utils.download import Download
 
 class CEURWS:
@@ -59,17 +59,6 @@ class Volume(JSONAble):
         return text
 
     @property
-    def year(self):
-        if hasattr(self, "date") and isinstance(self.date, datetime.datetime):
-            return self.date.year
-
-    @property
-    def volNumber(self)->str:
-        if hasattr(self, "number") and self.number:
-            return f"Vol-{self.number}"
-        return None
-
-    @property
     def sessions(self):
         """
         sessions of this volume
@@ -91,7 +80,7 @@ class Volume(JSONAble):
         """
         return
     
-    def extractValuesFromVolumePage(self,timeout=3,withPapers:bool=False,debug:bool=False):
+    def extractValuesFromVolumePage(self,timeout=3,withPapers:bool=False):
         '''
         extract values from the given volume page
         '''
@@ -99,22 +88,9 @@ class Volume(JSONAble):
         self.h1="?"
         if self.url is None:
             return
-    
-        scrape=WebScrape(timeout=timeout)
-        soup=scrape.getSoup(self.url, showHtml=debug)
-        for descValue in ["description","descripton"]:
-            # descripton is a typo in the Volume index files not here!
-            firstDesc=soup.find("meta", {"name" : descValue})
-            if firstDesc is not None:
-                self.desc=firstDesc["content"]
-                self.desc=Text.sanitize(self.desc,["CEUR Workshop Proceedings "])
-                break
-            
-        # first H1 is acronym
-        firstH1=soup.find('h1')
-        if firstH1 is not None:
-            self.h1=firstH1.text
-            self.h1=Text.sanitize(self.h1,['<TD bgcolor="#FFFFFF">'])
+        volumeParser=VolumeParser(timeout=timeout)
+        parseDict=volumeParser.parse(self.url)
+        self.fromDict(parseDict)
         
         if withPapers:
             pass
@@ -370,7 +346,7 @@ class Editor(JSONAble):
 
 class EditorManager(EntityManager):
     """
-    Contains multiple ceurws sessions
+    Contains multiple ceurws editors
     """
 
     def __init__(self):

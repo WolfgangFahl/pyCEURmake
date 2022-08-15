@@ -3,26 +3,12 @@ Created on 11.08.2022
 
 @author: wf
 '''
-#from pyparsing import makeHTMLTags, SkipTo, htmlComment
+import datetime
 import html
 import re
-import datetime
-# import logging
+from ceurws.textparser import Textparser
 
-class Text():
-    @classmethod
-    def sanitize(cls,text,replaceList=[]):
-        sanitizeChars="\n\t\r., "
-        text=text.strip(sanitizeChars)
-        text=text.replace("\n"," ")
-        text=text.replace("\r","")
-        for replace in replaceList:
-            text=text.replace(replace,"")
-        # compress multiple spaces
-        text=' '.join(text.split())
-        return text
-
-class IndexHtmlParser():
+class IndexHtmlParser(Textparser):
     '''
     CEUR-WS Index.html parser
     '''
@@ -35,8 +21,8 @@ class IndexHtmlParser():
             htmlText(str): the HTML text of the index page
             debug(bool): if TRUE switch debugging on
         '''
+        Textparser.__init__(self,debug=debug)
         self.htmlText=htmlText
-        self.debug=debug
         # soup (in memory is slow)
         # soup = BeautifulSoup(html_page, 'html.parser'
         self.lines=htmlText.split("\n")
@@ -45,34 +31,6 @@ class IndexHtmlParser():
         self.linkPattern=re.compile(r'''.*href=[\'"]?([^\'" >]+).*''',re.I)
         self.volPattern=re.compile("http://ceur-ws.org/Vol-([0-9]+)")
         self.volLinkPattern=re.compile(r'''.*<a\s+href=[\'"]http://ceur-ws.org/Vol-([0-9]+)[/]?[\'"]>([^<]*)</a>.*''',re.I | re.DOTALL)
-         
-    def log(self,msg:str):
-        '''
-        log the given message if debug is on
-        
-        Args:
-            msg(str): the message to log
-        '''
-        if self.debug:
-            print(msg)
-            
-    def getMatch(self,pattern,text,groupNo:int=1):
-        '''
-        get the match for the given regular expression for the given text returning the given group number
-        
-        Args:
-            regexp(str): the regular expression to check
-            text(str): the text to check
-            groupNo(int): the number of the regular expression group to return
-            
-        Returns:
-            str: the matching result or None if no match was found
-        '''
-        matchResult=pattern.match(text)
-        if matchResult:
-            return matchResult.group(groupNo)
-        else:
-            return None
         
     def find(self,startLine:int,needleRegex:str,step:int=1)->int:
         '''
@@ -147,9 +105,9 @@ class IndexHtmlParser():
                         valid=False
                 volume["valid"]=valid
                 if valid:
-                    acronym=html.unescape(volName)
-                    acronym=Text.sanitize(acronym)
-                    volume["acronym"]=acronym
+                    volName=html.unescape(volName)
+                    volName=Textparser.sanitize(volName)
+                    volume["volname"]=volName
                 
     def setVolumeTitle(self,volume:dict,lineIndex:int):
         '''
@@ -176,7 +134,7 @@ class IndexHtmlParser():
                     title+=line+delim
                     delim=" "
                     tdIndex+=1
-                volume["title"]=html.unescape(title).strip()
+                volume["tdtitle"]=html.unescape(title).strip()
 
     def getInfo(self,volume:dict,info:str,pattern,line:str):
         '''
@@ -225,6 +183,7 @@ class IndexHtmlParser():
         volume["toLine"]=toLine
         volume["valid"]=False
         volume["url"]=None
+        volume["acronym"]=None
         self.setVolumeTitle(volume, fromLine)
         
         infoPattern={}

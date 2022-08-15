@@ -157,7 +157,7 @@ class VolumesDisplay(Display):
         except Exception as ex:
             self.app.handleException(ex)
 
-    def onRowSelected(self, msg):
+    async def onRowSelected(self, msg):
         '''
         row selection event handler
 
@@ -165,50 +165,53 @@ class VolumesDisplay(Display):
             msg(dict): row selection information
         '''
         if msg.get("selected", False):
-            data = msg.get("data")
-            volPattern = "http://ceur-ws.org/Vol-(?P<volumeNumber>\d{1,4})/"
-            match = re.search(volPattern, data.get("Vol"))
-            volumeId = int(match.group("volumeNumber")) if match is not None else None
-            if volumeId is not None and volumeId in self.wdSync.volumesByNumber:
-                volume: Volume = self.wdSync.volumesByNumber.get(volumeId)
-                # check if already in wikidata → use URN
-                urn = getattr(volume, "urn")
-                wdItems = self.wdSync.getProceedingWdItemsByUrn(urn)
-                if len(wdItems) > 0:
-                    # a proceeding exists with the URN exists
-                    alert = Alert(a=self.colA1, text=f"{volume} already in Wikidata see ")
-                    for wdItem in wdItems:
-                        jp.Br(a=alert)
-                        qId = wdItem.split("/")[-1]
-                        jp.Link(a=alert, href=wdItem, text=qId)
-                    return
-                else:
-                    # A proceeding to the URN is not known → create wd entry
-                    record = {
-                        "title": getattr(volume, "title"),
-                        "label": getattr(volume, "title"),
-                        "description": f"Proceedings of {getattr(volume, 'acronym')} workshop",
-                        "urn": getattr(volume, "urn"),
-                        "short name": getattr(volume, "acronym"),
-                        "volume": getattr(volume, "number"),
-                        "pubDate": getattr(volume, "pubDate"),
-                        "ceurwsUrl": getattr(volume, "url"),
-                        "fullWorkUrl": getattr(volume, "url")
-                    }
-                    if isinstance(record.get("pubDate"), datetime):
-                        record["pubDate"] = record["pubDate"].isoformat()
-                    qId, errors = self.wdSync.addProceedingToWikidata(record)
-                    if qId is not None:
-                        alert = Alert(a=self.colA1, text=f"Proceedings entry for {volume} was created!")
-                        jp.Br(a=alert)
-                        qId = qId.split("/")[-1]
-                        jp.Link(a=alert, href=qId, text=qId)
+            try: 
+                data = msg.get("data")
+                volPattern = "http://ceur-ws.org/Vol-(?P<volumeNumber>\d{1,4})/"
+                match = re.search(volPattern, data.get("Vol"))
+                volumeId = int(match.group("volumeNumber")) if match is not None else None
+                if volumeId is not None and volumeId in self.wdSync.volumesByNumber:
+                    volume: Volume = self.wdSync.volumesByNumber.get(volumeId)
+                    # check if already in wikidata → use URN
+                    urn = getattr(volume, "urn")
+                    wdItems = self.wdSync.getProceedingWdItemsByUrn(urn)
+                    if len(wdItems) > 0:
+                        # a proceeding exists with the URN exists
+                        alert = Alert(a=self.colA1, text=f"{volume} already in Wikidata see ")
+                        for wdItem in wdItems:
+                            jp.Br(a=alert)
+                            qId = wdItem.split("/")[-1]
+                            jp.Link(a=alert, href=wdItem, text=qId)
+                        return
                     else:
-                        alert = Alert(a=self.colA1, text=f"An error occured during the creation of the proceedings entry for {volume}")
-                        jp.Br(a=alert)
-                        jp.P(a=alert, text=errors)
-            else:
-                Alert(a=self.colA1, text=f"Volume for selected row can not be loaded correctly")
+                        # A proceeding to the URN is not known → create wd entry
+                        record = {
+                            "title": getattr(volume, "title"),
+                            "label": getattr(volume, "title"),
+                            "description": f"Proceedings of {getattr(volume, 'acronym')} workshop",
+                            "urn": getattr(volume, "urn"),
+                            "short name": getattr(volume, "acronym"),
+                            "volume": getattr(volume, "number"),
+                            "pubDate": getattr(volume, "pubDate"),
+                            "ceurwsUrl": getattr(volume, "url"),
+                            "fullWorkUrl": getattr(volume, "url")
+                        }
+                        if isinstance(record.get("pubDate"), datetime):
+                            record["pubDate"] = record["pubDate"].isoformat()
+                        qId, errors = self.wdSync.addProceedingToWikidata(record)
+                        if qId is not None:
+                            alert = Alert(a=self.colA1, text=f"Proceedings entry for {volume} was created!")
+                            jp.Br(a=alert)
+                            qId = qId.split("/")[-1]
+                            jp.Link(a=alert, href=qId, text=qId)
+                        else:
+                            alert = Alert(a=self.colA1, text=f"An error occured during the creation of the proceedings entry for {volume}")
+                            jp.Br(a=alert)
+                            jp.P(a=alert, text=errors)
+                else:
+                    Alert(a=self.colA1, text=f"Volume for selected row can not be loaded correctly")
+            except Exception as ex:
+                self.app.handleException(ex)
     
 class WikidataDisplay(Display):
     '''

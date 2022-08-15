@@ -4,14 +4,14 @@
 # WF 2022-08-13
 'Proceedings':
   sparql: |
-    # 
+    #
     # get CEUR-WS Proceedings records by Volume
-    # 
+    #
     # WF 2022-08-13
     #
     # the Volume number P478 is sometimes available with the proceedings item and sometimes as a qualifier
-    # of 
-    #  
+    # of
+    #
     PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
     PREFIX p: <http://www.wikidata.org/prop/>
     PREFIX schema: <http://schema.org/>
@@ -33,22 +33,22 @@
       ?fullWorkUrl
       ?described_at_URL
       ?homePage
-    
+
     WHERE {
       ?item rdfs:label ?itemLabel.
       FILTER(LANG(?itemLabel) = "en")
-      OPTIONAL { 
+      OPTIONAL {
         ?item schema:description ?itemDescription.
         FILTER(LANG(?itemDescription) = "en")
       }
-    
+
       # Instance of Proceedings
       ?item wdt:P31 wd:Q1143604.
       # Part of the series
       ?item p:P179 ?partOfTheSeries.
       # CEUR Workshop proceedings
       ?partOfTheSeries ps:P179 wd:Q27230297.
-      
+
       # Volume directly with the proceeedings
       OPTIONAL {
         ?item wdt:P478 ?Volume.
@@ -89,7 +89,7 @@
       # full work available at
       OPTIONAL {
         ?item wdt:P953 ?fullWorkUrl
-      } 
+      }
       # described at url
       OPTIONAL {
         ?item wdt:P973 ?described_at_URL.
@@ -99,6 +99,20 @@
         ?item wdt:P856 ?homePage
       }
     } ORDER BY xsd:integer(?sVolume)
+'SubmittedByGt6':
+  sql: |
+    SELECT count(*) as count,submittedBy
+    FROM "volumes"
+    GROUP BY submittedBY
+    HAVING COUNT(*) > 6
+    ORDER BY 1 DESC
+'SubmittedByGt6ForWiki':
+  sql: |
+    SELECT count(*) as count,"{{Link|target="||submittedBy||"}}"
+    FROM "volumes"
+    GROUP BY submittedBY
+    HAVING COUNT(*) > 6
+    ORDER BY 1 DESC
 'VolumesWithoutDescription':
   sql: |
     select count(*) from volumes where desc ="?"

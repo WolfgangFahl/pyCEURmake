@@ -126,13 +126,14 @@ class VolumesDisplay(Display):
             self.wdSync=WikidataSync()
             lod=[]
             volumeList=self.wdSync.vm.getList()
+            limitTitleLen=120
             for volume in volumeList:
                 validMark= "✅" if volume.valid else "❌"
                 lod.append(
                     {
                         "Vol": self.createLink(volume.url,f"Vol-{volume.number:04}"),
                         "Acronym": self.getValue(volume,"acronym"),
-                        "Title": volume.title,
+                        "Title": self.getValue(volume,"title")[:limitTitleLen],
                         "Loctime": self.getValue(volume,"loctime"),
                         "Published": self.getValue(volume,"published"),
                         "valid": validMark
@@ -141,6 +142,7 @@ class VolumesDisplay(Display):
             self.agGrid.load_lod(lod)
             self.agGrid.options.defaultColDef.sortable=True
             self.agGrid.options.columnDefs[0].checkboxSelection = True
+            self.agGrid.options.columnDefs[2].autoHeight=True
             self.agGrid.html_columns=[0,1,2]
         except Exception as ex:
             self.app.handleException(ex)

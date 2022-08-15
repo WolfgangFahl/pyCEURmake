@@ -84,7 +84,7 @@ class TestIndexHtml(Basetest):
         '''
         test reading the volume pages
         '''
-        withStore=True
+        withStore=False
         vm=VolumeManager()
         vm.loadFromIndexHtml(force=withStore)
         volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), 'number')

@@ -49,5 +49,5 @@ class TestVolumeParser(Basetest):
             parts=[]
             if hasattr(volume,"loctime") and volume.loctime is not None:
                 parts=volume.loctime.split(",")
-            print(f"{volnumber:4}({len(parts)}):{volume.loctime}")
+                print(f"{volnumber:4}({len(parts)}):{volume.loctime}")
             

@@ -5,7 +5,7 @@
 'Proceedings':
   sparql: |
     #
-    # get CEUR-WS Proceedings records by Volume
+    # get CEUR-WS Proceedings records by Volume with linked Event and EventSeries
     #
     # WF 2022-08-13
     #
@@ -24,8 +24,15 @@
       ?sVolume
       ?Volume
       ?short_name
+      # event
       ?event
       ?eventLabel
+      # eventSeries
+      #?partOfTheEventSeriesStmt
+      ?eventSeries
+      ?eventSeriesLabel
+      ?eventSeriesOrdinal
+      # details
       ?title
       ?language_of_work_or_name ?language_of_work_or_nameLabel
       ?URN_NBN ?URN_NBNUrl
@@ -33,7 +40,7 @@
       ?fullWorkUrl
       ?described_at_URL
       ?homePage
-
+    
     WHERE {
       ?item rdfs:label ?itemLabel.
       FILTER(LANG(?itemLabel) = "en")
@@ -41,14 +48,14 @@
         ?item schema:description ?itemDescription.
         FILTER(LANG(?itemDescription) = "en")
       }
-
+    
       # Instance of Proceedings
       ?item wdt:P31 wd:Q1143604.
       # Part of the series
       ?item p:P179 ?partOfTheSeries.
       # CEUR Workshop proceedings
       ?partOfTheSeries ps:P179 wd:Q27230297.
-
+    
       # Volume directly with the proceeedings
       OPTIONAL {
         ?item wdt:P478 ?Volume.
@@ -61,10 +68,19 @@
       OPTIONAL {
         ?item wdt:P1813 ?short_name.
       }
+      # event
       OPTIONAL {
         ?item wdt:P4745 ?event.
         ?event rdfs:label ?eventLabel.
         FILTER(LANG(?eventLabel) = "en")
+        OPTIONAL {
+          ?event p:P179 ?partOfTheEventSeriesStmt.
+          ?partOfTheEventSeriesStmt ps:P179 ?eventSeries.
+          ?partOfTheEventSeriesStmt pq:P1545 ?eventSeriesOrdinal.
+          #?event wdt:P179 ?eventSeries.
+          ?eventSeries rdfs:label ?eventSeriesLabel.
+          FILTER(LANG(?eventSeriesLabel) = "en").
+        }
       }
       # Title
       OPTIONAL {
@@ -98,7 +114,8 @@
       OPTIONAL {
         ?item wdt:P856 ?homePage
       }
-    } ORDER BY xsd:integer(?sVolume)
+    }
+    ORDER BY xsd:integer(?sVolume)
 'SubmittedByGt6':
   sql: |
     SELECT count(*) as count,submittedBy

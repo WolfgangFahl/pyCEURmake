@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 
 import justpy as jp
-from jpwidgets.bt5widgets import Alert, App, Link
+from jpwidgets.bt5widgets import Alert, App, Link, Switch
 from ceurws.ceur_ws import  Volume
 from ceurws.querydisplay import QueryDisplay
 import sys
@@ -123,11 +123,20 @@ class VolumesDisplay(Display):
         '''
         self.app=app
         self.debug=debug
+        self.dryRun=True
+        self.ignoreErrors=False 
         self.container = jp.Div(classes="container", a=container)
         self.rowA = jp.Div(classes="row", a=self.container)
-        self.colA1 = jp.Div(classes="col-12", a=self.rowA)
+        self.colA1 = jp.Div(classes="col-2", a=self.rowA)
+        self.colA2 = jp.Div(classes="col-2", a=self.rowA)
+        self.colA3 = jp.Div(classes="col-8", a=self.rowA)
         self.rowB = jp.Div(classes="row", a=self.container)
         self.colB1 = jp.Div(classes="col-12", a=self.rowB)
+        self.dryRunButton=Switch(a=self.colA1,labelText="dry run",checked=self.dryRun,disable=True)
+        self.dryRunButton.on("input",self.onChangeDryRun)
+        self.ignoreErrorsButton=Switch(a=self.colA2,labelText="ignore errors",checked=self.ignoreErrors)
+        self.ignoreErrorsButton.on("input",self.onChangeIgnoreErrors)
+
         try:
             self.agGrid=LodGrid(a=self.colB1)
             self.wdSync=WikidataSync()
@@ -156,6 +165,24 @@ class VolumesDisplay(Display):
             self.agGrid.on('rowSelected', self.onRowSelected)
         except Exception as ex:
             self.app.handleException(ex)
+            
+    def onChangeDryRun(self,msg:dict):
+        '''
+        handle change of DryRun setting
+        
+        Args:
+            msg(dict): the justpy message
+        '''
+        self.dryRun=msg.value
+        
+    def onChangeIgnoreErrors(self,msg:dict):
+        '''
+        handle change of IgnoreErrors setting
+        
+        Args:
+            msg(dict): the justpy message
+        '''
+        self.ignoreErrors=msg.value    
 
     async def onRowSelected(self, msg):
         '''
@@ -166,6 +193,7 @@ class VolumesDisplay(Display):
         '''
         if msg.get("selected", False):
             try: 
+                self.app.clearErrors()
                 data = msg.get("data")
                 volPattern = "http://ceur-ws.org/Vol-(?P<volumeNumber>\d{1,4})/"
                 match = re.search(volPattern, data.get("Vol"))

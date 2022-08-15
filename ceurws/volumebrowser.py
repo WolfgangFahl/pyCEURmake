@@ -140,6 +140,7 @@ class VolumesDisplay(Display):
                     }
                 )  
             self.agGrid.load_lod(lod)
+            self.agGrid.options.defaultColDef.resizable=True
             self.agGrid.options.defaultColDef.sortable=True
             self.agGrid.options.columnDefs[0].checkboxSelection = True
             self.agGrid.options.columnDefs[2].autoHeight=True
@@ -236,7 +237,9 @@ class WikidataDisplay(Display):
                     "title":row.get("title","?"),
                 })
         self.agGrid.load_lod(lod)
+        self.agGrid.options.defaultColDef.resizable=True
         self.agGrid.options.columnDefs[0].checkboxSelection = True
+        self.agGrid.options.columnDefs[1].autoHeight=True
         self.agGrid.html_columns=[0,1,2,3]
     
   

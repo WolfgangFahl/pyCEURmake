@@ -7,6 +7,7 @@ import re
 from datetime import datetime
 
 import justpy as jp
+from markupsafe import Markup
 from jpwidgets.bt5widgets import Alert, App, Link, Switch
 from ceurws.ceur_ws import  Volume
 from ceurws.querydisplay import QueryDisplay
@@ -139,7 +140,7 @@ class VolumesDisplay(Display):
 
         try:
             self.agGrid=LodGrid(a=self.colB1)
-            self.wdSync=WikidataSync()
+            self.wdSync=WikidataSync(debug=self.debug)
             lod=[]
             volumeList=self.wdSync.vm.getList()
             limitTitleLen=120
@@ -226,18 +227,28 @@ class VolumesDisplay(Display):
                         }
                         if isinstance(record.get("pubDate"), datetime):
                             record["pubDate"] = record["pubDate"].isoformat()
-                        qId, errors = self.wdSync.addProceedingToWikidata(record)
+                        if self.dryRun:                       
+                            prettyData=pprint.pformat(msg.data)
+                            text=f"{prettyData}"
+                            alert=Alert(a=self.colA3,text=text)
+                          
+                        write=not self.dryRun
+                        if write:
+                            self.wdSync.login()
+                        qId, errors = self.wdSync.addProceedingToWikidata(record,write=write,ignoreErrors=self.ignoreErrors)
+                        if write:
+                            self.wdSync.logout()
                         if qId is not None:
-                            alert = Alert(a=self.colA1, text=f"Proceedings entry for {volume} was created!")
+                            alert = Alert(a=self.colA3, text=f"Proceedings entry for {volume} was created!")
                             jp.Br(a=alert)
                             qId = qId.split("/")[-1]
                             jp.Link(a=alert, href=qId, text=qId)
                         else:
-                            alert = Alert(a=self.colA1, text=f"An error occured during the creation of the proceedings entry for {volume}")
+                            alert = Alert(a=self.colA3, text=f"An error occured during the creation of the proceedings entry for {volume}")
                             jp.Br(a=alert)
                             jp.P(a=alert, text=errors)
                 else:
-                    Alert(a=self.colA1, text=f"Volume for selected row can not be loaded correctly")
+                    Alert(a=self.colA3, text=f"Volume for selected row can not be loaded correctly")
             except Exception as ex:
                 self.app.handleException(ex)
     
@@ -397,7 +408,7 @@ class VolumeBrowser(App):
     
     async def volumes(self):
         self.setupRowsAndCols()
-        self.volumeDisplay=VolumesDisplay(self, container=self.colA1)
+        self.volumeDisplay=VolumesDisplay(self, container=self.colA1,debug=self.debug)
         return self.wp
     
     async def content(self):

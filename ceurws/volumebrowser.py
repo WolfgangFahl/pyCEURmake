@@ -214,8 +214,9 @@ class WikidataDisplay(Display):
             pprint.pprint(olod[:showLimit])
         if self.agGrid is None:
             self.agGrid=LodGrid(a=self.app.rowB) 
+        reverseLod=sorted(olod, key=lambda row: int(row["sVolume"]) if "sVolume" in row else int(row["Volume"]), reverse=True)
         lod=[]
-        for row in olod:
+        for row in reverseLod:
             if "sVolume" in row:
                 volume=row["sVolume"]
             if "Volume" in row:

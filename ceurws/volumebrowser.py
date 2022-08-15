@@ -222,18 +222,21 @@ class WikidataDisplay(Display):
                 volume=row["Volume"]
             itemLink=self.createItemLink(row, "item")
             eventLink=self.createItemLink(row,"event")
+            eventSeriesLink=self.createItemLink(row, "eventSeries")
             volumeLink=self.createLink(f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volume}")
             lod.append(
                 {
                     "item": itemLink,
                     "volume": volumeLink,
                     "event": eventLink,
+                    "series": eventSeriesLink,
+                    "ordinal": row.get("eventSeriesOrdinal","?"),
                     "acronym":row.get("short_name","?"),
                     "title":row.get("title","?"),
                 })
         self.agGrid.load_lod(lod)
         self.agGrid.options.columnDefs[0].checkboxSelection = True
-        self.agGrid.html_columns=[0,1,2]
+        self.agGrid.html_columns=[0,1,2,3]
     
   
 class VolumeBrowser(App):

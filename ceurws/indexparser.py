@@ -184,6 +184,8 @@ class IndexHtmlParser(Textparser):
         volume["valid"]=False
         volume["url"]=None
         volume["acronym"]=None
+        volume["title"]=None
+        volume["loctime"]=None
         self.setVolumeTitle(volume, fromLine)
         
         infoPattern={}

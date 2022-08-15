@@ -4,6 +4,8 @@ Created on 2022-08-14
 @author: wf
 '''
 import os
+from typing import List
+
 from utils.download import Download
 from lodstorage.lod import LOD
 from ceurws.ceur_ws import VolumeManager, CEURWS
@@ -57,4 +59,32 @@ class WikidataSync(object):
         withDrop=True
         sqldb.createTable(wdRecords, "Proceedings", primaryKey, withCreate, withDrop)
         return wdRecords
+
+    def getProceedingWdItemsByUrn(self, urn:str) -> List[str]:
+        """
+        queries the wikidata items that have the given urn for the property P4109
+        Args:
+            urn: URN id to query for
+
+        Returns:
+            List of corresponding wikidata item ids or empty list of no matching item is found
+        """
+        query = f"""SELECT ?proceeding WHERE{{ ?proceeding wdt:P4109 "{urn}"}}"""
+        qres = self.sparql.queryAsListOfDicts(query)
+        wdItems = [record.get("proceeding") for record in qres]
+        return wdItems
+
+    def getEventWdItemsByUrn(self, urn:str) -> List[str]:
+        """
+        queries the wikidata proceedings that have the given urn assigned to P4109 and returns the assigned event
+        Args:
+            urn: URN id to query for
+
+        Returns:
+            List of corresponding wikidata item ids or empty list of no matching item is found
+        """
+        query = f"""SELECT ?event WHERE{{ ?proceeding wdt:P4109 "{urn}"; wdt:P4745 ?event .}}"""
+        qres = self.sparql.queryAsListOfDicts(query)
+        wdItems = [record.get("event") for record in qres]
+        return wdItems
         

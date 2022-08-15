@@ -3,8 +3,10 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import re
+
 import justpy as jp
-from jpwidgets.bt5widgets import App
+from jpwidgets.bt5widgets import Alert, App, Link
 from ceurws.ceur_ws import  Volume
 from ceurws.querydisplay import QueryDisplay
 import sys
@@ -68,8 +70,7 @@ class VolumeSearch():
         '''
         html=f"<a href='{volume.url}'>{volume.acronym}<a>:{volume.desc}:{volume.h1}:{volume.title}"
         self.volumeDiv.inner_html=html
-        
-            
+
     async def onVolumeChange(self,msg):
         '''
         there has been a search 
@@ -115,14 +116,19 @@ class VolumesDisplay(Display):
     display all Volumes
     '''
     
-    def __init__(self,app,debug:bool=False):
+    def __init__(self, app, container, debug:bool=False):
         '''
         constructor
         '''
         self.app=app
         self.debug=debug
+        self.container = jp.Div(classes="container", a=container)
+        self.rowA = jp.Div(classes="row", a=self.container)
+        self.colA1 = jp.Div(classes="col-12", a=self.rowA)
+        self.rowB = jp.Div(classes="row", a=self.container)
+        self.colB1 = jp.Div(classes="col-12", a=self.rowB)
         try:
-            self.agGrid=LodGrid(a=self.app.rowB) 
+            self.agGrid=LodGrid(a=self.colB1)
             self.wdSync=WikidataSync()
             lod=[]
             volumeList=self.wdSync.vm.getList()
@@ -144,8 +150,40 @@ class VolumesDisplay(Display):
             self.agGrid.options.columnDefs[0].checkboxSelection = True
             self.agGrid.options.columnDefs[2].autoHeight=True
             self.agGrid.html_columns=[0,1,2]
+            self.agGrid.on('rowSelected', self.onRowSelected)
         except Exception as ex:
             self.app.handleException(ex)
+
+    def onRowSelected(self, msg):
+        '''
+        row selection event handler
+
+        Args:
+            msg(dict): row selection information
+        '''
+        if msg.get("selected", False):
+            data = msg.get("data")
+            volPattern = "http://ceur-ws.org/Vol-(?P<volumeNumber>\d{1,4})/"
+            match = re.search(volPattern, data.get("Vol"))
+            volumeId = int(match.group("volumeNumber")) if match is not None else None
+            if volumeId is not None and volumeId in self.wdSync.volumesByNumber:
+                volume: Volume = self.wdSync.volumesByNumber.get(volumeId)
+                # check if already in wikidata → use URN
+                urn = getattr(volume, "urn")
+                wdItems = self.wdSync.getEventWdItemsByUrn(urn)
+                if len(wdItems) > 0:
+                    # a proceeding exists with the URN exists, and it has at least one event assigned to it
+                    alert = Alert(a=self.colA1, text=f"{volume} already in Wikidata see ")
+                    for wdItem in wdItems:
+                        jp.Br(a=alert)
+                        qId = wdItem.split("/")[-1]
+                        jp.Link(a=alert, href=wdItem, text=qId)
+                    return
+                else:
+                    # An event to the URN is not known → create wd entry
+                    Alert(a=self.colA1, text=f"ToDo: Create wikidata entry for the event of {volume}")
+            else:
+                Alert(a=self.colA1, text=f"Volume for selected row can not be loaded correctly")
     
 class WikidataDisplay(Display):
     '''
@@ -297,7 +335,7 @@ class VolumeBrowser(App):
     
     async def volumes(self):
         self.setupRowsAndCols()
-        self.volumeDisplay=VolumesDisplay(self)
+        self.volumeDisplay=VolumesDisplay(self, container=self.colA1)
         return self.wp
     
     async def content(self):
@@ -308,7 +346,7 @@ class VolumeBrowser(App):
         self.volumeSearch=VolumeSearch(self,self.colA1,self.rowB)
         self.wdSync=self.volumeSearch.wdSync
         return self.wp
-        
+
         
 DEBUG = 1
 if __name__ == "__main__":

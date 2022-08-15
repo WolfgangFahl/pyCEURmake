@@ -3,6 +3,8 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import unittest
+
 from tests.basetest import Basetest
 from ceurws.wikidatasync import WikidataSync
 
@@ -24,6 +26,7 @@ class TestWikidataSync(Basetest):
         if debug:
             print(f"found {len(wdRecords)} wikidata records")
 
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
     def test_getProceedingWdItemsByUrn(self):
         """tests getProceedingWdItemsByUrn"""
         test_params = [
@@ -38,6 +41,7 @@ class TestWikidataSync(Basetest):
                 actual = wdSync.getProceedingWdItemsByUrn(urn)
                 self.assertListEqual(expected, actual)
 
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
     def test_getEventWdItemsByUrn(self):
         """tests getEventWdItemsByUrn"""
         test_params = [

@@ -147,17 +147,26 @@ class VolumeManager(EntityManager):
 
 
     def load(self):
+        '''
+        load the volumeManager
+        '''
         if Download.needsDownload(CEURWS.CACHE_FILE):
             self.loadFromIndexHtml(force=True)
         else:
             self.loadFromBackup()
             
     def loadFromBackup(self):
+        '''
+        load from the SQLITE Cache file
+        '''
         self.fromStore(cacheFile=CEURWS.CACHE_FILE)
         
     def loadFromIndexHtml(self,force:bool=False):
         '''
         load my content from the index.html file
+        
+        Args:
+            force(bool): if TRUE fetch index.html from internet else read locally cached version
         '''
         htmlText=self.getIndexHtml(force=force)
         indexParser=IndexHtmlParser(htmlText,debug=self.debug)

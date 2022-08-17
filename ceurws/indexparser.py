@@ -152,7 +152,7 @@ class IndexHtmlParser(Textparser):
             for delim in ["<BR>","<br>"]:
                 infoValue=infoValue.replace(delim,"")
             infoValue=infoValue.strip()
-            if info=="editors":
+            if info in ["editors","submittedBy"]:
                 infoValue=html.unescape(infoValue)
             if info=="pubDate":
                 try:

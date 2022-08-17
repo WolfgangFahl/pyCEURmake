@@ -1,53 +1,21 @@
 import datetime
-import os
-from unittest import TestCase
-
-from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
-
-from ceurws.ceur_ws import Conference, Editor, Session, Paper, Volume
-from ceurws.ceur_ws import SessionManager
-import getpass
-
-class TestSessions(TestCase):
-    """
-    Test session manager
-    """
-
-    def test_sessions(self):
-        if getpass.getuser() != "holzheim":
-            # switch on for CI
-            return
-        sessions=[
-            {"volume":2992, "title":"Information Technologies and Intelligent Decision Making Systems II"},
-            {"volume":2976, "title": "Digital Infrastructures for Scholarly Content Objects 2021"},
-            {"volume":2975, "title": "Novel Approaches with AI and Edge Computing"},  #http://ceur-ws.org/Vol-2975/
-            {"volume":2975, "title": "Impact, Metrics and Sustainability"},  #http://ceur-ws.org/Vol-2975/
-        ]
-        manager=SessionManager()
-        manager.fromLoD(sessions)
-        manager.store()
+from tests.basetest import Basetest
+from ceurws.ceur_ws import Conference, Editor, Session,  Paper, Volume, VolumeManager
+from ceurws.template import TemplateEnv
 
 
-class TestVolume(TestCase):
+class TestVolume(Basetest):
     """
     Test volume manager
     """
 
-    def setUp(self) -> None:
-        scriptdir = os.path.dirname(os.path.abspath(__file__))
-        template_folder = scriptdir + '/../ceurws/resources/templates'
-        self.env = Environment(
-            loader=FileSystemLoader(searchpath=template_folder),
-            autoescape=select_autoescape(['html', 'xml'])
-        )
-        self.env.globals['datetime']=datetime.datetime
-        self.env.globals['enumerate']=enumerate
-        self.env.globals['len'] = len
-
-    def test_volumes(self):
-        """
-        tests the rendering of a volume as volume_index.html
-        """
+    def setUp(self,debug=False,profile=True) -> None:
+        Basetest.setUp(self, debug, profile)
+        self.templateEnv=TemplateEnv()
+        self.vm=VolumeManager()
+        self.vm.load()
+        
+    def getSampleVolum(self):
         conference=Conference()
         conference.fromDict({
             "id": "Vol-2436",
@@ -112,6 +80,16 @@ class TestVolume(TestCase):
                 "submitDate": "2019-07-28"
             }
         )
-
-        template = self.env.get_template('volume_index.jinja')
-        print(template.render(volume=volume))
+    
+    def testVolumeTemplate(self):
+        """
+        tests the rendering of a volume as volume_index.html
+        """
+        template=self.templateEnv.getTemplate('volume_index_body.html')
+        vol3000=self.vm.getList()[3000]
+        for volume in [self.getSampleVolum(),vol3000]:
+            html=template.render(volume=volume)
+            debug=self.debug
+            #debug=True
+            if debug:
+                print(html)

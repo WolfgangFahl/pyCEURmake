@@ -135,17 +135,17 @@ class WikidataRangeImport():
             self.progressBar.updateProgress(progress)
         
     async def onUploadButtonClick(self,_msg):
-        try:
-            self.app.clearErrors()
-            step=-1 if self.fromVolume>=self.toVolume else 1
-            total=(self.toVolume-self.fromVolume)/step+1
-            count=0
-            for volumeNumber in range(self.fromVolume,self.toVolume+step,step):
-                count+=1
+        self.app.clearErrors()
+        step=-1 if self.fromVolume>=self.toVolume else 1
+        total=(self.toVolume-self.fromVolume)/step+1
+        count=0
+        for volumeNumber in range(self.fromVolume,self.toVolume+step,step):
+            count+=1
+            try:
                 self.importVolume(volumeNumber,count/total*100)
                 await self.app.wp.update()
-        except Exception as ex:
-            self.app.handleException(ex)
+            except Exception as ex:
+                self.app.handleException(ex)
         
     async def onChangeFrom(self,msg):
         self.fromVolume=int(msg.value)
@@ -468,14 +468,13 @@ class VolumeBrowser(App):
         self.setupRowsAndCols()
         self.wikidataDisplay=WikidataDisplay(self,debug=True)
         return self.wp
-    
         
     async def settings(self):
         '''
         settings
         '''
         self.setupRowsAndCols()
-        self.wdRangeImport=WikidataRangeImport(self,a=self.rowA)
+        #self.wdRangeImport=WikidataRangeImport(self,a=self.rowA)
         return self.wp
     
     def showVolume(self,volume,volumeHeaderDiv,volumeDiv):

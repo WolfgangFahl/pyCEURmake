@@ -1,0 +1,220 @@
+{# renders the volume index page
+Args:
+    volume(Volume): volume that should be renderd
+
+Returns:
+    volume in its html representation
+#}
+{#
+renders the given session and all the contained papers
+
+Args:
+    volume(Volume): volume the session is contained in
+    session(Session): session to be rendered
+
+Returns:
+    rendered session
+#}
+{% macro render_session(volume, session)%}
+    <h3>
+        <span class="CEURSESSION">Session {{session.number}}
+            {%- if session.title -%}
+                : {{ session.title }}
+            {%- endif -%}
+        </span>
+    </h3>
+    <ul rel="dcterms:hasPart">
+        {% for paper in session.papers.values() %}
+            {{ render_paper(volume, paper) }}
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
+{#
+renders the given paper
+
+Args:
+    volume(Volume): volume the paper is published in
+    paper(Paper): paper to be rendered
+
+Returns:
+    rendered paper
+#}
+{% macro render_paper(volume, paper) %}
+    <li id="{{ paper.id }}" typeof="bibo:Article" about="#{{ paper.id }}">
+        <span rel="dcterms:relation">
+            <a typeof="bibo:Document" href="{{ paper.pdf }}">
+                <span property="dcterms:format" content="application/pdf"></span>
+                <span property="bibo:uri" content="{{ volume.url }}/{{ paper.pdf }}"></span>
+                <span about="#{{ paper.id }}" property="dcterms:title" class="CEURTITLE">
+                    {{ paper.title }}
+                </span>
+            </a>
+        </span>
+        {% if paper.pagesFrom and paper.pagesTo %}
+            <span class="CEURPAGES">
+                <span property="bibo:pageStart" datatype="xsd:nonNegativeInteger">
+                    {{ paper.pagesFrom }}
+                </span>
+                -
+                <span property="bibo:pageEnd" datatype="xsd:nonNegativeInteger">
+                    {{ paper.pagesTo }}
+                </span>
+            </span>
+        {% endif %}
+        <br/>&#xa;
+    {% for i,author in enumerate(paper.authors) %}
+        <span rel="dcterms:creator">
+            <span property="foaf:name" class="CEURAUTHOR">
+                {{ author.name }}
+            </span>
+        </span>
+        {% if i == len(paper.authors) %},{% endif %}
+    {% endfor -%}
+    <br/></li>&#xa;
+{% endmacro %}
+{# Begin of Template #}
+    <table style="border: 0; border-spacing: 0; border-collapse: collapse; width: 95%">
+        <tbody>
+            <tr>
+                <td style="text-align: left; vertical-align: middle">
+                    <a rel="dcterms:partOf" href="http://ceur-ws.org/">
+                        <div id="CEURWSLOGO"></div>
+                    </a>
+                 </td>
+                <td style="text-align: right; vertical-align: middle">
+
+                    <span property="bibo:volume" datatype="xsd:nonNegativeInteger" content="{{volume.number}}" class="CEURVOLNR">{{volume.volNumber}}</span> <br/>&#xa;
+                    <span property="bibo:uri dcterms:identifier" class="CEURURN">urn:nbn:de:0074-{{volume.number}}-C</span>
+                    <p class="unobtrusive copyright" style="text-align: justify">Copyright ©
+                    <span class="CEURPUBYEAR">{{volume.pubYear}}</span> for the individual papers
+                    by the papers' authors. Copying permitted for private and academic purposes.
+                    This volume is published and copyrighted by its editors.</p>
+
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <hr/>
+
+    <br/><br/><br/>&#xa;
+
+    <h1>
+    	{% if volume.conference %}
+        <a rel="foaf:homepage" href="{{volume.conference.homepage}}">
+            <span about="" property="bibo:shortTitle" class="CEURVOLACRONYM">{{volume.fullTitle}} {{volume.year}}</span>
+        </a>
+        {% endif %}
+        <br/>&#xa;
+      <span property="dcterms:alternative" class="CEURVOLTITLE">{{volume.title}}</span>
+    </h1>
+
+    <br/>
+    <h3>
+        <span property="dcterms:title" class="CEURFULLTITLE">Proceedings of the {{volume.fullTitle}}</span><br/>&#xa;
+        {% if volume.conference %}
+            co-located with {{ volume.conference.fullTitle if volume.conference.fullTitle }}
+            {{- '(' if volume.conference.fullTitle -}}
+            {%- if volume.conference.homepage -%}
+                <a rel="swc:isSubEventOf" href="{{ volume.conference.homepage or '?' }}"><span class="CEURCOLOCATED">{{ volume.conference.acronym or '?' }}</span></a>
+            {%- else -%}
+                <span class="CEURCOLOCATED">{{ volume.conference.acronym }}</span>
+            {%- endif -%}
+            {{- ')' if volume.conference.fullTitle -}}<br/>&#xa;
+        {% else %}
+            <!--co-located with &lt;span class="CEURCOLOCATED"&gt;NONE&lt;/span&gt;-->
+        {% endif %}
+    </h3>
+    <h3>
+        <span rel="bibo:presentedAt" typeof="bibo:Workshop" class="CEURLOCTIME">
+            <span rel="event:place" resource="{ replace($workshop/location/@href, 'https?://en\.wikipedia\.org/wiki/', 'http://dbpedia.org/resource/') }">
+                {{ volume.location }}
+            </span>,
+            {%- if volume.dateFrom and volume.dateTo -%}
+                <!--
+                Possible output formats:
+                different years: (December 31st, 2013) to (January 1st, 2014)
+                same year, different months: (November 30th) to (December 1st, 2013)
+                same year, same month: (December 30th) to (31st, 2013)
+                -->
+                <span rel="event:time">
+                    <span rel="time:hasBeginning">
+                        <span property="time:inXSDDateTime" content="{{ volume.dateFrom }}" datatype="xsd:date">
+                            {% if volume.dateFrom.year == volume.dateTo.year %}
+                                {{ volume.date.strftime('%b %d') }}
+                            {% else %}
+                                {{ volume.date.strftime('%b %d, %Y') }}
+                            {% endif %}
+                        </span>
+                    </span>
+                    to
+                    <span rel="time:hasEnd">
+                        <span property="time:inXSDDateTime" content="{{ volume.dateTo }}" datatype="xsd:date">
+                            {% if volume.dateFrom.year == volume.dateTo.year and volume.dateFrom.month == volume.dateTo.month %}
+                                {{ volume.date.strftime('%d, %Y') }}
+                            {% else %}
+                                {{ volume.date.strftime('%b %d, %Y') }}
+                            {% endif %}
+                        </span>
+                    </span>
+                </span>
+            {%  else %}
+            	{%- if volume.date -%}
+                <span property="dcterms:date" content="{{ volume.date }}" datatype="xsd:date">{{ volume.date.strftime('%b %d, %Y')  }}</span>
+                {% endif %}
+            {% endif %}
+        </span>.
+    </h3>
+    <br/>&#xa;
+    <b> Edited by </b>
+    <p>
+
+    </p>
+    <h3 rel="bibo:editor">
+        {% for workshopEditor in volume.editors %}
+            {% if workshopEditor.homepage %}
+                <a href="{{ workshopEditor.homepage or '?' }}">
+                    <span property="foaf:name" class="CEURVOLEDITOR">
+                        {{ workshopEditor.name }}
+                    </span>
+                </a>
+            {% else %}
+                <span about="_:{ generate-id() }" property="foaf:name" class="CEURVOLEDITOR"> {# ToDo: generate-id() #}
+                    {{ workshopEditor.name }}
+                </span>
+            {% endif -%}
+            , {{ workshopEditor.affiliation }}, {{ workshopEditor.country }}<br/>&#xa;
+        {% endfor %}
+    </h3>
+
+    <hr/>
+
+    <br/><br/><br/>&#xa;
+
+    <div class="CEURTOC">
+        <h2> Table of Contents </h2>
+        <!-- <toc> is expected to either contain a sequence of <paper> elements or a sequence of <session> elements.  However we also gracefully handle the occurrence of both, in which case we first output all <paper>s without a session, then the <session>s. -->
+        {% if tocPaper and False %}
+            <ul rel="dcterms:hasPart">
+                {% for paper in tocPaper %}
+                    {{ render_paper(volume, paper) }}
+                {% endfor %}
+
+            </ul>
+        {% endif %}
+        {% for session in  volume.sessions %}
+            {{ render_session(volume, session) }}
+        {% endfor %}
+    </div>
+
+    <p>
+        We offer a <a href="{{ volume.volNumber }}.bib">BibTeX file</a> for citing papers of this workshop from LaTeX.
+    </p>
+
+    <hr/>
+    <span class="unobtrusive">
+        {{ datetime.now().strftime('%Y-%m-%d') }}: submitted by {{ volume.submittedBy }}, metadata incl. bibliographic data published under <a href="http://creativecommons.org/publicdomain/zero/1.0/">Creative Commons CC0</a><br/>&#xa;
+    <span property="dcterms:issued" datatype="xsd:date" class="CEURPUBDATE">{{ volume.pubDate if volume.pubDate else "yyyy-mm-dd" }}</span>: published on CEUR-WS.org
+        |<a href="https://validator.w3.org/nu/?doc=http%3A%2F%2Fceur-ws.org%2F{{ volume.volNumber }}%2F">valid HTML5</a>|
+    </span>
+

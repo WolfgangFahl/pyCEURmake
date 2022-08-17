@@ -22,18 +22,20 @@ class WikidataSync(object):
     synchronize with wikidata
     '''
 
-    def __init__(self, debug:bool=False):
+    def __init__(self, baseurl="https://www.wikidata.org", debug:bool=False):
         '''
         Constructor
         
         Args:
+            baseurl(str): the baseurl of the wikidata endpoint
             debug(bool): if True switch on debugging
         '''
         self.debug = debug
         self.prepareVolumeManager()
         self.prepareRDF()
         self.wdQuery = self.qm.queriesByName["Proceedings"]
-        self.wd = Wikidata(baseurl="https://www.wikidata.org", debug=debug)
+        self.baseurl=baseurl
+        self.wd = Wikidata(baseurl=self.baseurl, debug=debug)
         
     def login(self):
         # @FIXME add username/password handling (see gsimport)
@@ -41,6 +43,10 @@ class WikidataSync(object):
         
     def logout(self):
         self.wd.logout()
+        
+    def itemUrl(self,qId):
+        url=f"{self.baseurl}/wiki/{qId}"
+        return url
         
     def prepareRDF(self):
         # SPARQL setup

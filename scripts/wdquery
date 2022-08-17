@@ -6,16 +6,24 @@ if [ ! -f /tmp/ceur.json ]
 then
   sparqlquery -qp $qp -qn Proceedings -f json > /tmp/ceur.json
 fi
-cat /tmp/ceur.json | jq .[].sVolume | awk '
+cat /tmp/ceur.json | jq .[].sVolume | awk -v invalid="191,2284" '
 BEGIN {
    previous=1
    quote="\x22"
+   split(invalid,invalidValues,",")
+   for (invalidKey in invalidValues) {
+      invalidValue=invalidValues[invalidKey]
+      invalidList[invalidValue]=1
+  }
 }
 {
   gsub(quote,"",$0)
   vol=$0
-  if (vol-previous!=1)
-   print NR,vol,previous,vol-previous
+  if (vol-previous!=1) {
+    firstmissing=previous+1
+    if (!(firstmissing in invalidList))
+      print NR,vol,previous,vol-previous,firstmissing
+  }
   previous=vol
 }
 '

@@ -43,7 +43,7 @@ class VolumeSearch():
     '''
     volume search
     '''
-    def __init__(self,app,a,volA,debug:bool=False):
+    def __init__(self,app,volumeInputDiv,volumeHeaderDiv,volumeDiv,debug:bool=False):
         '''
         constructor
         
@@ -57,11 +57,12 @@ class VolumeSearch():
         self.debug=debug
         self.wdSync=WikidataSync()
         self.app.addMenuLink(text='Endpoint',icon='web',href=self.wdSync.endpointConf.website,target="_blank")
-        self.volumeInput=self.app.createComboBox(labelText="Volume", a=a,placeholder='Please type here to search ...',size="120",change=self.onVolumeChange)
+        self.volumeInput=self.app.createComboBox(labelText="Volume", a=volumeInputDiv,placeholder='Please type here to search ...',size="120",change=self.onVolumeChange)
         for volume in self.wdSync.vm.getList():
             title=f"Vol-{volume.number}:{volume.title}"
             self.volumeInput.dataList.addOption(title,volume.number)
-        self.volumeDiv=jp.Div(a=volA)
+        self.volumeHeaderDiv=volumeHeaderDiv
+        self.volumeDiv=volumeDiv
         
     def updateVolume(self,volume:Volume):
         '''
@@ -70,7 +71,7 @@ class VolumeSearch():
         Args:
             volume(Volume): the currently selected volume
         '''
-        self.app.showVolume(volume, self.volumeDiv)
+        self.app.showVolume(volume, self.volumeHeaderDiv,self.volumeDiv)
 
     async def onVolumeChange(self,msg):
         '''
@@ -403,15 +404,15 @@ class VolumeBrowser(App):
     def setupRowsAndCols(self,header=""):
         self.setupPage(header)
         self.rowA=jp.Div(classes="row",a=self.contentbox)
-        self.rowB=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
-        self.rowC=jp.Div(classes="row",a=self.contentbox)
+        self.rowB=jp.Div(classes="row",a=self.contentbox)
+        self.rowC=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
         self.rowD=jp.Div(classes="row",a=self.contentbox)
         
         self.colA1=jp.Div(classes="col-12",a=self.rowA)
         self.colC1=jp.Div(classes="col-12",a=self.rowC)
         self.colD1=jp.Div(classes="col-12",a=self.rowD)
         
-        self.feedback=jp.Div(a=self.colC1)
+        self.feedback=jp.Div(a=self.colD1)
         self.errors=jp.Span(a=self.colD1,style='color:red')
         
     def showFeedback(self,html):
@@ -429,21 +430,29 @@ class VolumeBrowser(App):
         self.setupRowsAndCols()
         return self.wp
     
-    def showVolume(self,volume,volumeDiv):
+    def showVolume(self,volume,volumeHeaderDiv,volumeDiv):
         '''
         show the given volume
+        
+        Args:
+            volume(Volume): the volume to show
+            volumeHeaderDiv(jp.Div): the div for the header
+            volumeDiv(jp.Div): the div for the volume content
         '''
         try:
             #template=self.templateEnv.getTemplate('volume_index_body.html')
             #html=template.render(volume=volume)
-            html=f"""<h3>{volume.h1}</h3>
+            headerHtml=f"""<h3>{volume.h1}</h3>
     <a href='{volume.url}'>{volume.acronym}<a>
     {volume.title}<br>
     {volume.desc}
     published: {volume.pubDate}
-    submitted By: {volume.submittedBy}
-    <iframe src='{volume.url}' style='min-height: calc(100%); width: calc(100%);'></iframe>"""
-            volumeDiv.inner_html=html
+    submitted By: {volume.submittedBy}"""
+            iframeHtml=f"""
+            <iframe src='{volume.url}' style='min-height: calc(100%); width: calc(100%);'></iframe>"""
+            volumeHeaderDiv.inner_html=headerHtml
+            volumeDiv.inner_html=iframeHtml
+    
         except Exception as ex:
             self.handleException(ex)
     
@@ -467,12 +476,13 @@ class VolumeBrowser(App):
                 #"""
             except Exception as _ex:
                 pass
-        self.rowA=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
+        self.rowA=jp.Div(classes="row",a=self.contentbox)
+        self.rowB=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
         self.colA1=jp.Div(classes="col-12",a=self.rowA)   
         self.feedback=jp.Span(a=self.colA1)
         self.errors=jp.Span(a=self.colA1,style='color:red')
         if volume:
-            self.showVolume(volume,self.rowA)
+            self.showVolume(volume,self.colA1,self.rowB)
         else:
             Alert(a=self.colA1,text=f"Volume display for {volnumber} failed")
         return self.wp
@@ -490,7 +500,7 @@ class VolumeBrowser(App):
         show the content
         '''
         self.setupRowsAndCols()
-        self.volumeSearch=VolumeSearch(self,self.colA1,self.rowB)
+        self.volumeSearch=VolumeSearch(self,self.colA1,self.rowB,self.rowC)
         self.wdSync=self.volumeSearch.wdSync
         return self.wp
 

@@ -417,10 +417,15 @@ class WikidataDisplay(Display):
             volume=self.getRowValue(row, "sVolume")
             if volume=="?":
                 volume=self.getRowValue(row, "Volume")
+            volNumber="?"
+            if volume!="?":
+                volNumber=int(volume)
+                volumeLink=self.createLink(f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volNumber:04}")
+            else:
+                volumeLink="?"   
             itemLink=self.createItemLink(row, "item")
             eventLink=self.createItemLink(row,"event")
             eventSeriesLink=self.createItemLink(row, "eventSeries")
-            volumeLink=self.createLink(f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volume}")
             lod.append(
                 {
                     "item": itemLink,

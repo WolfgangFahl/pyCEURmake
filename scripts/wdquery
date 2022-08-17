@@ -1,0 +1,22 @@
+#!/bin/bash
+# WF 2022-08-17
+# run the wikidata proceedings query
+qp=ceurws/resources/queries/ceurws.yaml
+if [ ! -f /tmp/ceur.json ]
+then
+  sparqlquery -qp $qp -qn Proceedings -f json > /tmp/ceur.json
+fi
+cat /tmp/ceur.json | jq .[].sVolume | awk '
+BEGIN {
+   previous=1
+   quote="\x22"
+}
+{
+  gsub(quote,"",$0)
+  vol=$0
+  if (vol-previous!=1)
+   print NR,vol,previous,vol-previous
+  previous=vol
+}
+'
+#jq . /tmp/ceur.json

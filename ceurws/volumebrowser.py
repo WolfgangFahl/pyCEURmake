@@ -394,11 +394,14 @@ class VolumeBrowser(App):
         jp.Route('/wikidatasync',self.wikidatasync)
         self.templateEnv=TemplateEnv()
         
-    def setupRowsAndCols(self,header=""):
+    def setupPage(self,header=""):
         header="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">
 <link rel="stylesheet" href="/static/css/pygments.css">
 """+header
-        self.wp=self.getWp(header)
+        self.wp=self.getWp(header)  
+        
+    def setupRowsAndCols(self,header=""):
+        self.setupPage(header)
         self.rowA=jp.Div(classes="row",a=self.contentbox)
         self.rowB=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
         self.rowC=jp.Div(classes="row",a=self.contentbox)
@@ -428,12 +431,12 @@ class VolumeBrowser(App):
     
     def showVolume(self,volume,volumeDiv):
         '''
+        show the given volume
         '''
         try:
             #template=self.templateEnv.getTemplate('volume_index_body.html')
             #html=template.render(volume=volume)
-            html=f"""<br><br>
-    <h3>{volume.h1}</h3>
+            html=f"""<h3>{volume.h1}</h3>
     <a href='{volume.url}'>{volume.acronym}<a>
     {volume.title}<br>
     {volume.desc}
@@ -448,23 +451,30 @@ class VolumeBrowser(App):
         '''
         show a page for the given volume
         '''
+        self.setupPage()
         self.wdSync=WikidataSync()
         volnumber=None
         volume=None
         if "volnumber" in request.path_params:
             volnumber=request.path_params["volnumber"]
         if volnumber:
-            volume=self.wdSync.volumesByNumber[int(volnumber)]
-            #header="""<link rel="stylesheet" type="text/css" href="/static/css/ceur-ws.css">
-            #<link rel="stylesheet" type="text/css" href="/static/css/ceur-ws-semantic.css"/>
-            #<link rel="foaf:page" href="{{ volume.url }}"/>
-            #<title>CEUR-WS.org/{{volume.volNumber}} - {{volume.fullTitle}} ({{volume.acronym}})</title>
-            #"""
-        self.setupRowsAndCols()
+            try:
+                volume=self.wdSync.volumesByNumber[int(volnumber)]
+                #header="""<link rel="stylesheet" type="text/css" href="/static/css/ceur-ws.css">
+                #<link rel="stylesheet" type="text/css" href="/static/css/ceur-ws-semantic.css"/>
+                #<link rel="foaf:page" href="{{ volume.url }}"/>
+                #<title>CEUR-WS.org/{{volume.volNumber}} - {{volume.fullTitle}} ({{volume.acronym}})</title>
+                #"""
+            except Exception as _ex:
+                pass
+        self.rowA=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
+        self.colA1=jp.Div(classes="col-12",a=self.rowA)   
+        self.feedback=jp.Span(a=self.colA1)
+        self.errors=jp.Span(a=self.colA1,style='color:red')
         if volume:
-            self.showVolume(volume,self.rowB)
+            self.showVolume(volume,self.rowA)
         else:
-            print(f"Volume display for {volnumber} failed")
+            Alert(a=self.colA1,text=f"Volume display for {volnumber} failed")
         return self.wp
     
     async def volumes(self):

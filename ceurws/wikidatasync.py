@@ -36,6 +36,8 @@ class WikidataSync(object):
         self.wdQuery = self.qm.queriesByName["Proceedings"]
         self.baseurl=baseurl
         self.wd = Wikidata(baseurl=self.baseurl, debug=debug)
+        self.sqldb = SQLDB(CEURWS.CACHE_FILE)
+         
         
     def login(self):
         # @FIXME add username/password handling (see gsimport)
@@ -90,18 +92,33 @@ class WikidataSync(object):
             record["pubDate"] = record["pubDate"].isoformat()
         return record
         
-    def update(self):
+    def update(self,withStore:bool=True):
         '''
         update my table from the Wikidata Proceedings SPARQL query
         '''
+        if self.debug:
+            print(f"Querying proceedings from {self.baseurl} ...")
         wdRecords = self.sparql.queryAsListOfDicts(self.wdQuery.query)
-        # wdRecordsByVolume=
-        sqldb = SQLDB(CEURWS.CACHE_FILE)
         primaryKey = "URN_NBN"
         withCreate = True
         withDrop = True
-        sqldb.createTable(wdRecords, "Proceedings", primaryKey, withCreate, withDrop)
+        entityInfo=self.sqldb.createTable(wdRecords, "Proceedings", primaryKey,withCreate, withDrop,sampleRecordCount=1500)
+        procsByURN, duplicates = LOD.getLookup(wdRecords, 'URN_NBN')
+        if withStore:
+            self.sqldb.store(procsByURN.values(), entityInfo, executeMany=True, fixNone=True)
+        if len(duplicates)>0:
+            print(f"found {len(duplicates)} duplicates URN entries")
+            if len(duplicates)<10:
+                print(duplicates)
         return wdRecords
+    
+    def loadProceedingsFromCache(self):
+        '''
+        load the proceedings recors from the cache
+        '''
+        sqlQuery="SELECT * from Proceedings"
+        procRecords=self.sqldb.query(sqlQuery)
+        return procRecords
 
     def getProceedingWdItemsByUrn(self, urn:str) -> List[str]:
         """

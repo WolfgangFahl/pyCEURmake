@@ -3,6 +3,7 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import datetime
 import os
 from typing import List
 
@@ -65,7 +66,28 @@ class WikidataSync(object):
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
         
+    def getWikidataRecord(self,volume):
+        '''
+        '''
+        record = {
+            "title": getattr(volume, "title"),
+            "label": getattr(volume, "title"),
+            "description": f"Proceedings of {getattr(volume, 'acronym')} workshop",
+            "urn": getattr(volume, "urn"),
+            "short name": getattr(volume, "acronym"),
+            "volume": getattr(volume, "number"),
+            "pubDate": getattr(volume, "pubDate"),
+            "ceurwsUrl": getattr(volume, "url"),
+            "fullWorkUrl": getattr(volume, "url")
+        }
+        if isinstance(record.get("pubDate"), datetime.datetime):
+            record["pubDate"] = record["pubDate"].isoformat()
+        return record
+        
     def update(self):
+        '''
+        update my table from the Wikidata Proceedings SPARQL query
+        '''
         wdRecords = self.sparql.queryAsListOfDicts(self.wdQuery.query)
         # wdRecordsByVolume=
         sqldb = SQLDB(CEURWS.CACHE_FILE)
@@ -103,7 +125,25 @@ class WikidataSync(object):
         wdItems = [record.get("event") for record in qres]
         return wdItems
 
-    def addProceedingToWikidata(self, record:dict, write:bool=True, ignoreErrors:bool=False):
+    def addProceedingsToWikidata(self, record:dict, write:bool=True, ignoreErrors:bool=False):
+        """
+        Creates a wikidata entry for the given record
+        
+        Args:
+            record(dict): the data to add
+            write(bool): if True actually write
+            ignoreErrors(bool): if True ignore errors
+            
+        """
+        if write:
+            self.login()
+        qid,errors=self.doAddProceedingsToWikidata(record, write, ignoreErrors)
+        if write:
+            self.logout()
+        return qid,errors
+        
+
+    def doAddProceedingsToWikidata(self, record:dict, write:bool=True, ignoreErrors:bool=False):
         """
         Creates a wikidata entry for the given record
         

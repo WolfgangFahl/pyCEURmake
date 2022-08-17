@@ -100,9 +100,11 @@ class WikidataRangeImport():
         self.rowB=jp.Div(classes="row",a=a)
         self.rowC=jp.Div(classes="row",a=a)
         self.rowD=jp.Div(classes="row",a=a)
+        
         self.colA1=jp.Div(classes="col-3",a=self.rowA)
         self.colA2=jp.Div(classes="col-3",a=self.rowA)
         self.colA3=jp.Div(classes="col-3",a=self.rowA)
+        self.colD1=jp.Div(classes="col-12",a=self.rowD)
         self.wdSync=WikidataSync()
         self.fromInput=self.app.createInput(labelText="from", placeholder="from",change=self.onChangeFrom, a=self.colA1)
         self.toValue=self.app.createInput(labelText="to", placeholder="to",change=self.onChangeTo, a=self.colA2)
@@ -110,7 +112,7 @@ class WikidataRangeImport():
         self.progressBar = ProgressBar(a=self.rowC)
         
     def feedback(self,msg):
-        self.rowC.inner_html=msg
+        self.rowB.inner_html=msg
         print(msg)
         
     def importVolume(self,volumeNumber,progress):
@@ -122,8 +124,14 @@ class WikidataRangeImport():
             wdRecord=self.wdSync.getWikidataRecord(volume)
             msg=f"Importing {volume} to wikidata"
             self.feedback(msg)
-            qid,err=self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
-            self.feedback(f"{qid}:{err}")
+            qId,err=self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
+            if qId is not None:
+                href=self.wdSync.itemUrl(qId)
+                importSpan=jp.Span(a=self.colD1)
+                jp.Link(a=importSpan, href=volume.url,text=f"{volume}:{volume.acronym}:")
+                jp.Link(a=importSpan, href=href, text=f"{qId} ")
+            else:
+                self.feedback(f"error:{err}")
             self.progressBar.updateProgress(progress)
         
     async def onUploadButtonClick(self,_msg):
@@ -134,7 +142,8 @@ class WikidataRangeImport():
             count=0
             for volumeNumber in range(self.fromVolume,self.toVolume+step,step):
                 count+=1
-                self.importVolume(volumeNumber,count/total)
+                self.importVolume(volumeNumber,count/total*100)
+                await self.app.wp.update()
         except Exception as ex:
             self.app.handleException(ex)
         
@@ -298,7 +307,7 @@ class VolumesDisplay(Display):
                         if qId is not None:
                             alert = Alert(a=self.colA3, text=f"Proceedings entry for {volume} was created!")
                             jp.Br(a=alert)
-                            href=f"https://www.wikidata.org/wiki/{qId}"
+                            href=self.wdSync.itemUrl(qId)
                             jp.Link(a=alert, href=href, text=qId)
                         else:
                             alert = Alert(a=self.colA3, text=f"An error occured during the creation of the proceedings entry for {volume}")

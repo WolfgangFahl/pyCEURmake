@@ -8,7 +8,7 @@ then
 fi
 cat /tmp/ceur.json | jq .[].sVolume | awk -v invalid="191,2284" '
 BEGIN {
-   previous=1
+   previous=0
    quote="\x22"
    split(invalid,invalidValues,",")
    for (invalidKey in invalidValues) {

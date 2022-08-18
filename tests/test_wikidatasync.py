@@ -36,6 +36,18 @@ class TestWikidataSync(Basetest):
         for volnumber in volnumbers:
             wdProc=self.wdSync.getProceedingsForVolume(volnumber)
             print(wdProc)
+            
+    def testVolumeListRefresh(self):
+        '''
+        https://github.com/WolfgangFahl/pyCEURmake/issues/19
+        '''
+        volumesByNumber,addedVolumeNumberList=self.wdSync.getRecentlyAddedVolumeList()
+        debug=self.debug
+        debug=True
+        if debug:
+            print(f"{len(addedVolumeNumberList)} new volumes:{addedVolumeNumberList}")
+        self.assertTrue(isinstance(addedVolumeNumberList,list))
+        self.assertTrue(isinstance(volumesByNumber,dict))
 
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
     def test_getProceedingWdItemsByUrn(self):

@@ -124,6 +124,55 @@ class Display:
         except Exception as ex:
             self.app.handleException(ex)
             
+class VolumeListRefresh(Display):
+    '''
+    refresher for the list of volumes
+    '''
+    
+    def __init__(self,app,a):
+        self.app=app
+        self.rowA=jp.Div(classes="row",a=a)
+        self.rowB=jp.Div(classes="row",a=a)
+        self.rowC=jp.Div(classes="row",a=a)
+        self.rowD=jp.Div(classes="row",a=a)
+        
+        self.colA1=jp.Div(classes="col-3",a=self.rowA)
+        self.colA2=jp.Div(classes="col-3",a=self.rowA)
+        self.colA3=jp.Div(classes="col-3",a=self.rowA)
+        self.colD1=jp.Div(classes="col-12",a=self.rowD)
+        self.refreshButton=IconButton(a=self.colA1,iconName="upload-multiple",click=self.onRefreshButtonClick,classes="btn btn-primary btn-sm col-1")
+        self.progressBar = ProgressBar(a=self.rowC)
+        self.wdSync=WikidataSync(debug=self.app.debug)
+        
+    def updateRecentlyAddedVolume(self,volume,feedback,index,total):
+        '''
+        update a recently added Volume
+        '''
+        feedback.inner_html=f"reading {index}/{total} from {volume.url}"
+        volume.extractValuesFromVolumePage()
+        self.wdSync.addVolume(volume)
+        self.progressBar.updateProgress(index/total*100)
+    
+    async def onRefreshButtonClick(self,_msg):
+        self.app.clearErrors()
+        try:
+            _alert=Alert(a=self.colA1,text="checking CEUR-WS index.html for recently added volumes ...")
+            await self.app.wp.update()
+            volumesByNumber,addedVolumeNumberList=self.wdSync.getRecentlyAddedVolumeList()
+            _alert.inner_html=f"found {len(addedVolumeNumberList)} new volumes"
+            total=len(addedVolumeNumberList)
+            for i,volumeNumber in enumerate(addedVolumeNumberList):
+                self.updateRecentlyAddedVolume(volumesByNumber[volumeNumber],_alert,i+1,total)
+                await self.app.wp.update()
+            pass
+            #self.app.wdSync.storeVolumes()
+            self.progressBar.updateProgress(0)
+        
+            _alert.inner_html="Done"
+        except Exception as ex:
+                self.app.handleException(ex)
+    
+            
 class WikidataRangeImport(Display):
     '''
     import a range of volumes
@@ -639,6 +688,7 @@ class VolumeBrowser(App):
         '''
         self.setupRowsAndCols()
         #self.wdRangeImport=WikidataRangeImport(self,a=self.rowA)
+        self.volumeListRefresh=VolumeListRefresh(self,a=self.rowA)
         return self.wp
     
     async def volumePage(self,request):

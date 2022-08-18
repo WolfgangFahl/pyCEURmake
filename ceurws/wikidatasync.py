@@ -11,7 +11,7 @@ from spreadsheet.wikidata import Wikidata
 
 from utils.download import Download
 from lodstorage.lod import LOD
-from ceurws.ceur_ws import VolumeManager, CEURWS
+from ceurws.ceur_ws import Volume,VolumeManager, CEURWS
 from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
 from lodstorage.query import QueryManager, EndpointManager
@@ -73,6 +73,37 @@ class WikidataSync(object):
         self.volumesByNumber, _duplicates = LOD.getLookup(self.vm.getList(), 'number')
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
+        
+    def addVolume(self,volume:Volume):
+        '''
+        add the given volume
+        
+        Args:
+            volume(Volume): the volume to add
+        '''
+        self.volumeList.append(volume)
+        self.volumesByNumber[volume.number]=volume
+        self.volumeCount+=1
+        
+    def getRecentlyAddedVolumeList(self)->list[int]:
+        '''
+        get the list of volume that have recently been added
+        we do not expect deletions 
+        
+        Returns:
+            list[int]: list of volume numbers recently added
+        
+        '''
+        self.prepareVolumeManager()
+        refreshVm=VolumeManager()
+        refreshVm.loadFromIndexHtml(force=True)
+        refreshVolumesByNumber, _duplicates = LOD.getLookup(refreshVm.getList(), 'number')
+        # https://stackoverflow.com/questions/3462143/get-difference-between-two-lists
+        newVolumes=list(
+            set(list(refreshVolumesByNumber.keys()))-
+            set(list(self.volumesByNumber.keys()))  
+        )
+        return refreshVolumesByNumber,newVolumes
         
     def storeVolumes(self):
         self.vm.store()

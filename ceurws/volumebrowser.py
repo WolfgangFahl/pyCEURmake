@@ -55,7 +55,7 @@ class Display:
         link=f"<a href='{url}' target='_blank' style='color:blue'>{text}</a>"
         return link
     
-    def createExternalLink(self,row:dict,key:str,text:str,formatterUrl:str,emptyIfNone:False):
+    def createExternalLink(self,row:dict,key:str,text:str,formatterUrl:str,emptyIfNone:bool=False):
         '''
         create an ExternalLink for the given row entry with the given key, text and formatterUrl
         

@@ -24,6 +24,9 @@
       ?sVolume
       ?Volume
       ?short_name
+      # identifiers
+      ?dblpEventId
+      ?ppnId
       # event
       ?event
       ?eventLabel
@@ -67,6 +70,16 @@
       # Acronym
       OPTIONAL {
         ?item wdt:P1813 ?short_name.
+      }
+      # External Identifiers
+      OPTIONAL {
+      	# DBLP event ID
+      	# identifier for scientific events in the DBLP computer science bibliography
+      	?item wdt:P10692 ?dblpEventId.
+      }
+      OPTIONAL {
+        # K10plus PPN ID
+        ?item wdt:P6721 ?ppnId.
       }
       # event
       OPTIONAL {

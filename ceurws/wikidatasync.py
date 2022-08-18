@@ -106,7 +106,7 @@ class WikidataSync(object):
         primaryKey = "URN_NBN"
         withCreate = True
         withDrop = True
-        entityInfo=self.sqldb.createTable(wdRecords, "Proceedings", primaryKey,withCreate, withDrop,sampleRecordCount=1500)
+        entityInfo=self.sqldb.createTable(wdRecords, "Proceedings", primaryKey,withCreate, withDrop,sampleRecordCount=5000,failIfTooFew=False)
         procsByURN, duplicates = LOD.getLookup(wdRecords, 'URN_NBN')
         if withStore:
             self.sqldb.store(procsByURN.values(), entityInfo, executeMany=True, fixNone=True)

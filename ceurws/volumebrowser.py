@@ -35,123 +35,8 @@ class Version(object):
 {description}
 
   Created by {authors} on {date} last updated {updated}"""
-  
-  
-class VolumeSearch():
-    '''
-    volume search
-    '''
-    def __init__(self,app,volumeInputDiv,volumeHeaderDiv,volumeDiv,debug:bool=False):
-        '''
-        constructor
-        
-        Args:
-            app(App): the justpy bootstrap5 app
-            a(jp.Component): the ancestor component for the search
-            volA(jp.Component): the ancestor component for the Volume detail display
-            debug(bool): if True swith debugging on
-        '''
-        self.app=app
-        self.debug=debug
-        self.wdSync=WikidataSync(debug=debug)
-        self.app.addMenuLink(text='Endpoint',icon='web',href=self.wdSync.endpointConf.website,target="_blank")
-        self.volumeInput=self.app.createComboBox(labelText="Volume", a=volumeInputDiv,placeholder='Please type here to search ...',size="120",change=self.onVolumeChange)
-        for volume in self.wdSync.vm.getList():
-            title=f"Vol-{volume.number}:{volume.title}"
-            self.volumeInput.dataList.addOption(title,volume.number)
-        self.volumeHeaderDiv=volumeHeaderDiv
-        self.volumeDiv=volumeDiv
-        
-    def updateVolume(self,volume:Volume):
-        '''
-        update the volume info according to the search result
-        
-        Args:
-            volume(Volume): the currently selected volume
-        '''
-        self.app.showVolume(volume, self.volumeHeaderDiv,self.volumeDiv)
-
-    async def onVolumeChange(self,msg):
-        '''
-        there has been a search 
-        '''
-        try:
-            volumeNumberStr=msg.value
-            volumeNumber=None
-            try:
-                volumeNumber=int(volumeNumberStr)
-            except ValueError as _ve:
-                # ignore invalid values
-                pass      
-            if volumeNumber in self.wdSync.volumesByNumber:    
-                volume=self.wdSync.volumesByNumber[volumeNumber]
-                self.updateVolume(volume)
-        except Exception as ex:
-            self.app.handleException(ex)
             
-class WikidataRangeImport():
-    '''
-    import a range of volumes
-    '''
-    
-    def __init__(self,app,a):
-        self.app=app
-        self.rowA=jp.Div(classes="row",a=a)
-        self.rowB=jp.Div(classes="row",a=a)
-        self.rowC=jp.Div(classes="row",a=a)
-        self.rowD=jp.Div(classes="row",a=a)
-        
-        self.colA1=jp.Div(classes="col-3",a=self.rowA)
-        self.colA2=jp.Div(classes="col-3",a=self.rowA)
-        self.colA3=jp.Div(classes="col-3",a=self.rowA)
-        self.colD1=jp.Div(classes="col-12",a=self.rowD)
-        self.wdSync=WikidataSync(debug=self.app.debug)
-        self.fromInput=self.app.createInput(labelText="from", placeholder="from",change=self.onChangeFrom, a=self.colA1)
-        self.toValue=self.app.createInput(labelText="to", placeholder="to",change=self.onChangeTo, a=self.colA2)
-        self.uploadButton=IconButton(a=self.colA3,iconName="upload-multiple",click=self.onUploadButtonClick,classes="btn btn-primary btn-sm col-1")
-        self.progressBar = ProgressBar(a=self.rowC)
-        
-    def feedback(self,msg):
-        self.rowB.inner_html=msg
-        print(msg)
-        
-    def importVolume(self,volumeNumber,progress):
-        '''
-        import the given volume showing the given progress
-        '''
-        if volumeNumber in self.wdSync.volumesByNumber:
-            volume=self.wdSync.volumesByNumber[volumeNumber]
-            wdRecord=self.wdSync.getWikidataRecord(volume)
-            msg=f"Importing {volume} to wikidata"
-            self.feedback(msg)
-            qId,err=self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
-            if qId is not None:
-                href=self.wdSync.itemUrl(qId)
-                importSpan=jp.Span(a=self.colD1)
-                jp.Link(a=importSpan, href=volume.url,text=f"{volume}:{volume.acronym}:")
-                jp.Link(a=importSpan, href=href, text=f"{qId} ")
-            else:
-                self.feedback(f"error:{err}")
-            self.progressBar.updateProgress(progress)
-        
-    async def onUploadButtonClick(self,_msg):
-        self.app.clearErrors()
-        step=-1 if self.fromVolume>=self.toVolume else 1
-        total=(self.toVolume-self.fromVolume)/step+1
-        count=0
-        for volumeNumber in range(self.fromVolume,self.toVolume+step,step):
-            count+=1
-            try:
-                self.importVolume(volumeNumber,count/total*100)
-                await self.app.wp.update()
-            except Exception as ex:
-                self.app.handleException(ex)
-        
-    async def onChangeFrom(self,msg):
-        self.fromVolume=int(msg.value)
-        
-    async def onChangeTo(self,msg):
-        self.toVolume=int(msg.value)
+
             
 class Display:
     '''
@@ -167,8 +52,23 @@ class Display:
             url(str): the url to create a link for
             text(str): the text to add for the link
         '''
-        link=f"<a href='{url}' style='color:blue'>{text}</a>"
+        link=f"<a href='{url}' target='_blank' style='color:blue'>{text}</a>"
         return link
+    
+    def createWikidataSpan(self,a,wdSync,qId:str,volume:Volume):
+        '''
+        create a Wikidata Export span
+        
+        Args:
+            a(): ancestor
+            qId(str): wikidata item Q Identifier
+            volume(Volume): the Volume
+        '''
+        href=wdSync.itemUrl(qId)
+        wdSpan=jp.Span(a=a)
+        jp.Link(a=wdSpan, href=self.volume.url,text=f"{volume}:{volume.acronym}")
+        jp.Link(a=wdSpan, href=href, text=f"{qId} ")
+        return wdSpan
     
     def getValue(self,obj,attr):
         value=getattr(obj,attr,Display.noneValue)
@@ -208,7 +108,212 @@ class Display:
         except Exception as ex:
             self.app.handleException(ex)
             
-class VolumesDisplay(Display):
+class WikidataRangeImport(Display):
+    '''
+    import a range of volumes
+    '''
+    
+    def __init__(self,app,a):
+        self.app=app
+        self.rowA=jp.Div(classes="row",a=a)
+        self.rowB=jp.Div(classes="row",a=a)
+        self.rowC=jp.Div(classes="row",a=a)
+        self.rowD=jp.Div(classes="row",a=a)
+        
+        self.colA1=jp.Div(classes="col-3",a=self.rowA)
+        self.colA2=jp.Div(classes="col-3",a=self.rowA)
+        self.colA3=jp.Div(classes="col-3",a=self.rowA)
+        self.colD1=jp.Div(classes="col-12",a=self.rowD)
+        self.wdSync=WikidataSync(debug=self.app.debug)
+        self.fromInput=self.app.createInput(labelText="from", placeholder="from",change=self.onChangeFrom, a=self.colA1)
+        self.toValue=self.app.createInput(labelText="to", placeholder="to",change=self.onChangeTo, a=self.colA2)
+        self.uploadButton=IconButton(a=self.colA3,iconName="upload-multiple",click=self.onUploadButtonClick,classes="btn btn-primary btn-sm col-1")
+        self.progressBar = ProgressBar(a=self.rowC)
+        
+    def feedback(self,msg):
+        self.rowB.inner_html=msg
+        print(msg)
+        
+    def importVolume(self,volumeNumber,progress):
+        '''
+        import the given volume showing the given progress
+        '''
+        if volumeNumber in self.wdSync.volumesByNumber:
+            volume=self.wdSync.volumesByNumber[volumeNumber]
+            wdRecord=self.wdSync.getWikidataRecord(volume)
+            msg=f"Importing {volume} to wikidata"
+            self.feedback(msg)
+            qId,err=self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
+            if qId is not None:
+                _importSpan=self.createWikidataSpan(a=self.colD1,wdSync=self.app.wdSync,qId=qId, volume=volume)
+            else:
+                self.app.feedback(f"error:{err}")
+            self.progressBar.updateProgress(progress)
+        
+    async def onUploadButtonClick(self,_msg):
+        self.app.clearErrors()
+        step=-1 if self.fromVolume>=self.toVolume else 1
+        total=(self.toVolume-self.fromVolume)/step+1
+        count=0
+        for volumeNumber in range(self.fromVolume,self.toVolume+step,step):
+            count+=1
+            try:
+                self.importVolume(volumeNumber,count/total*100)
+                await self.app.wp.update()
+            except Exception as ex:
+                self.app.handleException(ex)
+        
+    async def onChangeFrom(self,msg):
+        self.fromVolume=int(msg.value)
+        
+    async def onChangeTo(self,msg):
+        self.toVolume=int(msg.value)
+        
+class VolumeDisplay(Display):
+    '''
+    displays a single volume
+    '''
+    def __init__(self,app,volumeToolbar,volumeHeaderDiv,volumeDiv):
+        '''
+        constructor
+        
+        Args:
+            app(App): The bootstrap 5 app
+            volnumber(int): the volume number 
+            volumeToolbar(jp.Div): the div for the toolbar
+            volumeHeaderDiv(jp.Div): the div for the header
+            volumeDiv(jp.Div): the div for the volume content
+        '''
+        self.app=app
+        self.volumeToolbar=volumeToolbar
+        self.volumeHeaderDiv=volumeHeaderDiv
+        self.volumeDiv=volumeDiv
+        self.volumeRefreshButton=None
+        self.wikidataButton=None
+        self.volume=None
+            
+    def showVolume(self,volume):
+        '''
+        show the given volume
+        
+        Args:
+            volume(Volume): the volume to show
+        '''
+        try:
+            self.volume=volume
+            if self.volumeRefreshButton is None:
+                self.volumeRefreshButton=IconButton(
+                    iconName="refresh",
+                    title="Refresh from CEUR-WS Volume page",
+                    classes="btn btn-primary btn-sm col-1",
+                    a=self.volumeToolbar,
+                    click=self.onRefreshButtonClick,
+                )
+            if self.wikidataButton is None:
+                self.wikidataButton=IconButton(
+                    iconName="web",
+                    title="Export to Wikidata",
+                    classes="btn btn-primary btn-sm col-1",
+                    a=self.volumeToolbar,
+                    click=self.onWikidataButtonClick,
+                )
+            wdProc=self.app.wdSync.getProceedingsForVolume(volume.number)
+            self.wikidataButton.disabled=wdProc is not None
+            if wdProc is not None:
+                itemLink=self.createLink(wdProc["item"], "wikidataitem")
+            else:
+                itemLink=""
+            #template=self.templateEnv.getTemplate('volume_index_body.html')
+            #html=template.render(volume=volume)
+            headerHtml=f"""{itemLink}<h3>{volume.h1}</h3>
+    <a href='{volume.url}'>{volume.acronym}<a>
+    {volume.title}<br>
+    {volume.desc}
+    published: {volume.pubDate}
+    submitted By: {volume.submittedBy}"""
+            iframeHtml=f"""
+            <iframe src='{volume.url}' style='min-height: calc(100%); width: calc(100%);'></iframe>"""
+            self.volumeHeaderDiv.inner_html=headerHtml
+            self.volumeDiv.inner_html=iframeHtml
+    
+        except Exception as ex:
+            self.app.handleException(ex)
+            
+    async def onRefreshButtonClick(self,_msg):
+        try:
+            self.volume.extractValuesFromVolumePage()
+            _alert=Alert(a=self.volumeToolbar,text=f"updated from {self.volume.url}")
+            self.showVolume(self.volume)
+            self.app.wdSync.storeVolumes()
+        except Exception as ex:
+            self.app.handleException(ex)  
+            
+    async def onWikidataButtonClick(self,_msg):
+        '''
+        handle wikidata sync request
+        '''
+        try:
+            wdRecord=self.app.wdSync.getWikidataRecord(self.volume)
+            qId,err=self.app.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
+            if qId is not None:
+                alert=Alert(a=self.volumeToolbar,text=f"wikidata export")
+                _wdSpan=self.createWikidataSpan(a=alert,wdSync=self.app.wdSync,qId=qId, volume=self.volume)   
+            else:
+                self.app.feedback(f"error:{err}")
+        except Exception as ex:
+            self.app.handleException(ex)  
+
+class VolumeSearch():
+    '''
+    volume search
+    '''
+    def __init__(self,app,volumeInputDiv,volumeDisplay:VolumeDisplay,debug:bool=False):
+        '''
+        constructor
+        
+        Args:
+            app(App): the justpy bootstrap5 app
+            volumeInputDiv(): the input Div
+            debug(bool): if True swith debugging on
+        '''
+        self.app=app
+        self.debug=debug
+        self.wdSync=WikidataSync(debug=debug)
+        self.app.addMenuLink(text='Endpoint',icon='web',href=self.wdSync.endpointConf.website,target="_blank")
+        self.volumeInput=self.app.createComboBox(labelText="Volume", a=volumeInputDiv,placeholder='Please type here to search ...',size="120",change=self.onVolumeChange)
+        for volume in self.wdSync.vm.getList():
+            title=f"Vol-{volume.number}:{volume.title}"
+            self.volumeInput.dataList.addOption(title,volume.number)
+        self.volumeDisplay=volumeDisplay
+        
+    def updateVolume(self,volume:Volume):
+        '''
+        update the volume info according to the search result
+        
+        Args:
+            volume(Volume): the currently selected volume
+        '''
+        self.volumeDisplay.showVolume(volume)
+
+    async def onVolumeChange(self,msg):
+        '''
+        there has been a search 
+        '''
+        try:
+            volumeNumberStr=msg.value
+            volumeNumber=None
+            try:
+                volumeNumber=int(volumeNumberStr)
+            except ValueError as _ve:
+                # ignore invalid values
+                pass      
+            if volumeNumber in self.wdSync.volumesByNumber:    
+                volume=self.wdSync.volumesByNumber[volumeNumber]
+                self.updateVolume(volume)
+        except Exception as ex:
+            self.app.handleException(ex)
+            
+class VolumeListDisplay(Display):
     '''
     display all Volumes
     '''
@@ -334,7 +439,6 @@ class WikidataDisplay(Display):
     '''
     display wiki data query results
     '''
-    
     def __init__(self,app,debug:bool=False):
         self.app=app
         self.debug=debug
@@ -505,59 +609,34 @@ class VolumeBrowser(App):
         #self.wdRangeImport=WikidataRangeImport(self,a=self.rowA)
         return self.wp
     
-    def showVolume(self,volume,volumeHeaderDiv,volumeDiv):
-        '''
-        show the given volume
-        
-        Args:
-            volume(Volume): the volume to show
-            volumeHeaderDiv(jp.Div): the div for the header
-            volumeDiv(jp.Div): the div for the volume content
-        '''
-        try:
-            #template=self.templateEnv.getTemplate('volume_index_body.html')
-            #html=template.render(volume=volume)
-            headerHtml=f"""<h3>{volume.h1}</h3>
-    <a href='{volume.url}'>{volume.acronym}<a>
-    {volume.title}<br>
-    {volume.desc}
-    published: {volume.pubDate}
-    submitted By: {volume.submittedBy}"""
-            iframeHtml=f"""
-            <iframe src='{volume.url}' style='min-height: calc(100%); width: calc(100%);'></iframe>"""
-            volumeHeaderDiv.inner_html=headerHtml
-            volumeDiv.inner_html=iframeHtml
-    
-        except Exception as ex:
-            self.handleException(ex)
-    
     async def volumePage(self,request):
         '''
         show a page for the given volume
         '''
         self.setupPage()
-        self.wdSync=WikidataSync(self.debug)
-        volnumber=None
-        volume=None
-        if "volnumber" in request.path_params:
-            volnumber=request.path_params["volnumber"]
-        if volnumber:
-            try:
-                volume=self.wdSync.volumesByNumber[int(volnumber)]
-                #header="""<link rel="stylesheet" type="text/css" href="/static/css/ceur-ws.css">
-                #<link rel="stylesheet" type="text/css" href="/static/css/ceur-ws-semantic.css"/>
-                #<link rel="foaf:page" href="{{ volume.url }}"/>
-                #<title>CEUR-WS.org/{{volume.volNumber}} - {{volume.fullTitle}} ({{volume.acronym}})</title>
-                #"""
-            except Exception as _ex:
-                pass
-        self.rowA=jp.Div(classes="row",a=self.contentbox)
-        self.rowB=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
+        self.rowA=jp.Div(classes="row",a=app.contentbox)
+        self.rowB=jp.Div(classes="row min-vh-100 vh-100",a=app.contentbox)
         self.colA1=jp.Div(classes="col-12",a=self.rowA)   
         self.feedback=jp.Span(a=self.colA1)
         self.errors=jp.Span(a=self.colA1,style='color:red')
+        if "volnumber" in request.path_params:
+            volnumberStr=request.path_params["volnumber"]
+        else:
+            volnumberStr=None    
+        volumeToolbar=jp.Div(a=self.colA1,classes="row")
+        volumeHeaderDiv=jp.Div(a=self.colA1,classes="row")
+        volumeDiv=self.rowB
+        self.volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
+        self.wdSync=WikidataSync(self.debug)
+        volume=None
+        if volnumberStr:
+            try:
+                volnumber=int(volnumberStr)
+                volume=self.wdSync.volumesByNumber[volnumber]
+            except Exception as _ex:
+                pass
         if volume:
-            self.showVolume(volume,self.colA1,self.rowB)
+            self.volumeDisplay.showVolume(volume)
         else:
             Alert(a=self.colA1,text=f"Volume display for {volnumber} failed")
         return self.wp
@@ -567,7 +646,7 @@ class VolumeBrowser(App):
         show the volumes table
         '''
         self.setupRowsAndCols()
-        self.volumeDisplay=VolumesDisplay(self, container=self.rowA ,debug=self.debug)
+        self.volumeListDisplay=VolumeListDisplay(self, container=self.rowA ,debug=self.debug)
         return self.wp
     
     async def content(self):
@@ -575,10 +654,13 @@ class VolumeBrowser(App):
         show the content
         '''
         self.setupRowsAndCols()
-        self.volumeSearch=VolumeSearch(self,self.colA1,self.rowB,self.rowC)
+        volumeToolbar=jp.Div(a=self.rowB,classes="row")
+        volumeHeaderDiv=jp.Div(a=self.rowB,classes="row")
+        volumeDiv=self.rowC
+        volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
+        self.volumeSearch=VolumeSearch(self,self.colA1,volumeDisplay)
         self.wdSync=self.volumeSearch.wdSync
         return self.wp
-
         
 DEBUG = 1
 if __name__ == "__main__":

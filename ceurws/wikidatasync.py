@@ -37,7 +37,7 @@ class WikidataSync(object):
         self.baseurl=baseurl
         self.wd = Wikidata(baseurl=self.baseurl, debug=debug)
         self.sqldb = SQLDB(CEURWS.CACHE_FILE)
-         
+        self.procRecords=None
         
     def login(self):
         # @FIXME add username/password handling (see gsimport)
@@ -74,8 +74,12 @@ class WikidataSync(object):
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
         
+    def storeVolumes(self):
+        self.vm.store()
+        
     def getWikidataRecord(self,volume):
         '''
+        get the wikidata Record for the given volume
         '''
         record = {
             "title": getattr(volume, "title"),
@@ -117,8 +121,30 @@ class WikidataSync(object):
         load the proceedings recors from the cache
         '''
         sqlQuery="SELECT * from Proceedings"
-        procRecords=self.sqldb.query(sqlQuery)
-        return procRecords
+        self.procRecords=self.sqldb.query(sqlQuery)
+        return self.procRecords
+    
+    def getProceedingsForVolume(self,searchVolnumber:int)->dict:
+        '''
+        get the proceedings record for the given searchVolnumber
+        
+        Args:
+            searchVolnumber(int): the number of the volume to search
+            
+        Returns:
+            dict: the record for the proceedings in wikidata
+        '''
+        if self.procRecords is None:
+            self.loadProceedingsFromCache()
+            self.procsByVolnumber={}
+            for procRecord in self.procRecords:
+                volnumber=procRecord.get("sVolume",None)
+                if volnumber is None:
+                    procRecord.get("Volume",None)
+                if volnumber is not None:
+                    self.procsByVolnumber[int(volnumber)]=procRecord
+        volProcRecord=self.procsByVolnumber.get(searchVolnumber,None)
+        return volProcRecord
 
     def getProceedingWdItemsByUrn(self, urn:str) -> List[str]:
         """

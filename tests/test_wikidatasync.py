@@ -8,6 +8,7 @@ import unittest
 from tests.basetest import Basetest
 from ceurws.wikidatasync import WikidataSync
 
+
 class TestWikidataSync(Basetest):
     '''
     Test synchronizing with Wikidata
@@ -30,11 +31,11 @@ class TestWikidataSync(Basetest):
         '''
         get the Proceedings Record for the given volume
         '''
+        self.wdSync.update()  # to create Proceedings Table
         volnumbers=[50,457]
         for volnumber in volnumbers:
             wdProc=self.wdSync.getProceedingsForVolume(volnumber)
             print(wdProc)
-            
 
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
     def test_getProceedingWdItemsByUrn(self):

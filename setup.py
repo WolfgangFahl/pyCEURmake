@@ -17,9 +17,9 @@ setup(name=Version.name,
       ),
       classifiers=[
             'Programming Language :: Python',
-            'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
-            'Programming Language :: Python :: 3.9'
+            'Programming Language :: Python :: 3.9',
+            'Programming Language :: Python :: 3.10'
       ],
       packages=['ceurws'],
       package_data={'ceurws': ['resources/templates/*.jinja','resources/templates/*.html']},

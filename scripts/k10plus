@@ -30,9 +30,9 @@ PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX wikibase: <http://wikiba.se/ontology#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?sVolume ?ppn ?item ?itemLabel
+SELECT ?sVolume ?ppnToSet ?ppnId ?item ?itemLabel
 WHERE {
-  VALUES (?sVolume ?ppn) {
+  VALUES (?sVolume ?ppnToSet) {
 EOF
  # get ppns
  # 003@ $01663037973
@@ -69,6 +69,10 @@ cat << EOF >> $sparql
    ?partOfTheSeries ps:P179 wd:Q27230297.
    # Volumes via a a qualifier of the part of the series relation
    ?partOfTheSeries pq:P478 ?sVolume.
+   # K10plus PPN ID
+   OPTIONAL {
+     ?item wdt:P6721 ?ppnId.
+   }
 } ORDER BY DESC (xsd:integer(?sVolume))
 EOF
 
@@ -82,4 +86,37 @@ then
 else
   echo "$jsonmatch already exists"
 fi
-jq . $jsonmatch
+jq . $jsonmatch | awk '
+BEGIN { FS="\x22"}
+/itemLabel/ { next }
+/item/ {
+    gsub("http://www.wikidata.org/entity/","",$4)
+    item=$4
+    #print NR,item
+    next
+  }
+/ppnToSet/ {
+    ppnToSet=$4
+    #print NR,ppnToSet
+    next
+}
+/ppnId/ {
+  ppnId=$4
+  #print NR,ppnId
+  next
+}
+/sVolume/  {
+  volume=$4
+  printf("# Volume %s\n",volume)
+  if (length(ppnId)==0) {
+    printf("wd add-claim %s P6721 %s\n",item,ppnToSet)
+  } else {
+    printf("# has ppnId %s\n",ppnId)
+  }
+  item=""
+  volume=""
+  ppnToSet=""
+  ppnId=""
+  next
+}
+'

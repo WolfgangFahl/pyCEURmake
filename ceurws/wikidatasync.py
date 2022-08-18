@@ -85,7 +85,7 @@ class WikidataSync(object):
         self.volumesByNumber[volume.number]=volume
         self.volumeCount+=1
         
-    def getRecentlyAddedVolumeList(self)->list[int]:
+    def getRecentlyAddedVolumeList(self)->list:
         '''
         get the list of volume that have recently been added
         we do not expect deletions 

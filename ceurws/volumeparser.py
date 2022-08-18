@@ -63,7 +63,7 @@ class VolumeParser(Textparser):
             
         # first H1 has title info
         firstH1=soup.find('h1')
-        if firstH1 is not None:
+        if firstH1 is not None:    
             h1=firstH1.text
             h1=Textparser.sanitize(h1,['<TD bgcolor="#FFFFFF">'])
             scrapedDict["h1"]=h1

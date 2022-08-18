@@ -6,7 +6,7 @@ if [ ! -f /tmp/ceur.json ]
 then
   sparqlquery -qp $qp -qn Proceedings -f json > /tmp/ceur.json
 fi
-cat /tmp/ceur.json | jq .[].sVolume | awk -v invalid="191,2284" '
+cat /tmp/ceur.json | jq .[].sVolume | awk -v invalid="191,2284,3021" '
 BEGIN {
    previous=0
    quote="\x22"

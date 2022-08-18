@@ -55,6 +55,22 @@ class Display:
         link=f"<a href='{url}' target='_blank' style='color:blue'>{text}</a>"
         return link
     
+    def createExternalLink(self,row:dict,key:str,text:str,formatterUrl:str):
+        '''
+        create an ExternalLink for the given row entry with the given key, text and formatterUrl
+        
+        Args:
+            row(dict): the row to extract the value from
+            key(str): the key
+            text(str): the text to display for the link
+            formatterUrl(str): the prefix for the url to use
+        '''
+        value=self.getRowValue(row, key)
+        if value==Display.noneValue: return Display.noneValue
+        url=formatterUrl+value
+        link=self.createLink(url, text)
+        return link
+    
     def createWikidataSpan(self,a,wdSync,qId:str,volume:Volume):
         '''
         create a Wikidata Export span
@@ -480,6 +496,8 @@ class WikidataDisplay(Display):
         wikidata Refresh button has been clicked
         '''
         try:
+            _alert=Alert(a=self.app.colA1,text="running SPARQL query to retrieve CEUR-WS proceedings from Wikidata ...")
+            await self.app.wp.update()
             self.updateWikidata()
             await self.app.wp.update()
         except Exception as ex:
@@ -491,7 +509,7 @@ class WikidataDisplay(Display):
         '''
         self.pdQueryDisplay.showSyntaxHighlightedQuery(self.wdSync.wdQuery)
         wdRecords=self.wdSync.update()
-        self.app.showFeedback(f"found {len(wdRecords)} wikidata records")
+        _alert=Alert(a=self.app.colA1,text=f"found {len(wdRecords)} wikidata CEUR-WS proceedings records")
         self.reloadAgGrid(wdRecords)
         pass
     
@@ -530,20 +548,26 @@ class WikidataDisplay(Display):
             itemLink=self.createItemLink(row, "item")
             eventLink=self.createItemLink(row,"event")
             eventSeriesLink=self.createItemLink(row, "eventSeries")
+            #@TODO - use formatterUris from Wikidata
+            dblpLink=self.createExternalLink(row,"dblpEventId","dblp","https://dblp.org/db/")
+            k10PlusLink=self.createExternalLink(row, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=")
             lod.append(
                 {
                     "item": itemLink,
                     "volume": volumeLink,
                     "acronym": self.getRowValue(row, "short_name"),
+                    "dblp": dblpLink,
+                    "k10plus": k10PlusLink,
                     "event": eventLink,
                     "series": eventSeriesLink,
                     "ordinal": self.getRowValue(row,"eventSeriesOrdinal"),
+
                    # "title":row.get("title","?"),
                 })
         self.agGrid.load_lod(lod)
         self.setDefaultColDef(self.agGrid)
         self.agGrid.options.columnDefs[0].checkboxSelection = True
-        self.agGrid.html_columns=[0,1,2,3,4]
+        self.agGrid.html_columns=[0,1,2,3,4,5,6]
   
 class VolumeBrowser(App):
     '''

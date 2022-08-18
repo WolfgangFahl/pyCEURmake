@@ -42,7 +42,7 @@ class Display:
     '''
     generic Display
     '''
-    noneValue="?"
+    noneValue="-"
     
     def createLink(self,url,text):
         '''
@@ -526,12 +526,11 @@ class WikidataDisplay(Display):
         '''
         create an item link
         '''
-        if key in row:
-            item=row[key]
-            itemLabel=row[f"{key}Label"]
-            itemLink=self.createLink(item,itemLabel)
-        else:
-            itemLink="?"
+        value=self.getRowValue(row, key)
+        if value==Display.noneValue: return value
+        item=row[key]
+        itemLabel=row[f"{key}Label"]
+        itemLink=self.createLink(item,itemLabel)
         return itemLink
     
     def reloadAgGrid(self,olod:list,showLimit=10):

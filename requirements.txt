@@ -6,7 +6,7 @@ flask-dropzone
 # https://github.com/SmartDataAnalytics/OpenResearch
 ConferenceCorpus>=0.0.26
 # https://pypi.org/project/pylodstorage/
-pylodstorage>=0.4.6
+pylodstorage>=0.4.7
 # http://pydispatcher.sourceforge.net/
 PyDispatcher
 # https://pypi.org/project/APScheduler/

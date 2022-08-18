@@ -55,7 +55,7 @@ class Display:
         link=f"<a href='{url}' target='_blank' style='color:blue'>{text}</a>"
         return link
     
-    def createExternalLink(self,row:dict,key:str,text:str,formatterUrl:str):
+    def createExternalLink(self,row:dict,key:str,text:str,formatterUrl:str,emptyIfNone:False):
         '''
         create an ExternalLink for the given row entry with the given key, text and formatterUrl
         
@@ -66,7 +66,7 @@ class Display:
             formatterUrl(str): the prefix for the url to use
         '''
         value=self.getRowValue(row, key)
-        if value==Display.noneValue: return Display.noneValue
+        if value==Display.noneValue: return "" if emptyIfNone else Display.noneValue
         url=formatterUrl+value
         link=self.createLink(url, text)
         return link
@@ -238,10 +238,19 @@ class VolumeDisplay(Display):
             if wdProc is not None:
                 itemLink=self.createLink(wdProc["item"], "wikidataitem")
             else:
-                itemLink=""
+                itemLink=""   
+            dblpLink=self.createExternalLink(wdProc,"dblpEventId","dblp","https://dblp.org/db/",emptyIfNone=True)
+            k10PlusLink=self.createExternalLink(wdProc, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",emptyIfNone=True)
+            links=""
+            delim=""
+            for link in [itemLink,dblpLink,k10PlusLink]:
+                if link:
+                    links+=delim+link
+                    delim="&nbsp;"
+  
             #template=self.templateEnv.getTemplate('volume_index_body.html')
             #html=template.render(volume=volume)
-            headerHtml=f"""{itemLink}<h3>{volume.h1}</h3>
+            headerHtml=f"""{links}<h3>{volume.h1}</h3>
     <a href='{volume.url}'>{volume.acronym}<a>
     {volume.title}<br>
     {volume.desc}
@@ -647,8 +656,8 @@ class VolumeBrowser(App):
             volnumberStr=request.path_params["volnumber"]
         else:
             volnumberStr=None    
-        volumeToolbar=jp.Div(a=self.colA1,classes="row")
-        volumeHeaderDiv=jp.Div(a=self.colA1,classes="row")
+        volumeToolbar=jp.Div(a=self.rowA,classes="col-12")
+        volumeHeaderDiv=jp.Div(a=self.rowA,classes="col-12")
         volumeDiv=self.rowB
         self.volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
         self.wdSync=WikidataSync(self.debug)
@@ -678,8 +687,8 @@ class VolumeBrowser(App):
         show the content
         '''
         self.setupRowsAndCols()
-        volumeToolbar=jp.Div(a=self.rowB,classes="row")
-        volumeHeaderDiv=jp.Div(a=self.rowB,classes="row")
+        volumeToolbar=jp.Div(a=self.rowB,classes="col-12")
+        volumeHeaderDiv=jp.Div(a=self.rowB,classes="col-12")
         volumeDiv=self.rowC
         volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
         self.volumeSearch=VolumeSearch(self,self.colA1,volumeDisplay)

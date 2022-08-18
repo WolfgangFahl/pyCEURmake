@@ -29,9 +29,12 @@ class TestVolumeParser(Basetest):
         debug=self.debug
         # title >=559
         # acronym > = 901
-        if self.inPublicCI(): 
-            start=775
-            limit=785 
+        dolimit=self.inPublicCI()
+        dolimit=True
+        debug=True
+        if dolimit: 
+            start=457
+            limit=458 
         else: 
             start=1
             limit=len(self.volumeList)+1

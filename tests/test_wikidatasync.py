@@ -15,16 +15,26 @@ class TestWikidataSync(Basetest):
     
     def setUp(self, debug=False, profile=True):
         Basetest.setUp(self, debug=debug, profile=profile)
+        self.wdSync=WikidataSync()
 
     def testWikidataSync(self):
         '''
         test synchronizing with wikidata
         '''
-        wdSync=WikidataSync()
-        wdRecords=wdSync.update()
+        wdRecords=self.wdSync.update()
         debug=True
         if debug:
             print(f"found {len(wdRecords)} wikidata records")
+            
+    def testGetProceedingsForVolume(self):
+        '''
+        get the Proceedings Record for the given volume
+        '''
+        volnumbers=[50,457]
+        for volnumber in volnumbers:
+            wdProc=self.wdSync.getProceedingsForVolume(volnumber)
+            print(wdProc)
+            
 
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
     def test_getProceedingWdItemsByUrn(self):

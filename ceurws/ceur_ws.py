@@ -80,7 +80,7 @@ class Volume(JSONAble):
         """
         return
     
-    def extractValuesFromVolumePage(self,timeout=3,withPapers:bool=False):
+    def extractValuesFromVolumePage(self,timeout=3,withPapers:bool=True):
         '''
         extract values from the given volume page
         '''

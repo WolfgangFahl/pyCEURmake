@@ -727,7 +727,7 @@ class VolumeBrowser(App):
         if volume:
             self.volumeDisplay.showVolume(volume)
         else:
-            Alert(a=self.colA1,text=f"Volume display for {volnumber} failed")
+            Alert(a=self.colA1,text=f"Volume display for {volnumberStr} failed")
         return self.wp
     
     async def volumes(self):

@@ -1,0 +1,33 @@
+#
+# Sample Queries for dblp RDF data library
+#
+# WF 2022-08-13 based on 
+# https://ceur-ws.bitplan.com/index.php/Workdocumentation_2022-08-16#DBLP_versus_CEUR-WS_Queries
+# by Tim
+'CEUR-WS Papercount':
+  sparql: |
+    PREFIX dblp: <https://dblp.org/rdf/schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    SELECT (COUNT(?paper) as ?count)
+    WHERE { 
+        ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
+        ?paper dblp:publishedAsPartOf ?proceeding.
+    }
+    
+'CEUR-WS Counts':
+  sparql: |
+    PREFIX dblp: <https://dblp.org/rdf/schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    SELECT (COUNT(DISTINCT ?author) as ?numberOfAuthors) 
+           (COUNT(DISTINCT ?paper) as ?numberOfPapers) 
+           (COUNT(DISTINCT ?editor) as ?numberOfEditors)
+           (COUNT(DISTINCT ?proceeding) as ?numberOfVolumes)
+    WHERE { 
+        ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
+        OPTIONAL{?proceeding dblp:editedBy ?editor}
+        OPTIONAL{
+            ?paper dblp:publishedAsPartOf ?proceeding.
+            OPTIONAL{?paper dblp:authoredBy ?author}
+        }
+    
+    }

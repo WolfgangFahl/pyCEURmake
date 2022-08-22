@@ -160,7 +160,7 @@ class TestWikidataSync(Basetest):
                 self.assertEqual(expectedDesc, actualDesc)
 
 
-    @unittest.skipIf(False, "Only manual execution of the test since it edits wikidata")
+    @unittest.skipIf(True, "Only manual execution of the test since it edits wikidata")
     def test_addLinkBetweenProceedingsAndEvent(self):
         """tests addLinkBetweenProceedingsAndEvent"""
         volumeNumber = 1949
@@ -200,7 +200,7 @@ class TestDblpEndpoint(Basetest):
         self.endpointUrl = "https://qlever.cs.uni-freiburg.de/api/dblp/query"
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl)
 
-    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_getWikidataIdByVolumeNumber(self):
         """tests getWikidataIdByVolumeNumber"""
         test_params = [("1", ["conf/krdb/94"]), ("2400", ["conf/sebd/2019"]), ("-1", []), (3100, ["conf/psychobit/2021"])]
@@ -210,6 +210,7 @@ class TestDblpEndpoint(Basetest):
                 actual = self.dblpEndpoint.getDblpIdByVolumeNumber(number)
                 self.assertListEqual(expected, actual)
 
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_convertEntityIdToUrlId(self):
         """tests convertEntityIdToUrlId"""
         test_params = [("conf/aaai/2022", "conf/aaai/aaai2022"), ("conf/aaai", None),
@@ -220,7 +221,7 @@ class TestDblpEndpoint(Basetest):
                 actual = self.dblpEndpoint.convertEntityIdToUrlId(entityId)
                 self.assertEqual(expected, actual)
 
-    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_toDblpUrl(self):
         """tests toDblpUrl"""
         test_params =[("conf/aaai/2022", False, "https://dblp.org/db/conf/aaai/aaai2022"),

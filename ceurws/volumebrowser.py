@@ -71,6 +71,18 @@ class Display:
         link=self.createLink(url, text)
         return link
     
+    def createVolumeSpan(self,a,volume:Volume):
+        '''
+        create a Volume span linking to our local volume display
+
+        Args:
+            a(): ancestor
+            volume(Volume): the Volume
+        '''
+        wdSpan=jp.Span(a=a)
+        jp.Link(a=wdSpan, href=f"/volume/{volume.number}",text=f"{volume}:{volume.acronym}")
+        return wdSpan
+
     def createWikidataSpan(self,a,wdSync,qId:str,volume:Volume):
         '''
         create a Wikidata Export span
@@ -124,6 +136,56 @@ class Display:
         except Exception as ex:
             self.app.handleException(ex)
             
+class VolumeListRefresh(Display):
+    '''
+    refresher for the list of volumes
+    '''
+
+    def __init__(self,app,a):
+        self.app=app
+        self.rowA=jp.Div(classes="row",a=a)
+        self.rowB=jp.Div(classes="row",a=a)
+        self.rowC=jp.Div(classes="row",a=a)
+        self.rowD=jp.Div(classes="row",a=a)
+
+        self.colA1=jp.Div(classes="col-3",a=self.rowA)
+        self.colA2=jp.Div(classes="col-3",a=self.rowA)
+        self.colA3=jp.Div(classes="col-3",a=self.rowA)
+        self.colD1=jp.Div(classes="col-12",a=self.rowD)
+        self.refreshButton=IconButton(a=self.colA1,iconName="upload-multiple",click=self.onRefreshButtonClick,classes="btn btn-primary btn-sm col-1")
+        self.progressBar = ProgressBar(a=self.rowC)
+
+    def updateRecentlyAddedVolume(self,volume,feedback,index,total):
+        '''
+        update a recently added Volume
+        '''
+        feedback.inner_html=f"reading {index}/{total} from {volume.url}"
+        volume.extractValuesFromVolumePage()
+        self.app.wdSync.addVolume(volume)
+        self.progressBar.updateProgress(index/total*100)
+
+    async def onRefreshButtonClick(self,_msg):
+        self.app.clearErrors()
+        try:
+            _alert=Alert(a=self.colA1,text="checking CEUR-WS index.html for recently added volumes ...")
+            await self.app.wp.update()
+            volumesByNumber,addedVolumeNumberList=self.app.wdSync.getRecentlyAddedVolumeList()
+            _alert.inner_html=f"found {len(addedVolumeNumberList)} new volumes"
+            total=len(addedVolumeNumberList)
+            for i,volumeNumber in enumerate(addedVolumeNumberList):
+                volume=volumesByNumber[volumeNumber]
+                self.updateRecentlyAddedVolume(volume,_alert,i+1,total)
+                _importSpan=self.createVolumeSpan(a=self.colD1,volume=volume)
+                await self.app.wp.update()
+            pass
+            self.app.wdSync.storeVolumes()
+            self.progressBar.updateProgress(0)
+
+            _alert.inner_html="Done"
+        except Exception as ex:
+                self.app.handleException(ex)
+
+
 class WikidataRangeImport(Display):
     '''
     import a range of volumes
@@ -154,12 +216,12 @@ class WikidataRangeImport(Display):
         '''
         import the given volume showing the given progress
         '''
-        if volumeNumber in self.wdSync.volumesByNumber:
-            volume=self.wdSync.volumesByNumber[volumeNumber]
-            wdRecord=self.wdSync.getWikidataProceedingsRecord(volume)
+        if volumeNumber in self.app.wdSync.volumesByNumber:
+            volume=self.app.wdSync.volumesByNumber[volumeNumber]
+            wdRecord=self.app.wdSync.getWikidataProceedingsRecord(volume)
             msg=f"Importing {volume} to wikidata"
             self.feedback(msg)
-            qId,err=self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
+            qId,err=self.app.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
             if qId is not None:
                 _importSpan=self.createWikidataSpan(a=self.colD1,wdSync=self.app.wdSync,qId=qId, volume=volume)
             else:
@@ -235,19 +297,17 @@ class VolumeDisplay(Display):
                 )
             wdProc=self.app.wdSync.getProceedingsForVolume(volume.number)
             self.wikidataButton.disabled=wdProc is not None
+            links=""
             if wdProc is not None:
                 itemLink=self.createLink(wdProc["item"], "wikidataitem")
-            else:
-                itemLink=""   
-            dblpLink=self.createExternalLink(wdProc,"dblpEventId","dblp","https://dblp.org/db/",emptyIfNone=True)
-            k10PlusLink=self.createExternalLink(wdProc, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",emptyIfNone=True)
-            links=""
-            delim=""
-            for link in [itemLink,dblpLink,k10PlusLink]:
-                if link:
-                    links+=delim+link
-                    delim="&nbsp;"
-  
+                dblpLink=self.createExternalLink(wdProc,"dblpEventId","dblp","https://dblp.org/db/",emptyIfNone=True)
+                k10PlusLink=self.createExternalLink(wdProc, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",emptyIfNone=True)
+                delim=""
+                for link in [itemLink,dblpLink,k10PlusLink]:
+                    if link:
+                        links+=delim+link
+                        delim="&nbsp;"
+
             #template=self.templateEnv.getTemplate('volume_index_body.html')
             #html=template.render(volume=volume)
             headerHtml=f"""{links}<h3>{volume.h1}</h3>
@@ -303,10 +363,9 @@ class VolumeSearch():
         '''
         self.app=app
         self.debug=debug
-        self.wdSync=WikidataSync(debug=debug)
-        self.app.addMenuLink(text='Endpoint',icon='web',href=self.wdSync.endpointConf.website,target="_blank")
+        self.app.addMenuLink(text='Endpoint',icon='web',href=self.app.wdSync.endpointConf.website,target="_blank")
         self.volumeInput=self.app.createComboBox(labelText="Volume", a=volumeInputDiv,placeholder='Please type here to search ...',size="120",change=self.onVolumeChange)
-        for volume in self.wdSync.vm.getList():
+        for volume in self.app.wdSync.vm.getList():
             title=f"Vol-{volume.number}:{volume.title}"
             self.volumeInput.dataList.addOption(title,volume.number)
         self.volumeDisplay=volumeDisplay
@@ -332,8 +391,8 @@ class VolumeSearch():
             except ValueError as _ve:
                 # ignore invalid values
                 pass      
-            if volumeNumber in self.wdSync.volumesByNumber:    
-                volume=self.wdSync.volumesByNumber[volumeNumber]
+            if volumeNumber in self.app.wdSync.volumesByNumber:
+                volume=self.app.wdSync.volumesByNumber[volumeNumber]
                 self.updateVolume(volume)
         except Exception as ex:
             self.app.handleException(ex)
@@ -366,9 +425,8 @@ class VolumeListDisplay(Display):
      
         try:
             self.agGrid=LodGrid(a=self.colB1)
-            self.wdSync=WikidataSync(debug=self.debug)
             lod=[]
-            volumeList=self.wdSync.vm.getList()
+            volumeList=self.app.wdSync.vm.getList()
             reverseVolumeList=sorted(volumeList, key=lambda volume:volume.number, reverse=True)
             for volume in reverseVolumeList:
                 validMark= "✅" if volume.valid else "❌"
@@ -423,8 +481,8 @@ class VolumeListDisplay(Display):
                 volPattern = "http://ceur-ws.org/Vol-(?P<volumeNumber>\d{1,4})/"
                 match = re.search(volPattern, data.get("Vol"))
                 volumeId = int(match.group("volumeNumber")) if match is not None else None
-                if volumeId is not None and volumeId in self.wdSync.volumesByNumber:
-                    volume: Volume = self.wdSync.volumesByNumber.get(volumeId)
+                if volumeId is not None and volumeId in self.app.wdSync.volumesByNumber:
+                    volume: Volume = self.app.wdSync.volumesByNumber.get(volumeId)
                     await self.createEventItemAndLinkProceedings(volume, msg)
                 else:
                     Alert(a=self.colA3, text=f"Volume for selected row can not be loaded correctly")
@@ -437,7 +495,7 @@ class VolumeListDisplay(Display):
         """
         # check if already in wikidata → use URN
         urn = getattr(volume, "urn")
-        wdItems = self.wdSync.getProceedingWdItemsByUrn(urn)
+        wdItems = self.app.wdSync.getProceedingWdItemsByUrn(urn)
         if len(wdItems) > 0:
             # a proceeding exists with the URN exists
             alert = Alert(a=self.colA1, text=f"{volume} already in Wikidata see ")
@@ -448,18 +506,18 @@ class VolumeListDisplay(Display):
             return
         else:
             # A proceedings volume for the URN is not known → create wd entry
-            wdRecord = self.wdSync.getWikidataProceedingsRecord(volume)
+            wdRecord = self.app.wdSync.getWikidataProceedingsRecord(volume)
             if self.dryRun:
                 prettyData = pprint.pformat(msg.data)
                 text = f"{prettyData}"
                 alert = Alert(a=self.colA3, text=text)
 
             write = not self.dryRun
-            qId, errors = self.wdSync.addProceedingsToWikidata(wdRecord, write=write, ignoreErrors=self.ignoreErrors)
+            qId, errors = self.app.wdSync.addProceedingsToWikidata(wdRecord, write=write, ignoreErrors=self.ignoreErrors)
             if qId is not None:
                 alert = Alert(a=self.colA3, text=f"Proceedings entry for {volume} was created!")
                 jp.Br(a=alert)
-                href = self.wdSync.itemUrl(qId)
+                href = self.app.wdSync.itemUrl(qId)
                 jp.Link(a=alert, href=href, text=qId)
             else:
                 alert = Alert(a=self.colA3,
@@ -471,15 +529,15 @@ class VolumeListDisplay(Display):
         """Create event  wikidata item for given volume and link the proceedings with the event"""
         write = not self.dryRun
         volNumber = getattr(volume, "number")
-        if self.wdSync.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
+        if self.app.wdSync.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
             # link between proceedings and event already exists
-            proceedingsWikidataId = self.wdSync.getWikidataIdByVolumeNumber(number=volNumber)
+            proceedingsWikidataId = self.app.wdSync.getWikidataIdByVolumeNumber(number=volNumber)
             alert = Alert(a=self.colA3, text=f"Vol-{volNumber}:Event and Link between proceedings and event already exists")
             jp.Br(a=alert)
-            proceedings_href = self.wdSync.itemUrl(proceedingsWikidataId)
+            proceedings_href = self.app.wdSync.itemUrl(proceedingsWikidataId)
             jp.Link(a=alert, href=proceedings_href, text=proceedingsWikidataId)
             return
-        dblpEntityIds = self.wdSync.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
+        dblpEntityIds = self.app.wdSync.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
         if len(dblpEntityIds) > 1:
             Alert(a=self.colA3, text=f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}")
             return
@@ -487,15 +545,15 @@ class VolumeListDisplay(Display):
             dblpEntityId = dblpEntityIds[0]
         else:
             dblpEntityId = None
-        wdItems = self.wdSync.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
+        wdItems = self.app.wdSync.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
         eventQid = None
         errors = None
         if len(wdItems) == 0:
             # event item does not exist → create a new one
-            eventRecord = self.wdSync.getWikidataEventRecord(volume)
-            self.wdSync.login()
-            eventQid, errors = self.wdSync.doAddEventToWikidata(record=eventRecord, write=write)
-            self.wdSync.logout()
+            eventRecord = self.app.wdSync.getWikidataEventRecord(volume)
+            self.app.wdSync.login()
+            eventQid, errors = self.app.wdSync.doAddEventToWikidata(record=eventRecord, write=write)
+            self.app.wdSync.logout()
         elif len(wdItems) == 1:
             # the event item already exists
             eventQid = wdItems[0]
@@ -503,19 +561,19 @@ class VolumeListDisplay(Display):
             alert = Alert(a=self.colA3, text=f"For the volume {volNumber} multiple event entries exist:")
             jp.Br(a=alert)
             for qId in wdItems:
-                href = self.wdSync.itemUrl(qId)
+                href = self.app.wdSync.itemUrl(qId)
                 jp.Link(a=alert, href=href, text=qId)
             return
         if eventQid is not None:
             # add link between Proceedings and the event item
-            self.wdSync.login()
-            proceedingsWikidataId, errors = self.wdSync.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=write)
-            self.wdSync.logout()
+            self.app.wdSync.login()
+            proceedingsWikidataId, errors = self.app.wdSync.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=write)
+            self.app.wdSync.logout()
             alert = Alert(a=self.colA3, text="")
-            event_href = self.wdSync.itemUrl(eventQid)
+            event_href = self.app.wdSync.itemUrl(eventQid)
             jp.Link(a=alert, href=event_href, text=f"Event entry for {volume}: {eventQid}")
             jp.Br(a=alert)
-            proceedings_href = self.wdSync.itemUrl(proceedingsWikidataId)
+            proceedings_href = self.app.wdSync.itemUrl(proceedingsWikidataId)
             jp.Link(a=alert, href=proceedings_href, text=f"Proceedings entry for {volume}: {proceedingsWikidataId}")
 
         else:
@@ -532,8 +590,7 @@ class WikidataDisplay(Display):
         self.app=app
         self.debug=debug
         self.agGrid=None
-        self.wdSync=WikidataSync(debug=debug)
-        self.app.addMenuLink(text='Endpoint',icon='web',href=self.wdSync.endpointConf.website,target="_blank")
+        self.app.addMenuLink(text='Endpoint',icon='web',href=self.app.wdSync.endpointConf.website,target="_blank")
         self.pdQueryDisplay=self.createQueryDisplay("Proceedings", self.app.rowA)
         self.readProceedingsButton=jp.Button(text="from cache",classes="btn btn-primary",a=self.app.colA1,click=self.onReadProceedingsClick)
         self.wikidataRefreshButton=jp.Button(text="refresh wikidata",classes="btn btn-primary",a=self.app.colA1,click=self.onWikidataRefreshButtonClick)
@@ -549,7 +606,7 @@ class WikidataDisplay(Display):
             QueryDisplay: the created QueryDisplay
         '''
         filenameprefix=f"{name}"
-        qd=QueryDisplay(app=self.app,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.wdSync.sparql,endpointConf=self.wdSync.endpointConf)
+        qd=QueryDisplay(app=self.app,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.app.wdSync.sparql,endpointConf=self.app.wdSync.endpointConf)
         return qd    
     
     async def onReadProceedingsClick(self,_msg):
@@ -557,7 +614,7 @@ class WikidataDisplay(Display):
         read Proceedings button has been clicked
         '''
         try:
-            proceedingsRecords=self.wdSync.loadProceedingsFromCache()
+            proceedingsRecords=self.app.wdSync.loadProceedingsFromCache()
             self.app.showFeedback(f"found {len(proceedingsRecords)} cached wikidata proceedings records")
             self.reloadAgGrid(proceedingsRecords)
             await self.app.wp.update()
@@ -580,8 +637,8 @@ class WikidataDisplay(Display):
         '''
         update Wikidata
         '''
-        self.pdQueryDisplay.showSyntaxHighlightedQuery(self.wdSync.wdQuery)
-        wdRecords=self.wdSync.update()
+        self.pdQueryDisplay.showSyntaxHighlightedQuery(self.app.wdSync.wdQuery)
+        wdRecords=self.app.wdSync.update()
         _alert=Alert(a=self.app.colA1,text=f"found {len(wdRecords)} wikidata CEUR-WS proceedings records")
         self.reloadAgGrid(wdRecords)
         pass
@@ -674,7 +731,8 @@ class VolumeBrowser(App):
 <link rel="stylesheet" href="/static/css/pygments.css">
 """+header
         self.wp=self.getWp(header)  
-        
+        self.wdSync=WikidataSync(debug=self.debug)
+
     def setupRowsAndCols(self,header=""):
         self.setupPage(header)
         self.rowA=jp.Div(classes="row",a=self.contentbox)
@@ -703,6 +761,7 @@ class VolumeBrowser(App):
         '''
         self.setupRowsAndCols()
         #self.wdRangeImport=WikidataRangeImport(self,a=self.rowA)
+        self.volumeListRefresh=VolumeListRefresh(self,a=self.rowA)
         return self.wp
     
     async def volumePage(self,request):
@@ -723,7 +782,6 @@ class VolumeBrowser(App):
         volumeHeaderDiv=jp.Div(a=self.rowA,classes="col-12")
         volumeDiv=self.rowB
         self.volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
-        self.wdSync=WikidataSync(self.debug)
         volume=None
         if volnumberStr:
             try:
@@ -734,7 +792,7 @@ class VolumeBrowser(App):
         if volume:
             self.volumeDisplay.showVolume(volume)
         else:
-            Alert(a=self.colA1,text=f"Volume display for {volnumber} failed")
+            Alert(a=self.colA1,text=f"Volume display for {volnumberStr} failed")
         return self.wp
     
     async def volumes(self):
@@ -755,7 +813,6 @@ class VolumeBrowser(App):
         volumeDiv=self.rowC
         volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
         self.volumeSearch=VolumeSearch(self,self.colA1,volumeDisplay)
-        self.wdSync=self.volumeSearch.wdSync
         return self.wp
         
 DEBUG = 1

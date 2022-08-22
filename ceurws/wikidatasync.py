@@ -40,7 +40,7 @@ class WikidataSync(object):
         self.sqldb = SQLDB(CEURWS.CACHE_FILE)
         self.procRecords=None
         self.dbpEndpoint = DblpEndpoint(endpoint="https://qlever.cs.uni-freiburg.de/api/dblp/query")
-        
+
     def login(self):
         # @FIXME add username/password handling (see gsimport)
         self.wd.loginWithCredentials()
@@ -76,6 +76,37 @@ class WikidataSync(object):
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
         
+    def addVolume(self,volume:Volume):
+        '''
+        add the given volume
+
+        Args:
+            volume(Volume): the volume to add
+        '''
+        self.volumeList.append(volume)
+        self.volumesByNumber[volume.number]=volume
+        self.volumeCount+=1
+
+    def getRecentlyAddedVolumeList(self)->list:
+        '''
+        get the list of volume that have recently been added
+        we do not expect deletions
+
+        Returns:
+            list[int]: list of volume numbers recently added
+
+        '''
+        self.prepareVolumeManager()
+        refreshVm=VolumeManager()
+        refreshVm.loadFromIndexHtml(force=True)
+        refreshVolumesByNumber, _duplicates = LOD.getLookup(refreshVm.getList(), 'number')
+        # https://stackoverflow.com/questions/3462143/get-difference-between-two-lists
+        newVolumes=list(
+            set(list(refreshVolumesByNumber.keys()))-
+            set(list(self.volumesByNumber.keys()))
+        )
+        return refreshVolumesByNumber,newVolumes
+
     def storeVolumes(self):
         self.vm.store()
         
@@ -119,7 +150,7 @@ class WikidataSync(object):
             record["language of work or name"] = "Q1860"
             record["dblpEventId"] = self.dbpEndpoint.convertEntityIdToUrlId(entityId=dblpEntityId)
         return record
-        
+
     def update(self,withStore:bool=True):
         '''
         update my table from the Wikidata Proceedings SPARQL query

@@ -156,7 +156,7 @@ class WikidataRangeImport(Display):
         '''
         if volumeNumber in self.wdSync.volumesByNumber:
             volume=self.wdSync.volumesByNumber[volumeNumber]
-            wdRecord=self.wdSync.getWikidataRecord(volume)
+            wdRecord=self.wdSync.getWikidataProceedingsRecord(volume)
             msg=f"Importing {volume} to wikidata"
             self.feedback(msg)
             qId,err=self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
@@ -278,7 +278,7 @@ class VolumeDisplay(Display):
         handle wikidata sync request
         '''
         try:
-            wdRecord=self.app.wdSync.getWikidataRecord(self.volume)
+            wdRecord=self.app.wdSync.getWikidataProceedingsRecord(self.volume)
             qId,err=self.app.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
             if qId is not None:
                 alert=Alert(a=self.volumeToolbar,text=f"wikidata export")
@@ -425,40 +425,104 @@ class VolumeListDisplay(Display):
                 volumeId = int(match.group("volumeNumber")) if match is not None else None
                 if volumeId is not None and volumeId in self.wdSync.volumesByNumber:
                     volume: Volume = self.wdSync.volumesByNumber.get(volumeId)
-                    # check if already in wikidata → use URN
-                    urn = getattr(volume, "urn")
-                    wdItems = self.wdSync.getProceedingWdItemsByUrn(urn)
-                    if len(wdItems) > 0:
-                        # a proceeding exists with the URN exists
-                        alert = Alert(a=self.colA1, text=f"{volume} already in Wikidata see ")
-                        for wdItem in wdItems:
-                            jp.Br(a=alert)
-                            qId = wdItem.split("/")[-1]
-                            jp.Link(a=alert, href=wdItem, text=qId)
-                        return
-                    else:
-                        # A proceedings volume for the URN is not known → create wd entry 
-                        wdRecord=self.wdSync.getWikidataRecord(volume)
-                        if self.dryRun:                       
-                            prettyData=pprint.pformat(msg.data)
-                            text=f"{prettyData}"
-                            alert=Alert(a=self.colA3,text=text)
-                          
-                        write=not self.dryRun
-                        qId, errors = self.wdSync.addProceedingsToWikidata(wdRecord,write=write,ignoreErrors=self.ignoreErrors)
-                        if qId is not None:
-                            alert = Alert(a=self.colA3, text=f"Proceedings entry for {volume} was created!")
-                            jp.Br(a=alert)
-                            href=self.wdSync.itemUrl(qId)
-                            jp.Link(a=alert, href=href, text=qId)
-                        else:
-                            alert = Alert(a=self.colA3, text=f"An error occured during the creation of the proceedings entry for {volume}")
-                            jp.Br(a=alert)
-                            jp.P(a=alert, text=errors)
+                    await self.createEventItemAndLinkProceedings(volume, msg)
                 else:
                     Alert(a=self.colA3, text=f"Volume for selected row can not be loaded correctly")
             except Exception as ex:
                 self.app.handleException(ex)
+
+    async def createProceedingsItemFromVolume(self, volume: Volume, msg):
+        """
+        Create wikidata item for proceedings of given volume
+        """
+        # check if already in wikidata → use URN
+        urn = getattr(volume, "urn")
+        wdItems = self.wdSync.getProceedingWdItemsByUrn(urn)
+        if len(wdItems) > 0:
+            # a proceeding exists with the URN exists
+            alert = Alert(a=self.colA1, text=f"{volume} already in Wikidata see ")
+            for wdItem in wdItems:
+                jp.Br(a=alert)
+                qId = wdItem.split("/")[-1]
+                jp.Link(a=alert, href=wdItem, text=qId)
+            return
+        else:
+            # A proceedings volume for the URN is not known → create wd entry
+            wdRecord = self.wdSync.getWikidataProceedingsRecord(volume)
+            if self.dryRun:
+                prettyData = pprint.pformat(msg.data)
+                text = f"{prettyData}"
+                alert = Alert(a=self.colA3, text=text)
+
+            write = not self.dryRun
+            qId, errors = self.wdSync.addProceedingsToWikidata(wdRecord, write=write, ignoreErrors=self.ignoreErrors)
+            if qId is not None:
+                alert = Alert(a=self.colA3, text=f"Proceedings entry for {volume} was created!")
+                jp.Br(a=alert)
+                href = self.wdSync.itemUrl(qId)
+                jp.Link(a=alert, href=href, text=qId)
+            else:
+                alert = Alert(a=self.colA3,
+                              text=f"An error occured during the creation of the proceedings entry for {volume}")
+                jp.Br(a=alert)
+                jp.P(a=alert, text=errors)
+
+    async def createEventItemAndLinkProceedings(self, volume: Volume, msg):
+        """Create event  wikidata item for given volume and link the proceedings with the event"""
+        write = not self.dryRun
+        volNumber = getattr(volume, "number")
+        if self.wdSync.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
+            # link between proceedings and event already exists
+            proceedingsWikidataId = self.wdSync.getWikidataIdByVolumeNumber(number=volNumber)
+            alert = Alert(a=self.colA3, text=f"Vol-{volNumber}:Event and Link between proceedings and event already exists")
+            jp.Br(a=alert)
+            proceedings_href = self.wdSync.itemUrl(proceedingsWikidataId)
+            jp.Link(a=alert, href=proceedings_href, text=proceedingsWikidataId)
+            return
+        dblpEntityIds = self.wdSync.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
+        if len(dblpEntityIds) > 1:
+            Alert(a=self.colA3, text=f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}")
+            return
+        elif len(dblpEntityIds) == 1:
+            dblpEntityId = dblpEntityIds[0]
+        else:
+            dblpEntityId = None
+        wdItems = self.wdSync.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
+        eventQid = None
+        errors = None
+        if len(wdItems) == 0:
+            # event item does not exist → create a new one
+            eventRecord = self.wdSync.getWikidataEventRecord(volume)
+            self.wdSync.login()
+            eventQid, errors = self.wdSync.doAddEventToWikidata(record=eventRecord, write=write)
+            self.wdSync.logout()
+        elif len(wdItems) == 1:
+            # the event item already exists
+            eventQid = wdItems[0]
+        else:
+            alert = Alert(a=self.colA3, text=f"For the volume {volNumber} multiple event entries exist:")
+            jp.Br(a=alert)
+            for qId in wdItems:
+                href = self.wdSync.itemUrl(qId)
+                jp.Link(a=alert, href=href, text=qId)
+            return
+        if eventQid is not None:
+            # add link between Proceedings and the event item
+            self.wdSync.login()
+            proceedingsWikidataId, errors = self.wdSync.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=write)
+            self.wdSync.logout()
+            alert = Alert(a=self.colA3, text="")
+            event_href = self.wdSync.itemUrl(eventQid)
+            jp.Link(a=alert, href=event_href, text=f"Event entry for {volume}: {eventQid}")
+            jp.Br(a=alert)
+            proceedings_href = self.wdSync.itemUrl(proceedingsWikidataId)
+            jp.Link(a=alert, href=proceedings_href, text=f"Proceedings entry for {volume}: {proceedingsWikidataId}")
+
+        else:
+            alert = Alert(a=self.colA3, text=f"An error occured during the creation of the proceedings entry for {volume}")
+            jp.Br(a=alert)
+            jp.P(a=alert, text=errors)
+
     
 class WikidataDisplay(Display):
     '''

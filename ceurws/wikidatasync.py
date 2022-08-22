@@ -5,7 +5,6 @@ Created on 2022-08-14
 '''
 import datetime
 import os
-from functools import cache
 from typing import List, Union
 
 from spreadsheet.wikidata import Wikidata
@@ -460,8 +459,6 @@ class WikidataSync(object):
         qId, errors = self.wd.addDict(row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
         return qId, errors
 
-
-    @cache
     def getWikidataIdByVolumeNumber(self, number) -> str:
         """
         query wikidata for the qId of the proceedings of the given volume number
@@ -591,7 +588,6 @@ class DblpEndpoint:
     def __init__(self, endpoint):
         self.sparql = SPARQL(endpoint)
 
-    @cache
     def getDblpIdByVolumeNumber(self, number) -> List[str]:
         """
         Get the dblp entity id by given volume number
@@ -611,7 +607,6 @@ class DblpEndpoint:
             qIds = [record.get("proceeding")[len(self.DBLP_REC_PREFIX):] for record in qres]
         return qIds
 
-    @cache
     def getDblpUrlByDblpId(self, entityId) -> Union[str, None]:
         """
         Get the dblp url for given entity id

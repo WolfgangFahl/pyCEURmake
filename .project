@@ -3,6 +3,7 @@
 	<name>pyCEURmake</name>
 	<comment></comment>
 	<projects>
+		<project>justpy</project>
 		<project>PyGenericSpreadSheet</project>
 		<project>pyJustpyWidgets</project>
 		<project>pyLoDStorage</project>

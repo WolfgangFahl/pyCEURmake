@@ -165,6 +165,9 @@ class VolumeListRefresh(Display):
         self.progressBar.updateProgress(index/total*100)
 
     async def onRefreshButtonClick(self,_msg):
+        '''
+        handle clicking of the refresh button to get recently added volumes
+        '''
         self.app.clearErrors()
         try:
             _alert=Alert(a=self.colA1,text="checking CEUR-WS index.html for recently added volumes ...")

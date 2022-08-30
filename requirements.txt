@@ -19,8 +19,9 @@ BeautifulSoup4~=4.11.1
 lxml~=4.9.1
 # pyjustpywidgets
 # https://pypi.org/project/pyJustpyWidgets/
-pyJustpyWidgets~=0.0.23 
+pyJustpyWidgets~=0.0.25
 # https://pypi.org/project/justpy/
-justpy~=0.2.7
+#justpy~=0.2.7
+justpy~=0.4.1
 # https://pypi.org/project/pyGenericSpreadSheet/
 pyGenericSpreadSheet~=0.1.20

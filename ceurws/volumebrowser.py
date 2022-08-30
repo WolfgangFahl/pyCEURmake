@@ -3,6 +3,7 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import asyncio
 import re
 import justpy as jp
 from jpwidgets.bt5widgets import Alert, App, IconButton, Switch, ProgressBar
@@ -731,10 +732,10 @@ class VolumeBrowser(App):
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
         
         # Routes
-        jp.Route('/settings',self.settings)
-        jp.Route('/volumes',self.volumes)
-        jp.Route('/volume/{volnumber}',self.volumePage)
-        jp.Route('/wikidatasync',self.wikidatasync)
+        jp.JpRoute('/settings',self.settings)
+        jp.JpRoute('/volumes',self.volumes)
+        jp.JpRoute('/volume/{volnumber}',self.volumePage)
+        jp.JpRoute('/wikidatasync',self.wikidatasync)
         self.templateEnv=TemplateEnv()
         
     def setupPage(self,header=""):
@@ -812,6 +813,8 @@ class VolumeBrowser(App):
         '''
         self.setupRowsAndCols()
         self.volumeListDisplay=VolumeListDisplay(self, container=self.rowA ,debug=self.debug)
+        #await asyncio.sleep(0.1)
+        #await self.volumeListDisplay.onSizeColumnsToFit({})
         return self.wp
     
     async def content(self):

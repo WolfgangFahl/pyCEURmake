@@ -15,7 +15,7 @@ class TestVolume(Basetest):
         self.vm=VolumeManager()
         self.vm.load()
         
-    def getSampleVolum(self):
+    def getSampleVolume(self):
         conference=Conference()
         conference.fromDict({
             "id": "Vol-2436",
@@ -87,7 +87,7 @@ class TestVolume(Basetest):
         """
         template=self.templateEnv.getTemplate('volume_index_body.html')
         vol3000=self.vm.getList()[3000]
-        for volume in [self.getSampleVolum(),vol3000]:
+        for volume in [self.getSampleVolume(),vol3000]:
             html=template.render(volume=volume)
             debug=self.debug
             #debug=True

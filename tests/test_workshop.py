@@ -7,6 +7,9 @@ import unittest
 from ceurws.workshop import Workshop
 
 class TestWorkshop(unittest.TestCase):
+    '''
+    test workshop XML  handling
+    '''
 
 
     def setUp(self):

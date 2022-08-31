@@ -3,6 +3,7 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import asyncio
 import re
 import justpy as jp
 from jpwidgets.bt5widgets import Alert, App, IconButton, Switch, ProgressBar
@@ -181,6 +182,9 @@ class VolumeListRefresh(Display):
         self.progressBar.updateProgress(index/total*100)
 
     async def onRefreshButtonClick(self,_msg):
+        '''
+        handle clicking of the refresh button to get recently added volumes
+        '''
         self.app.clearErrors()
         try:
             _alert=Alert(a=self.colA1,text="checking CEUR-WS index.html for recently added volumes ...")
@@ -597,62 +601,70 @@ class VolumeListDisplay(Display):
                 jp.Br(a=alert)
                 jp.P(a=alert, text=errors)
 
-    async def createEventItemAndLinkProceedings(self, volume: Volume, msg):
-        """Create event  wikidata item for given volume and link the proceedings with the event"""
-        write = not self.dryRun
-        volNumber = getattr(volume, "number")
-        if self.app.wdSync.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
-            # link between proceedings and event already exists
-            proceedingsWikidataId = self.app.wdSync.getWikidataIdByVolumeNumber(number=volNumber)
-            alert = Alert(a=self.colA3, text=f"Vol-{volNumber}:Event and Link between proceedings and event already exists")
-            jp.Br(a=alert)
-            proceedings_href = self.app.wdSync.itemUrl(proceedingsWikidataId)
-            jp.Link(a=alert, href=proceedings_href, text=proceedingsWikidataId)
-            return
-        dblpEntityIds = self.app.wdSync.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
-        if len(dblpEntityIds) > 1:
-            Alert(a=self.colA3, text=f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}")
-            return
-        elif len(dblpEntityIds) == 1:
-            dblpEntityId = dblpEntityIds[0]
-        else:
-            dblpEntityId = None
-        wdItems = self.app.wdSync.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
-        eventQid = None
-        errors = None
-        if len(wdItems) == 0:
-            # event item does not exist → create a new one
-            eventRecord = self.app.wdSync.getWikidataEventRecord(volume)
-            self.app.wdSync.login()
-            eventQid, errors = self.app.wdSync.doAddEventToWikidata(record=eventRecord, write=write)
-            self.app.wdSync.logout()
-        elif len(wdItems) == 1:
-            # the event item already exists
-            eventQid = wdItems[0]
-        else:
-            alert = Alert(a=self.colA3, text=f"For the volume {volNumber} multiple event entries exist:")
-            jp.Br(a=alert)
-            for qId in wdItems:
-                href = self.app.wdSync.itemUrl(qId)
-                jp.Link(a=alert, href=href, text=qId)
-            return
-        if eventQid is not None:
-            # add link between Proceedings and the event item
-            self.app.wdSync.login()
-            proceedingsWikidataId, errors = self.app.wdSync.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=write)
-            self.app.wdSync.logout()
-            alert = Alert(a=self.colA3, text="")
-            event_href = self.app.wdSync.itemUrl(eventQid)
-            jp.Link(a=alert, href=event_href, text=f"Event entry for {volume}: {eventQid}")
-            jp.Br(a=alert)
-            proceedings_href = self.app.wdSync.itemUrl(proceedingsWikidataId)
-            jp.Link(a=alert, href=proceedings_href, text=f"Proceedings entry for {volume}: {proceedingsWikidataId}")
-
-        else:
-            alert = Alert(a=self.colA3, text=f"An error occured during the creation of the proceedings entry for {volume}")
-            jp.Br(a=alert)
-            jp.P(a=alert, text=errors)
-
+    async def createEventItemAndLinkProceedings(self, volume: Volume, _msg):
+        """
+        Create event  wikidata item for given volume and link 
+        the proceedings with the event
+        
+        Args:
+            volume(Volume): the volume for which to create the event item
+        """
+        try:
+            write = not self.dryRun
+            volNumber = getattr(volume, "number")
+            if self.app.wdSync.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
+                # link between proceedings and event already exists
+                proceedingsWikidataId = self.app.wdSync.getWikidataIdByVolumeNumber(number=volNumber)
+                alert = Alert(a=self.colA3, text=f"Vol-{volNumber}:Event and Link between proceedings and event already exists")
+                jp.Br(a=alert)
+                proceedings_href = self.app.wdSync.itemUrl(proceedingsWikidataId)
+                jp.Link(a=alert, href=proceedings_href, text=proceedingsWikidataId)
+                return
+            dblpEntityIds = self.app.wdSync.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
+            if len(dblpEntityIds) > 1:
+                Alert(a=self.colA3, text=f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}")
+                return
+            elif len(dblpEntityIds) == 1:
+                dblpEntityId = dblpEntityIds[0]
+            else:
+                dblpEntityId = None
+            wdItems = self.app.wdSync.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
+            eventQid = None
+            errors = None
+            if len(wdItems) == 0:
+                # event item does not exist → create a new one
+                eventRecord = self.app.wdSync.getWikidataEventRecord(volume)
+                self.app.wdSync.login()
+                eventQid, errors = self.app.wdSync.doAddEventToWikidata(record=eventRecord, write=write)
+                self.app.wdSync.logout()
+            elif len(wdItems) == 1:
+                # the event item already exists
+                eventQid = wdItems[0]
+            else:
+                alert = Alert(a=self.colA3, text=f"For the volume {volNumber} multiple event entries exist:")
+                jp.Br(a=alert)
+                for qId in wdItems:
+                    href = self.app.wdSync.itemUrl(qId)
+                    jp.Link(a=alert, href=href, text=qId)
+                return
+            if eventQid is not None:
+                # add link between Proceedings and the event item
+                self.app.wdSync.login()
+                proceedingsWikidataId, errors = self.app.wdSync.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=write)
+                self.app.wdSync.logout()
+                alert = Alert(a=self.colA3, text="")
+                event_href = self.app.wdSync.itemUrl(eventQid)
+                jp.Link(a=alert, href=event_href, text=f"Event entry for {volume}: {eventQid}")
+                jp.Br(a=alert)
+                proceedings_href = self.app.wdSync.itemUrl(proceedingsWikidataId)
+                jp.Link(a=alert, href=proceedings_href, text=f"Proceedings entry for {volume}: {proceedingsWikidataId}")
+    
+            else:
+                alert = Alert(a=self.colA3, text=f"An error occured during the creation of the proceedings entry for {volume}")
+                jp.Br(a=alert)
+                jp.P(a=alert, text=errors)
+        except Exception as ex:
+            self.app.handleException(ex)
     
 class WikidataDisplay(Display):
     '''
@@ -792,10 +804,10 @@ class VolumeBrowser(App):
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
         
         # Routes
-        jp.Route('/settings',self.settings)
-        jp.Route('/volumes',self.volumes)
-        jp.Route('/volume/{volnumber}',self.volumePage)
-        jp.Route('/wikidatasync',self.wikidatasync)
+        jp.JpRoute('/settings',self.settings)
+        jp.JpRoute('/volumes',self.volumes)
+        jp.JpRoute('/volume/{volnumber}',self.volumePage)
+        jp.JpRoute('/wikidatasync',self.wikidatasync)
         self.templateEnv=TemplateEnv()
         
     def setupPage(self,header=""):
@@ -873,6 +885,8 @@ class VolumeBrowser(App):
         '''
         self.setupRowsAndCols()
         self.volumeListDisplay=VolumeListDisplay(self, container=self.rowA ,debug=self.debug)
+        #await asyncio.sleep(0.1)
+        #await self.volumeListDisplay.onSizeColumnsToFit({})
         return self.wp
     
     async def content(self):

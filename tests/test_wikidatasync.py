@@ -3,7 +3,11 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import pprint
 import unittest
+
+from lodstorage.lod import LOD
+from wikibaseintegrator import wbi_core, wbi_datatype
 
 from tests.basetest import Basetest
 from ceurws.wikidatasync import DblpEndpoint, WikidataSync
@@ -122,12 +126,12 @@ class TestWikidataSync(Basetest):
             ("Working Notes of FIRE 2021 - Forum for Information Retrieval Evaluation", "FIRE 2021 - Forum for Information Retrieval Evaluation"),
             ("Working Notes for CLEF 2014 Conference", "CLEF 2014 Conference"),
             ("Joint Workshop Proceedings of the 3rd Edition of Knowledge-aware and Conversational Recommender Systems (KaRS) and the 5th Edition of Recommendation in Complex Environments (ComplexRec)", "3rd Edition of Knowledge-aware and Conversational Recommender Systems (KaRS) and the 5th Edition of Recommendation in Complex Environments (ComplexRec)"),
-            ("Workshop on Linked Data on the Web", "Linked Data on the Web"),
-            ("International Workshop on Enabling Service Business Ecosystems - ESBE'09", "Enabling Service Business Ecosystems - ESBE'09"),
+            ("Workshop on Linked Data on the Web", "Workshop on Linked Data on the Web"),
+            ("International Workshop on Enabling Service Business Ecosystems - ESBE'09", "International Workshop on Enabling Service Business Ecosystems - ESBE'09"),
             ("Workshop Proceedings from The Twenty-Third International Conference on Case-Based Reasoning", "The Twenty-Third International Conference on Case-Based Reasoning"),
             ("Workshop and Poster Proceedings of the 8th Joint International Semantic Technology Conference", "8th Joint International Semantic Technology Conference"),
             ("Workshops Proceedings and Tutorials of the 28th ACM Conference on Hypertext and Social Media", "28th ACM Conference on Hypertext and Social Media"),
-            ("Extended Papers of the International Symposium on Digital Humanities (DH 2016)", "Digital Humanities (DH 2016)"),
+            ("Extended Papers of the International Symposium on Digital Humanities (DH 2016)", "International Symposium on Digital Humanities (DH 2016)"),
             ("Short Papers Proceedings of the 2nd International Workshop on Software Engineering & Technology (Q-SET 2021)", "2nd International Workshop on Software Engineering & Technology (Q-SET 2021)"),
             ("", ""),
             (None, None),
@@ -136,7 +140,16 @@ class TestWikidataSync(Basetest):
             ("Proceedings of the Selected Papers of the Workshop on Emerging Technology Trends on the Smart Industry and the Internet of Things (TTSIIT 2022)", "Workshop on Emerging Technology Trends on the Smart Industry and the Internet of Things (TTSIIT 2022)"),
             ("Proceedings of the Working Notes of CLEF 2022 - Conference and Labs of the Evaluation Forum", "CLEF 2022 - Conference and Labs of the Evaluation Forum"),
             ("Proceedings of the Doctoral Consortium Papers Presented at the 34th International Conference on Advanced Information Systems Engineering (CAiSE 2022)", "34th International Conference on Advanced Information Systems Engineering (CAiSE 2022)"),
-            ('Selected Papers of the II International Scientific Symposium "Intelligent Solutions" (IntSol-2021). Workshop Proceedings', 'II International Scientific Symposium "Intelligent Solutions" (IntSol-2021)')
+            ('Selected Papers of the II International Scientific Symposium "Intelligent Solutions" (IntSol-2021). Workshop Proceedings', 'II International Scientific Symposium "Intelligent Solutions" (IntSol-2021)'),
+            ("Third Conference on Software Engineering and Information Management (full papers)", "Third Conference on Software Engineering and Information Management"),
+            ("Post-proceedings of the Tenth Seminar on Advanced Techniques and Tools for Software Evolution", "Tenth Seminar on Advanced Techniques and Tools for Software Evolution"),
+            ("Late Breaking Papers of the 27th International Conference on Inductive Logic Programming", "27th International Conference on Inductive Logic Programming"),
+            ("Anais do II Encontro Potiguar de Jogos, Entretenimento e Educação", "II Encontro Potiguar de Jogos, Entretenimento e Educação"),
+            ("Proceedings del Workshop L’integrazione dei dati archeologici digitali - Esperienze e prospettive in Italia 2015", "Workshop L’integrazione dei dati archeologici digitali - Esperienze e prospettive in Italia 2015"),
+            ("Proceedings 1st Learning Analytics for Curriculum and Program Quality Improvement Workshop", "1st Learning Analytics for Curriculum and Program Quality Improvement Workshop"),
+            ("Gemeinsamer Tagungsband der Workshops der Tagung Software Engineering 2014", "Workshops der Tagung Software Engineering 2014"),
+            ("Local Proceedings of the Fifth Balkan Conference in Informatics", "Fifth Balkan Conference in Informatics"),
+            ("Local Proceedings and Materials of Doctoral Consortium of the Tenth International Baltic Conference on Databases and Information Systems", "Doctoral Consortium of the Tenth International Baltic Conference on Databases and Information Systems")
         ]
         for param in test_params:
             with self.subTest("test event name extraction", param=param):
@@ -146,10 +159,14 @@ class TestWikidataSync(Basetest):
 
     def test_getEventTypeFromTitle(self):
         """tests getEventTypeFromTitle"""
+        workshop = ("Q40444998", "academic workshop")
+        conference = ("Q2020153", "academic conference")
         test_params = [
-            ("20th Internal Workshop on Satisfiability Modulo Theories", ("Q40444998", "academic workshop")),
-            ("Baltic DB&IS 2022 Doctoral Consortium and Forum", ("Q40444998", "academic workshop")),
-            ("20th Italian Conference on Theoretical Computer Science", ("Q2020153", "academic conference")),
+            ("20th Internal Workshop on Satisfiability Modulo Theories", workshop),
+            ("Baltic DB&IS 2022 Doctoral Consortium and Forum", workshop),
+            ("20th Italian Conference on Theoretical Computer Science", conference),
+            ("14th International Conference on ICT in Education, Research and Industrial Applications. Integration, Harmonization and Knowledge Transfer. Volume II: Workshops ", workshop),
+            ("4th International Symposium on Advanced Technologies and Applications in the Internet of Things", conference),
             ("", (None, None)), (None, (None, None))
         ]
         for param in test_params:
@@ -158,7 +175,6 @@ class TestWikidataSync(Basetest):
                 actualQid, actualDesc = self.wdSync.getEventTypeFromTitle(title)
                 self.assertEqual(expectedQid, actualQid)
                 self.assertEqual(expectedDesc, actualDesc)
-
 
     @unittest.skipIf(True, "Only manual execution of the test since it edits wikidata")
     def test_addLinkBetweenProceedingsAndEvent(self):
@@ -190,6 +206,44 @@ class TestWikidataSync(Basetest):
             eventQid = "Q11358"
             actual = self.wdSync.checkIfProceedingsFromExists(volumeNumber, eventQid)
             self.assertFalse(actual)
+
+    @unittest.skipIf(True, "queries unreliable wikidata endpoint")
+    def test_issueMissingUrlQualifier(self):
+        """
+        tests if ceurws proceedings have a described at url and if the language of work qualifier is missing
+        """
+        write = False
+        query="""SELECT ?proceeding ?volNumber ?statement
+            WHERE{ 
+                ?proceeding p:P179 [ps:P179 wd:Q27230297; 
+                                  pq:P478 ?volNumber].
+                ?proceeding p:P973 ?statement.
+                MINUS{?statement pq:P407 ?lang}
+            }
+            ORDER BY xsd:integer(?volNumber)
+            """
+        qres = self.wdSync.sparql.queryAsListOfDicts(query)
+        print(len(qres), "Volume urls have a missing language qualifier!")
+        qualifier = st=wbi_datatype.ItemID(value="Q1860",prop_nr="P407", is_qualifier=True)
+        self.wdSync.wd.loginWithCredentials()
+        for record in qres:
+            proceeedingQid = record.get("proceeding")[len("http://www.wikidata.org/entity/"):]
+            volumeNumber = record.get("volNumber")
+            print(proceeedingQid, volumeNumber)
+            wbPage = wbi_core.ItemEngine(item_id=proceeedingQid, mediawiki_api_url=self.wdSync.wd.apiurl)
+            urlStatement = None
+            for statement in wbPage.statements:
+                if getattr(statement, "prop_nr") == "P973":
+                    if isinstance(statement, wbi_datatype.Url):
+                        urlStatement = wbi_datatype.Url(value=statement.value,prop_nr=statement.prop_nr, qualifiers=[qualifier])
+                        break
+            if urlStatement is not None:
+                wbPage.update([urlStatement])
+                if self.debug:
+                    pprint.pprint(wbPage.get_json_representation())
+                if write:
+                    wbPage.write(self.wdSync.wd.login)
+        self.wdSync.wd.logout()
 
 
 class TestDblpEndpoint(Basetest):

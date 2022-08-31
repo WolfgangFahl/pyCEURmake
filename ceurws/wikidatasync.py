@@ -530,14 +530,18 @@ class WikidataSync(object):
                     "Selected Contributions of the", "Workshops Proceedings for the",
                     "Supplementary Proceedings of the", "Short Paper Proceedings of", "Short Paper Proceedings of the",
                     "Working Notes Proceedings of the", "Working Notes of", "Working Notes for",
-                    "Joint Workshop Proceedings of the", "Joint Workshop Proceedings of", "Workshop on",
-                    "International Workshop on ", "Workshop Proceedings from", "Workshop and Poster Proceedings of the",
-                    "Workshops Proceedings and Tutorials of the", "Extended Papers of the International Symposium on",
+                    "Joint Workshop Proceedings of the", "Joint Workshop Proceedings of",
+                    "Workshop Proceedings from", "Workshop and Poster Proceedings of the",
+                    "Workshops Proceedings and Tutorials of the", "Extended Papers of the",
                     "Short Papers Proceedings of the", "Short Papers Proceedings of",
                     "Proceedings of the Selected Papers of the", "Proceedings of the Working Notes of",
-                    "Proceedings of the Doctoral Consortium Papers Presented at the"]
+                    "Proceedings of the Doctoral Consortium Papers Presented at the", "Selected Contributions to the",
+                    "Selected and Revised Papers of", "Selected Papers of", "Up-and-Coming and Short Papers of the",
+                    "Academic Papers at", "Poster Track of the", "Actes de la", "Post-proceedings of the",
+                    "Late Breaking Papers of the", "Anais do", "Proceedings del", "Proceedings",
+                    "Gemeinsamer Tagungsband der", "Local Proceedings of the", "Local Proceedings and Materials of"]
         postfixes = ["Workshop Proceedings", "Proceedings", "Conference Proceedings", "Workshops Proceedings",
-                     "Adjunct Proceedings", "Poster and Demo Proceedings"]
+                     "Adjunct Proceedings", "Poster and Demo Proceedings", "(full papers)"]
         if title is not None:
             prefixes.sort(key=lambda prefix: len(prefix), reverse=True)
             for prefix in prefixes:
@@ -568,9 +572,11 @@ class WikidataSync(object):
             return None, None
         academicConference = ("Q2020153", "academic conference")
         academicWorkshop = ("Q40444998", "academic workshop")
-        if "conference" in title.lower():
+        if "workshop" in title.lower():
+            return academicWorkshop
+        elif "conference" in title.lower():
             return academicConference
-        elif "Symposium" in title.lower():
+        elif "symposium" in title.lower():
             return academicConference
         else:
             return academicWorkshop

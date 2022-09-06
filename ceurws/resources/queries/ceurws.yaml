@@ -75,7 +75,7 @@
       OPTIONAL {
       	# DBLP event ID
       	# identifier for scientific events in the DBLP computer science bibliography
-      	?item wdt:P10692 ?dblpEventId.
+      	?item wdt:P8978 ?dblpEventId.
       }
       OPTIONAL {
         # K10plus PPN ID

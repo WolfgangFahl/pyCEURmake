@@ -59,14 +59,21 @@ class VolumeParser(Textparser):
                 desc=Textparser.sanitize(desc,["CEUR Workshop Proceedings "])
                 scrapedDict["desc"]=desc
                 break
-        
-            
+
         # first H1 has title info
         firstH1=soup.find('h1')
-        if firstH1 is not None:    
+        if firstH1 is not None:
+            if len(firstH1.contents[0].text) < 20:
+                scrapedDict["acronym"] = firstH1.contents[0].text
             h1=firstH1.text
             h1=Textparser.sanitize(h1,['<TD bgcolor="#FFFFFF">'])
             scrapedDict["h1"]=h1
+            link = firstH1.find("a")
+            if link is not None and len(link.text) < 20:
+                acronym = link.text
+                eventHomepage = link.attrs.get("href")
+                scrapedDict["acronym"] = acronym
+                scrapedDict["homepage"] = eventHomepage
             
         # first h3 has loctime
         firstH3=soup.find('h3')
@@ -79,6 +86,8 @@ class VolumeParser(Textparser):
             scrapedDict["acronym"]=scrapedDict["desc"]
         if self.hasValue(scrapedDict, "h1") and not self.hasValue(scrapedDict,"title"):
             scrapedDict["title"]=scrapedDict["h1"]
+        if self.hasValue(scrapedDict, "h1") and self.hasValue(scrapedDict, "title") and not self.hasValue(scrapedDict, "acronym"):
+            scrapedDict["acronym"] = scrapedDict["h1"]
             
         return scrapedDict
 

@@ -228,6 +228,20 @@ class WikidataSync(object):
         wdItems = [record.get("event") for record in qres]
         return wdItems
 
+    def getEventsOfProceedings(self, itemId:str) -> List[str]:
+        """
+        get the item ids of the events the given proceedings ids is the proceedings from
+        Args:
+            itemId: Qid of the proceedings
+
+        Returns:
+            List of the events
+        """
+        query = f"""SELECT ?event WHERE {{ wd:{itemId} wdt:P4745 ?event.}}"""
+        qres = self.sparql.queryAsListOfDicts(query)
+        wdItems = [record.get("event")[len("http://www.wikidata.org/entity/"):] for record in qres]
+        return wdItems
+
     def addProceedingsToWikidata(self, record:dict, write:bool=True, ignoreErrors:bool=False):
         """
         Creates a wikidata entry for the given record
@@ -345,6 +359,14 @@ class WikidataSync(object):
         qId, errors = self.wd.addDict(row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
         return qId, errors
 
+    def askWikidata(self, askQuery:str) -> bool:
+        try:
+            qres = self.sparql.rawQuery(askQuery).convert()
+            return qres.get("boolean", False)
+        except Exception as ex:
+            print(ex)
+            return False
+
     def checkIfProceedingsFromExists(self, volumeNumber:int, eventItemQid: Union[str, None]) -> bool:
         """Returns True if the is proceedings from relation already exists between the given proceedings and event"""
         eventVar = "?event"
@@ -352,12 +374,21 @@ class WikidataSync(object):
             eventVar = f"wd:{eventItemQid}"
         proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
         query = f"""ASK{{ wd:{proceedingsWikidataId} wdt:P4745 {eventVar}.}}"""
-        try:
-            qres = self.sparql.rawQuery(query).convert()
-            return qres.get("boolean", False)
-        except Exception as ex:
-            print(ex)
-            return False
+        proceedingExists = self.askWikidata(query)
+        return proceedingExists
+
+    def hasItemPropertyValueFor(self, item, propertyId:str):
+        """
+        ask wikidata if the given item has a value for the given property
+        Args:
+            item: item Qid
+            propertyId: property Pid
+        Returns:
+            True if the item has the property else False
+        """
+        query = f"""ASK{{ wd:{item} wdt:{propertyId} ?value.}}"""
+        return self.askWikidata(query)
+
 
     def addLinkBetweenProceedingsAndEvent(self, volumeNumber:int, eventItemQid: str, write:bool=True, ignoreErrors:bool=False):
         """
@@ -457,6 +488,98 @@ class WikidataSync(object):
         ]
         mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
         qId, errors = self.wd.addDict(row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
+        return qId, errors
+
+    def addDblpPublicationId(self,
+                             volumeNumber:int,
+                             dblpRecordId:str=None,
+                             write: bool = True,
+                             ignoreErrors: bool = False):
+        """
+        try to add the dblp publication id (P8978) to the proceedings record
+        Args:
+            volumeNumber: ceurws volumenumber of the proceedings
+            dblpRecordId: dblp record id to add to the proceedings item. If None query dblp for the record id
+            write: if True actually write
+            ignoreErrors(bool): if True ignore errors
+        """
+        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
+        if proceedingsWikidataId is None:
+            return False, "Proceedings item can not be determined"
+        if self.hasItemPropertyValueFor(item=proceedingsWikidataId, propertyId="P8978"):
+            return False, "dblp publication id is already assigned to the proceedings item"
+        if dblpRecordId is None:
+            dblpRecordIds = self.dbpEndpoint.getDblpIdByVolumeNumber(volumeNumber)
+            if len(dblpRecordIds) == 1:
+                dblpRecordId = dblpRecordIds[0]
+            elif len(dblpRecordIds) > 1:
+                return False, f"More than one proceedings record found ({dblpRecordIds})"
+            else:
+                return False, f"Proceedings of volume {volumeNumber} are not in dblp"
+        wdMetadata =[
+            {"Entity": "proceedings",
+             "Column": "DBLP publication ID",
+             "PropertyName": "DBLP publication ID",
+             "PropertyId": "P8978",
+             "Type": "extid",
+             "Qualifier": None,
+             "Lookup": ""}
+        ]
+        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
+        record = {"DBLP publication ID": dblpRecordId}
+        _, errors = self.wd.addDict(itemId=proceedingsWikidataId, row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
+        return True, errors
+
+    def addAcronymToItem(self, itemId: str, acronym: str, desc:str=None, label:str=None, write: bool = True, ignoreErrors: bool = False):
+        """
+        add the acronym to the given item
+        Args:
+            itemId: item to add the acronym to
+            acronym(str): acronym of the item
+            write(bool): if True actually write
+            ignoreErrors(bool): if True ignore errors
+
+        Returns:
+            (qid, errors) id of the created entry and occurred errors
+        """
+        wdMetadata = [{"Column": "short name", "PropertyName": "short name", "PropertyId": "P1813", "Type": "text","Lookup": ""}]
+        record = {"short name": acronym, "description": desc, "label":label}
+        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
+        qId, errors = self.wd.addDict(itemId=itemId, row=record, mapDict=mapDict, write=write,
+                                      ignoreErrors=ignoreErrors)
+        return qId, errors
+
+    def addOfficialWebsiteToItem(self, itemId: str, officialWebsite: str, write: bool = True, ignoreErrors: bool = False):
+        """
+        add the official website to the given item
+        Args:
+            itemId: item to add the acronym to
+            acronym(str): acronym of the item
+            write(bool): if True actually write
+            ignoreErrors(bool): if True ignore errors
+
+        Returns:
+            (qid, errors) id of the created entry and occurred errors
+        """
+        wdMetadata = [{
+                "Column": "official website",
+                "PropertyName": "official website",
+                "PropertyId": "P856",
+                "Type": "url",
+                "Lookup": ""
+            },
+            {
+                "Column": "language of work or name",
+                "PropertyName": "language of work or name",
+                "PropertyId": "P407",
+                "Type": "itemid",
+                "Qualifier": "official website",
+                "Lookup": ""
+            }]
+        record = {"official website": officialWebsite, "language of work or name": "Q1860"}
+        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
+        qId, errors = self.wd.addDict(itemId=itemId, row=record, mapDict=mapDict, write=write,
+                                      ignoreErrors=ignoreErrors)
         return qId, errors
 
     def getWikidataIdByVolumeNumber(self, number) -> str:
@@ -581,6 +704,51 @@ class WikidataSync(object):
         else:
             return academicWorkshop
 
+    def doCreateEventItemAndLinkProceedings(self, volume: Volume, write:bool=False):
+        """
+        Create event  wikidata item for given volume and link the proceedings with the event
+        Args:
+            volume: volume to create the event for
+            write: If True actually write
+
+        Returns:
+            proceedingsQId, eventQId, msg
+        """
+        volNumber = getattr(volume, "number")
+        if self.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
+            # link between proceedings and event already exists
+            proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volNumber)
+            return proceedingsWikidataId, None, "Event and Link between proceedings and event already exists"
+        dblpEntityIds = self.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
+        if len(dblpEntityIds) > 1:
+            return None, None, f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}"
+        elif len(dblpEntityIds) == 1:
+            dblpEntityId = dblpEntityIds[0]
+        else:
+            dblpEntityId = None
+        wdItems = self.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
+        msg=""
+        eventQid = None
+        errors = None
+        if len(wdItems) == 0:
+            # event item does not exist → create a new one
+            eventRecord = self.getWikidataEventRecord(volume)
+            eventQid, errors = self.doAddEventToWikidata(record=eventRecord, write=write)
+            msg += "Created Event item;"
+        elif len(wdItems) == 1:
+            # the event item already exists
+            eventQid = wdItems[0]
+            msg += "Event item already exists;"
+        else:
+            return None, None, f"Multiple event entries exist: {','.join(wdItems)}"
+        if eventQid is not None:
+            # add link between Proceedings and the event item
+            proceedingsWikidataId, errors = self.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=write)
+            msg += "Added Link between Proceedings and Event item;"
+            return proceedingsWikidataId, eventQid, msg
+
+        else:
+            return volume, None, None, f"An error occured during the creation of the proceedings entry for {volume}"
 
 
 class DblpEndpoint:
@@ -638,6 +806,7 @@ class DblpEndpoint:
     def convertEntityIdToUrlId(self, entityId:str) -> Union[str, None]:
         """
         Convert the given entityId to the id used in the url
+        Note: use with care this conversion does not always work
         Args:
             entityId: id of the entity
         Example:

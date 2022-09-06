@@ -246,52 +246,20 @@ class WikidataRangeImport(Display):
             self.app.feedback(f"error:{err}")
 
     def createEventItemAndLinkProceedings(self, volume: Volume):
-        """Create event  wikidata item for given volume and link the proceedings with the event"""
-        volNumber = getattr(volume, "number")
-        if self.app.wdSync.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
-            # link between proceedings and event already exists
-            proceedingsWikidataId = self.app.wdSync.getWikidataIdByVolumeNumber(number=volNumber)
-            self.createEventProceedingsList(self.colD1, self.wdSync, volume, proceedingsWikidataId,
-                                            msg="Event and Link between proceedings and event already exists")
-            return
-        dblpEntityIds = self.app.wdSync.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
-        if len(dblpEntityIds) > 1:
-            self.createEventProceedingsList(self.colD1, self.wdSync, volume,
-                                            msg=f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}")
-            return
-        elif len(dblpEntityIds) == 1:
-            dblpEntityId = dblpEntityIds[0]
-        else:
-            dblpEntityId = None
-        wdItems = self.app.wdSync.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
-        msg=""
-        eventQid = None
-        errors = None
-        if len(wdItems) == 0:
-            # event item does not exist → create a new one
-            eventRecord = self.app.wdSync.getWikidataEventRecord(volume)
-            eventQid, errors = self.app.wdSync.doAddEventToWikidata(record=eventRecord, write=True)
-            msg += "Created Event item;"
-        elif len(wdItems) == 1:
-            # the event item already exists
-            eventQid = wdItems[0]
-            msg += "Event item already exists;"
-        else:
-            self.createEventProceedingsList(self.colD1, self.wdSync, volume,
-                                            msg=f"Multiple event entries exist: {','.join(wdItems)}")
-            return
-        if eventQid is not None:
-            # add link between Proceedings and the event item
-            proceedingsWikidataId, errors = self.app.wdSync.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=True)
-            msg += "Added Link between Proceedings and Event item;"
-            self.createEventProceedingsList(self.colD1, self.wdSync, volume, proceedingsWikidataId, eventQid,
-                                            msg=msg)
-
-        else:
-            self.createEventProceedingsList(self.colD1, self.wdSync, volume,
-                                            msg=f"An error occured during the creation of the proceedings entry for {volume}")
+        """
+        Create event  wikidata item for given volume and link the proceedings with the event
+        Args:
+            volume: volume to create the event and proceedings link for
+        """
+        proceedingsQId, eventQId, msg = self.app.wdSync.doCreateEventItemAndLinkProceedings(volume, write=True)
+        self.createEventProceedingsList(self.colD1,
+                                        self.wdSync,
+                                        volume=volume,
+                                        proceedingsId=proceedingsQId,
+                                        eventId=eventQId,
+                                        msg=msg)
         
-    async def onUploadButtonClick(self,_msg):
+    async def onUploadButtonClick(self, _msg):
         self.app.clearErrors()
         step=-1 if self.fromVolume>=self.toVolume else 1
         total=(self.toVolume-self.fromVolume)/step+1
@@ -310,9 +278,9 @@ class WikidataRangeImport(Display):
                         self.createEventProceedingsList(self.colD1, self.wdSync, volume,
                                                     msg=f"An error occured during the creation of the proceedings entry for {volume}")
                     finally:
-                        self.progressBar.incrementProgress(100/(total-1))
-                    print(f"Vol-{volumeNumber}")
-                    await self.app.wp.update()
+                        self.progressBar.incrementProgress(100 / (total - 1))
+                        print(f"Vol-{volumeNumber}")
+                        await self.app.wp.update()
             except Exception as ex:
                 self.app.handleException(ex)
         self.app.wdSync.logout()
@@ -611,58 +579,14 @@ class VolumeListDisplay(Display):
         """
         try:
             write = not self.dryRun
-            volNumber = getattr(volume, "number")
-            if self.app.wdSync.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
-                # link between proceedings and event already exists
-                proceedingsWikidataId = self.app.wdSync.getWikidataIdByVolumeNumber(number=volNumber)
-                alert = Alert(a=self.colA3, text=f"Vol-{volNumber}:Event and Link between proceedings and event already exists")
+            proceedingsQId, eventQId, msg = self.app.wdSync.doCreateEventItemAndLinkProceedings(volume, write=write)
+            alert = Alert(a=self.colA3, text=msg)
+            if proceedingsQId is not None:
                 jp.Br(a=alert)
-                proceedings_href = self.app.wdSync.itemUrl(proceedingsWikidataId)
-                jp.Link(a=alert, href=proceedings_href, text=proceedingsWikidataId)
-                return
-            dblpEntityIds = self.app.wdSync.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
-            if len(dblpEntityIds) > 1:
-                Alert(a=self.colA3, text=f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}")
-                return
-            elif len(dblpEntityIds) == 1:
-                dblpEntityId = dblpEntityIds[0]
-            else:
-                dblpEntityId = None
-            wdItems = self.app.wdSync.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
-            eventQid = None
-            errors = None
-            if len(wdItems) == 0:
-                # event item does not exist → create a new one
-                eventRecord = self.app.wdSync.getWikidataEventRecord(volume)
-                self.app.wdSync.login()
-                eventQid, errors = self.app.wdSync.doAddEventToWikidata(record=eventRecord, write=write)
-                self.app.wdSync.logout()
-            elif len(wdItems) == 1:
-                # the event item already exists
-                eventQid = wdItems[0]
-            else:
-                alert = Alert(a=self.colA3, text=f"For the volume {volNumber} multiple event entries exist:")
+                jp.Link(a=alert,href=f"https://www.wikidata.org/entity/{proceedingsQId}", text=f"Proceedings: {proceedingsQId}")
+            if eventQId is not None:
                 jp.Br(a=alert)
-                for qId in wdItems:
-                    href = self.app.wdSync.itemUrl(qId)
-                    jp.Link(a=alert, href=href, text=qId)
-                return
-            if eventQid is not None:
-                # add link between Proceedings and the event item
-                self.app.wdSync.login()
-                proceedingsWikidataId, errors = self.app.wdSync.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=write)
-                self.app.wdSync.logout()
-                alert = Alert(a=self.colA3, text="")
-                event_href = self.app.wdSync.itemUrl(eventQid)
-                jp.Link(a=alert, href=event_href, text=f"Event entry for {volume}: {eventQid}")
-                jp.Br(a=alert)
-                proceedings_href = self.app.wdSync.itemUrl(proceedingsWikidataId)
-                jp.Link(a=alert, href=proceedings_href, text=f"Proceedings entry for {volume}: {proceedingsWikidataId}")
-    
-            else:
-                alert = Alert(a=self.colA3, text=f"An error occured during the creation of the proceedings entry for {volume}")
-                jp.Br(a=alert)
-                jp.P(a=alert, text=errors)
+                jp.Link(a=alert, href=f"https://www.wikidata.org/entity/{eventQId}", text=f"Event: {eventQId}")
         except Exception as ex:
             self.app.handleException(ex)
     
@@ -762,7 +686,7 @@ class WikidataDisplay(Display):
             eventLink=self.createItemLink(row,"event")
             eventSeriesLink=self.createItemLink(row, "eventSeries")
             #@TODO - use formatterUris from Wikidata
-            dblpLink=self.createExternalLink(row,"dblpEventId","dblp","https://dblp.org/db/")
+            dblpLink=self.createExternalLink(row,"dblpEventId","dblp","https://dblp.org/rec/")
             k10PlusLink=self.createExternalLink(row, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=")
             lod.append(
                 {
@@ -844,7 +768,7 @@ class VolumeBrowser(App):
         settings
         '''
         self.setupRowsAndCols()
-        self.wdRangeImport=WikidataRangeImport(self,a=self.rowA)
+        #self.wdRangeImport=WikidataRangeImport(self,a=self.rowA)
         self.volumeListRefresh=VolumeListRefresh(self,a=self.rowA)
         return self.wp
     

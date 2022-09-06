@@ -53,4 +53,15 @@ class TestVolumeParser(Basetest):
             if hasattr(volume,"loctime") and volume.loctime is not None:
                 parts=volume.loctime.split(",")
                 print(f"{volnumber:4}({len(parts)}):{volume.loctime}")
+
+    def test_issue30(self):
+        """
+        tests why the extraction of the acronym fails for some volumes
+        """
+        volumeWithKnownIssue = "435"
+        volumeUrl = self.volumeParser.volumeUrl(volumeWithKnownIssue)
+        scrapedDict=self.volumeParser.parse(volumeUrl)
+        self.assertEqual("SWAT4LS 2008", scrapedDict.get("acronym"))
+        self.assertEqual("http://www.swat4ls.org/", scrapedDict.get("homepage"))
+        print(scrapedDict)
             

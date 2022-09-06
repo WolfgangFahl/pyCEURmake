@@ -11,6 +11,7 @@ from wikibaseintegrator import wbi_core, wbi_datatype
 
 from tests.basetest import Basetest
 from ceurws.wikidatasync import DblpEndpoint, WikidataSync
+from volumeparser import VolumeParser
 
 
 class TestWikidataSync(Basetest):
@@ -245,6 +246,79 @@ class TestWikidataSync(Basetest):
                     wbPage.write(self.wdSync.wd.login)
         self.wdSync.wd.logout()
 
+    @unittest.skipIf(True,"Only to manually add missing dblp publication ids")
+    def test_addingMissingDblpPublicationId(self):
+        """
+        tests adding the missing dblp publication (record) id
+        Input: volume number
+        Process:
+            * query dblp if proceedings for the given volume exist → dblp record id
+            * add dblp record id as dblp publication id (P8978)
+        """
+        self.wdSync.login()
+        for volumeNumber in range(1,3205):
+            print(f"Vol-{volumeNumber}", end=" ")
+            res, errors = self.wdSync.addDblpPublicationId(volumeNumber, write=True)
+            if res:
+                print("✅", end=" ")
+            else:
+                print("✗", errors)
+            print("")
+        self.wdSync.logout()
+
+    @unittest.skipIf(True, "Only to manually try to extract and add missing acronyms")
+    def test_issue30_missing_acronym(self):
+        """
+
+        """
+        write = False
+        query="""
+            SELECT ?item ?itemLabel ?itemdesc ?volume
+            WHERE 
+            {
+              ?item wdt:P31 wd:Q1143604;
+                    p:P179 [ps:P179 wd:Q27230297; pq:P478 ?volume];
+                    schema:description ?itemdesc. 
+              FILTER(lang(?itemdesc)="en") 
+              FILTER(str(?itemdesc)="Proceedings of None workshop")
+              MINUS{?item wdt:P1813 ?acronym}
+              SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+            }"""
+        qres = self.wdSync.sparql.queryAsListOfDicts(query)
+        volumesWithMissingAcronym = [(record.get("item"), record.get("volume")) for record in qres]
+        volumeParser = VolumeParser()
+        self.wdSync.login()
+        for wdUrl, volumeNumber in volumesWithMissingAcronym:
+            qId = wdUrl[len("http://www.wikidata.org/entity/"):]
+            scrapedDict = volumeParser.parse(volumeParser.volumeUrl(volumeNumber))
+            acronym = scrapedDict.get("acronym")
+            if acronym is not None and len(acronym) < 20:
+                print(f"{qId}:✅ Adding Acronym {acronym}")
+                self.wdSync.addAcronymToItem(qId, acronym, desc=f"Proceedings of {acronym} workshop", write=write)
+                eventIds = self.wdSync.getEventsOfProceedings(qId)
+                if len(eventIds) == 1:
+                    # proceeding of just one event
+                    eventId = eventIds[0]
+                    self.wdSync.addAcronymToItem(eventId, acronym, write=write)
+                    homepage = scrapedDict.get("homepage")
+                    if homepage is not None and homepage.startswith("http"):
+                        self.wdSync.addOfficialWebsiteToItem(eventId, homepage, write=write)
+                        pass
+            else:
+                print(f"{qId}:✗ {volumeParser.volumeUrl(volumeNumber)}")
+        self.wdSync.logout()
+
+    def test_getEventsOfProceedings(self):
+        """tests getEventsOfProceedings"""
+        test_params =[
+            ("Q113545267", ["Q113656499"]),
+            ("Q39294161", ["Q113744888", "Q113625218"])
+        ]
+        for param in test_params:
+            with self.subTest("Test for the events of a proceedings", param=param):
+                proceedingsId, expectedEventIds = param
+                actual = self.wdSync.getEventsOfProceedings(proceedingsId)
+                self.assertSetEqual(set(expectedEventIds), set(actual))
 
 class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""

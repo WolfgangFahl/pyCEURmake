@@ -122,6 +122,7 @@ class WikidataSync(object):
             "volume": getattr(volume, "number"),
             "pubDate": getattr(volume, "pubDate"),
             "ceurwsUrl": getattr(volume, "url"),
+            "language of work or name": "Q1860",
             "fullWorkUrl": getattr(volume, "url")
         }
         if isinstance(record.get("pubDate"), datetime.datetime):
@@ -334,6 +335,15 @@ class WikidataSync(object):
                 "PropertyId": "P973",
                 "Type": "url",
                 "Qualifier": None,
+                "Lookup": ""
+            },
+            {
+                "Entity": "proceedings",
+                "Column": "language of work or name",
+                "PropertyName": "language of work or name",
+                "PropertyId": "P407",
+                "Type": "itemid",
+                "Qualifier": "described at URL",
                 "Lookup": ""
             },
             {

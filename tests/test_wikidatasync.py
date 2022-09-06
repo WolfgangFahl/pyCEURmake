@@ -11,7 +11,7 @@ from wikibaseintegrator import wbi_core, wbi_datatype
 
 from tests.basetest import Basetest
 from ceurws.wikidatasync import DblpEndpoint, WikidataSync
-from volumeparser import VolumeParser
+from ceurws.volumeparser import VolumeParser
 
 
 class TestWikidataSync(Basetest):

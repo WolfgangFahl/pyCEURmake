@@ -20,9 +20,9 @@ class Version(object):
     Version handling for VolumBrowser
     '''
     name="CEUR-WS Volume Browser"
-    version='0.0.1'
+    version='0.0.2'
     date = '2022-08-14'
-    updated = '2022-08-14'
+    updated = '2022-09-06'
     description='CEUR-WS Volume browser'
     authors='Wolfgang Fahl'
     license=f'''Copyright 2022 contributors. All rights reserved.
@@ -36,8 +36,6 @@ class Version(object):
 {description}
 
   Created by {authors} on {date} last updated {updated}"""
-            
-
             
 class Display:
     '''
@@ -113,7 +111,6 @@ class Display:
             jp.Link(a=li2, href=wdSync.itemUrl(eventId), text=eventId)
         li3 = jp.Li(a=ul, classes="list-group-item", text=wdSync.getEventNameFromTitle(getattr(volume, "title")))
         li4 = jp.Li(a=ul, classes="list-group-item", text=msg)
-
     
     def getValue(self,obj,attr):
         value=getattr(obj,attr,Display.noneValue)
@@ -149,7 +146,9 @@ class Display:
         
     async def onSizeColumnsToFit(self,_msg:dict):   
         try:
-            await self.agGrid.run_api('sizeColumnsToFit()', self.app.wp)
+            await asyncio.sleep(0.2)
+            if self.agGrid:
+                await self.agGrid.run_api('sizeColumnsToFit()', self.app.wp)
         except Exception as ex:
             self.app.handleException(ex)
             
@@ -204,7 +203,6 @@ class VolumeListRefresh(Display):
             _alert.inner_html="Done"
         except Exception as ex:
                 self.app.handleException(ex)
-
 
 class WikidataRangeImport(Display):
     '''
@@ -466,6 +464,7 @@ class VolumeListDisplay(Display):
         self.ignoreErrorsButton=Switch(a=self.colA2,labelText="ignore errors",checked=self.ignoreErrors)
         self.ignoreErrorsButton.on("input",self.onChangeIgnoreErrors)
         self.addFitSizeButton(a=self.colA3)
+        self.app.wp.on("page_ready", self.onSizeColumnsToFit)
      
         try:
             self.agGrid=LodGrid(a=self.colB1)
@@ -603,6 +602,7 @@ class WikidataDisplay(Display):
         self.readProceedingsButton=jp.Button(text="from cache",classes="btn btn-primary",a=self.app.colA1,click=self.onReadProceedingsClick)
         self.wikidataRefreshButton=jp.Button(text="refresh wikidata",classes="btn btn-primary",a=self.app.colA1,click=self.onWikidataRefreshButtonClick)
         self.addFitSizeButton(a=self.app.colA1)
+        self.app.wp.on("page_ready", self.onSizeColumnsToFit)
 
     def createQueryDisplay(self,name,a)->QueryDisplay:
         '''
@@ -626,6 +626,7 @@ class WikidataDisplay(Display):
             self.app.showFeedback(f"found {len(proceedingsRecords)} cached wikidata proceedings records")
             self.reloadAgGrid(proceedingsRecords)
             await self.app.wp.update()
+            await self.onSizeColumnsToFit(_msg)
         except Exception as ex:
             self.app.handleException(ex)
     
@@ -638,6 +639,7 @@ class WikidataDisplay(Display):
             await self.app.wp.update()
             self.updateWikidata()
             await self.app.wp.update()
+            await self.onSizeColumnsToFit(_msg)
         except Exception as ex:
             self.app.handleException(ex)
 

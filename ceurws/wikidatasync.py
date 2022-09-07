@@ -758,7 +758,7 @@ class WikidataSync(object):
             return proceedingsWikidataId, eventQid, msg
 
         else:
-            return volume, None, None, f"An error occured during the creation of the proceedings entry for {volume}"
+            return None, None, f"An error occured during the creation of the proceedings entry for {volume}"
 
 
 class DblpEndpoint:

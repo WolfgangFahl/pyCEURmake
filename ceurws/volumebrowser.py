@@ -22,7 +22,7 @@ class Version(object):
     name="CEUR-WS Volume Browser"
     version='0.0.2'
     date = '2022-08-14'
-    updated = '2022-09-06'
+    updated = '2022-09-07'
     description='CEUR-WS Volume browser'
     authors='Wolfgang Fahl'
     license=f'''Copyright 2022 contributors. All rights reserved.
@@ -730,10 +730,10 @@ class VolumeBrowser(App):
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
         
         # Routes
-        jp.JpRoute('/settings',self.settings)
-        jp.JpRoute('/volumes',self.volumes)
-        jp.JpRoute('/volume/{volnumber}',self.volumePage)
-        jp.JpRoute('/wikidatasync',self.wikidatasync)
+        jp.Route('/settings',self.settings)
+        jp.Route('/volumes',self.volumes)
+        jp.Route('/volume/{volnumber}',self.volumePage)
+        jp.Route('/wikidatasync',self.wikidatasync)
         self.templateEnv=TemplateEnv()
         
     def setupPage(self,header=""):

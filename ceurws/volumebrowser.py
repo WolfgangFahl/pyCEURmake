@@ -526,6 +526,7 @@ class VolumeListDisplay(Display):
                 volumeId = int(match.group("volumeNumber")) if match is not None else None
                 if volumeId is not None and volumeId in self.app.wdSync.volumesByNumber:
                     volume: Volume = self.app.wdSync.volumesByNumber.get(volumeId)
+                    await self.createProceedingsItemFromVolume(volume, msg)
                     await self.createEventItemAndLinkProceedings(volume, msg)
                 else:
                     Alert(a=self.colA3, text=f"Volume for selected row can not be loaded correctly")
@@ -578,7 +579,11 @@ class VolumeListDisplay(Display):
         """
         try:
             write = not self.dryRun
+            if write:
+                self.app.wdSync.login()
             proceedingsQId, eventQId, msg = self.app.wdSync.doCreateEventItemAndLinkProceedings(volume, write=write)
+            if write:
+                self.app.wdSync.logout()
             alert = Alert(a=self.colA3, text=msg)
             if proceedingsQId is not None:
                 jp.Br(a=alert)

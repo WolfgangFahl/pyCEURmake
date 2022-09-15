@@ -3,10 +3,13 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import csv
 import pprint
 import unittest
+from collections import Counter
 
 from lodstorage.lod import LOD
+from ptp.eventrefparser import EventReferenceParser
 from wikibaseintegrator import wbi_core, wbi_datatype
 
 from tests.basetest import Basetest
@@ -308,6 +311,7 @@ class TestWikidataSync(Basetest):
                 print(f"{qId}:✗ {volumeParser.volumeUrl(volumeNumber)}")
         self.wdSync.logout()
 
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
     def test_getEventsOfProceedings(self):
         """tests getEventsOfProceedings"""
         test_params =[
@@ -319,6 +323,7 @@ class TestWikidataSync(Basetest):
                 proceedingsId, expectedEventIds = param
                 actual = self.wdSync.getEventsOfProceedings(proceedingsId)
                 self.assertSetEqual(set(expectedEventIds), set(actual))
+
 
 class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""

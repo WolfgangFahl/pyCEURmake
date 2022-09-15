@@ -142,7 +142,11 @@ class WikidataSync(object):
             "label": self.getEventNameFromTitle(volumeTitle),
             "description": description,
             "instanceOf": instanceOf,
-            "short name": getattr(volume, "acronym")
+            "short name": getattr(volume, "acronym"),
+            "locationWikidataId": getattr(volume, "cityWikidataId"),
+            "countryWikidataId": getattr(volume, "countryWikidataId"),
+            "start time": getattr(volume, "dateFrom").isoformat() if getattr(volume, "dateFrom") is not None else None,
+            "end time": getattr(volume, "dateTo").isoformat() if getattr(volume, "dateTo") is not None else None
         }
         if dblpEntityIds is not None and len(dblpEntityIds) > 0:
             dblpEntityId = dblpEntityIds[0]
@@ -399,8 +403,11 @@ class WikidataSync(object):
         query = f"""ASK{{ wd:{item} wdt:{propertyId} ?value.}}"""
         return self.askWikidata(query)
 
-
-    def addLinkBetweenProceedingsAndEvent(self, volumeNumber:int, eventItemQid: str, write:bool=True, ignoreErrors:bool=False):
+    def addLinkBetweenProceedingsAndEvent(self,
+                                          volumeNumber:int,
+                                          eventItemQid: str,
+                                          write:bool=True,
+                                          ignoreErrors:bool=False):
         """
         add the link between the wikidata proceedings item and the given event wikidata item
         Args:
@@ -423,7 +430,11 @@ class WikidataSync(object):
         ]
         mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
         record = {"isProceedingsFrom": eventItemQid}
-        _, errors = self.wd.addDict(itemId=proceedingsWikidataId, row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
+        _, errors = self.wd.addDict(itemId=proceedingsWikidataId,
+                                    row=record,
+                                    mapDict=mapDict,
+                                    write=write,
+                                    ignoreErrors=ignoreErrors)
         return proceedingsWikidataId, errors
 
     def doAddEventToWikidata(self, record: dict, write: bool = True, ignoreErrors: bool = False):
@@ -494,7 +505,45 @@ class WikidataSync(object):
                 "Type": "extid",
                 "Qualifier": None,
                 "Lookup": ""
-             }
+             },
+            {
+                "Entity": entity,
+                "Column": "start time",
+                "PropertyName": "start time",
+                "PropertyId": "P580",
+                "Value": entityQid,
+                "Type": "date",
+                "Qualifier": None,
+                "Lookup": ""
+            },
+            {
+                "Entity": entity,
+                "Column": "end time",
+                "PropertyName": "end time",
+                "PropertyId": "P582",
+                "Value": entityQid,
+                "Type": "date",
+                "Qualifier": None,
+                "Lookup": ""
+            },
+            {
+                "Entity": entity,
+                "Column": "locationWikidataId",
+                "PropertyName": "location",
+                "PropertyId": "P276",
+                "Type": "itemid",
+                "Qualifier": None,
+                "Lookup": ""
+            },
+            {
+                "Entity": entity,
+                "Column": "countryWikidataId",
+                "PropertyName": "country",
+                "PropertyId": "P17",
+                "Type": "itemid",
+                "Qualifier": None,
+                "Lookup": ""
+            }
         ]
         mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
         qId, errors = self.wd.addDict(row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
@@ -714,18 +763,19 @@ class WikidataSync(object):
         else:
             return academicWorkshop
 
-    def doCreateEventItemAndLinkProceedings(self, volume: Volume, write:bool=False):
+    def doCreateEventItemAndLinkProceedings(self, volume: Volume, proceedingsWikidataId:str=None, write:bool=False):
         """
         Create event  wikidata item for given volume and link the proceedings with the event
         Args:
             volume: volume to create the event for
+            proceedingsWikidataId: proceedings wikidata id of the event
             write: If True actually write
 
         Returns:
             proceedingsQId, eventQId, msg
         """
         volNumber = getattr(volume, "number")
-        if self.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
+        if proceedingsWikidataId is None and self.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
             # link between proceedings and event already exists
             proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volNumber)
             return proceedingsWikidataId, None, "Event and Link between proceedings and event already exists"
@@ -742,6 +792,7 @@ class WikidataSync(object):
         errors = None
         if len(wdItems) == 0:
             # event item does not exist → create a new one
+            volume.resolveLoctime()
             eventRecord = self.getWikidataEventRecord(volume)
             eventQid, errors = self.doAddEventToWikidata(record=eventRecord, write=write)
             msg += "Created Event item;"

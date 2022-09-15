@@ -4,7 +4,7 @@ xmltodict
 pyFlaskBootstrap4>=0.5.1
 flask-dropzone
 # https://github.com/SmartDataAnalytics/OpenResearch
-ConferenceCorpus>=0.0.26
+ConferenceCorpus>=0.0.35
 # https://pypi.org/project/pylodstorage/
 pylodstorage>=0.4.7
 # http://pydispatcher.sourceforge.net/
@@ -22,6 +22,6 @@ lxml~=4.9.1
 pyJustpyWidgets~=0.0.27
 # https://pypi.org/project/justpy/
 #justpy~=0.2.7
-justpy~=0.6.3
+justpy~=0.8.0
 # https://pypi.org/project/pyGenericSpreadSheet/
 pyGenericSpreadSheet~=0.1.21

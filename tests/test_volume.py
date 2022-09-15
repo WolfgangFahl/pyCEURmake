@@ -93,3 +93,63 @@ class TestVolume(Basetest):
             #debug=True
             if debug:
                 print(html)
+
+    def test_resolveLoctime(self):
+        """tests resolveLoctime"""
+        test_params = [
+            ("Moscow, Russia, July 18, 2016", "2016-07-18", "2016-07-18", "Q649", "Q159"),
+            ("Halifax, Canada, July 13-16, 2016", "2016-07-13", "2016-07-16", "Q2141", "Q16"),
+            # ("Genoa (Italy) February 10-11, 2011", "2011-02-10", "2011-02-11", "Q1449", "Q38"),
+            ("Berlin, Germany, June 30 & July 1, 2011", "2011-06-30", "2011-07-01", "Q64", "Q183"),
+            ("La Clusaz, France, 30-31 March, 2011", "2011-03-30", "2011-03-31", "Q530721", "Q142"),
+            ("Opole, Poland, 13-17 August, 2012", "2012-08-13", "2012-08-17", "Q92212", "Q36"),
+            ("Cuiabá, Mato Grosso, Brasil, Novembro 05, 2012", "2012-11-05", "2012-11-05", "Q170762", "Q155"),
+            ("Paphos, Cyprus, September, 21, 2013", "2013-09-21", "2013-09-21", "Q180918", "Q229"),
+            ("Rio de Janeiro, Brazil, August 28th to 30th, 2013", "2013-08-28", "2013-08-30", "Q8678", "Q155"),
+            # ("Cazalla de la Sierra, España, 12 y 13 de Junio, 2014", "2014-06-12", "2014-06-13", "Q1445283", "Q29"),
+            ("Annecy, France, July 6–9, 2016", "2016-07-06", "2016-07-09", "Q50189", "Q142"),
+            ("Lisbon, Portugal, October 11, 2010", "2010-10-11", "2010-10-11", "Q597", "Q45"),
+            ("Rende, Italy, November 19‐20, 2019", "2019-11-19", "2019-11-20", "Q53946", "Q38"),
+            ("Online, September, 14 & 15, 2020", "2020-09-14", "2020-09-15", "Q7935096", None)
+        ]
+        for param in test_params:
+            with self.subTest("Tests resolveLoctime on", param=param):
+                loctime, expectedDateFrom, expectedDateTo, expectedCity, expectedCountry = param
+                vol = Volume()
+                vol.fromDict({"number":1, "loctime": loctime})
+                vol.resolveLoctime()
+                self.assertEqual(datetime.datetime.fromisoformat(expectedDateFrom).date(), getattr(vol, "dateFrom"))
+                self.assertEqual(datetime.datetime.fromisoformat(expectedDateTo).date(), getattr(vol, "dateTo"))
+                self.assertEqual(expectedCity, getattr(vol, "cityWikidataId", None))
+                self.assertEqual(expectedCountry, getattr(vol, "countryWikidataId",None))
+
+    def test_locationExtraction(self):
+        """
+        tests locationExtraction
+        """
+        test_params=[
+            ("Waterloo, Ontario, Canada,  4-7  2010", "Q639408", "Q16"), # not to be confused with Waterloo Sierra Leone
+            ("Waterloo, Sierra Leone", "Q623241", "Q1044")
+        ]
+        for param in test_params:
+            with self.subTest("Tests resolveLoctime on", param=param):
+                locStr, expectedCity, expectedCountry = param
+                vol = Volume()
+                vol.extractAndSetLocation(locationStr=locStr)
+                self.assertEqual(expectedCity, getattr(vol, "cityWikidataId"))
+                self.assertEqual(expectedCountry, getattr(vol, "countryWikidataId"))
+
+    def test_removePartsMatching(self):
+        """
+        tests removePartsMatching
+        """
+        test_params = [# input, pattern, expected
+            ("Moscow, Russia, July 18, 2016", "\d", "Moscow, Russia"),
+            ("Berlin, Germany, June 30 & July 1, 2011", "[a-zA-Z]", " 2011"),
+            ("Berlin, Germany, June 30 & July 1, 2011", "\d", "Berlin, Germany")
+        ]
+        for param in test_params:
+            with self.subTest("Tests removePartsMatching on", param=param):
+                value, pattern, expectedResult = param
+                actualResult = Volume.removePartsMatching(value, pattern=pattern)
+                self.assertEqual(expectedResult, actualResult)

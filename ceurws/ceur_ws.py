@@ -1,5 +1,10 @@
+import calendar
 import datetime
 import os
+import re
+import typing
+
+import dateutil.parser
 from lodstorage.entity import EntityManager
 from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
@@ -8,6 +13,9 @@ from pathlib import Path
 from ceurws.indexparser import IndexHtmlParser
 from ceurws.volumeparser import VolumeParser
 from utils.download import Download
+from ptp.eventrefparser import Tokenizer, CountryCategory, CityCategory, CityPrefixCategory
+from geograpy.locator import City, Country, Location, LocationContext, Region
+
 
 class CEURWS:
     '''
@@ -53,7 +61,191 @@ class Volume(JSONAble):
             }
         ]
         return samples
-    
+
+    def getVolumeNumber(self):
+        """
+        get number of the volume
+        """
+        number = getattr(self, "number", "Volume has no number")
+        return number
+
+    def normalize(self):
+        """
+        Tries to normalize the properties e.g. breaking loctime into designated location and time properties
+        Example: 'Vienna, Austria, July 25th, 2022'
+        """
+        pass
+
+    def resolveLoctime(self):
+        """
+        Resolve the loctime property by breaking it down to city, region, country, dateFrom, and dateTo
+        """
+        loctime = getattr(self, "loctime", None)
+        if loctime is None:
+            td_title = getattr(self, "tdtitle", None)
+            title_parts = td_title.split(",")
+            del title_parts[0]
+            loctime = ",".join(title_parts)
+            loctime = loctime.strip(".")
+            setattr(self, "loctime", loctime)
+        if loctime is None:
+            return None
+        dateFrom, dateTo = self.extractDates(loctime)
+        if dateFrom is not None:
+            setattr(self, "dateFrom", dateFrom)
+        if dateTo is not None:
+            setattr(self, "dateTo", dateTo)
+        self.extractAndSetLocation(locationStr=loctime)
+
+    def extractAndSetLocation(self, locationStr:str) -> (str, str):
+        """
+        Extracts the location from the given string and returns the found city and country
+        ToDo: Once the EventReferenceParser from cc is updated to support city country combinations switch to it
+        Args:
+            locationStr: string to extract the locations from
+
+        Returns:
+            city wikidata id, country wikidata id
+        """
+        parser = self.__class__.__dict__.get("locationparser")
+        if parser is None:
+            parser = LocationContext.fromCache()
+            self.__class__.locationparser = parser
+        locationStr = self.removePartsMatching(locationStr, pattern="\d")
+        locationStr = locationStr.replace(",", " ")
+        for month in calendar.month_name:
+            if month == "":
+                continue
+            locationStr = locationStr.replace(month, " ")
+        locations = parser.locateLocation(locationStr, verbose=True)
+        locations = self.rankLocations(locationStr, locations)
+        city = None
+        cityWikidataId = None
+        country = None
+        countryWikidataId = None
+        if locations is not None and len(locations) > 0:
+            bestMatch = locations[0]
+            if isinstance(bestMatch, City):
+                city = bestMatch.name
+                cityWikidataId = bestMatch.wikidataid
+                country = bestMatch.country.name
+                countryWikidataId = bestMatch.country.wikidataid
+                print(self.getVolumeNumber(), locationStr, "→", bestMatch.name,  bestMatch.country.name)
+            elif isinstance(bestMatch, Country):
+                country = bestMatch.wikidataid
+                print(self.getVolumeNumber(), locationStr, "→", bestMatch.name)
+        virtualEventKeywords = ["virtual", "online"]
+        for keyword in virtualEventKeywords:
+            if keyword in locationStr.lower():
+                city = "virtual event"
+                cityWikidataId = "Q7935096"  # virtual event
+                country = None
+                print(self.getVolumeNumber(), locationStr, "→ virtual event")
+        if city is not None:
+            setattr(self, "city", city)
+            setattr(self, "cityWikidataId", cityWikidataId)
+        if countryWikidataId is not None:
+            setattr(self, "country", country)
+            setattr(self, "countryWikidataId", countryWikidataId)
+
+    def extractDates(self, dateStr:str, durationThreshold: int = 11) -> (datetime.date, datetime.date):
+        """"
+        Extracts the start and end time from the given string
+        optimized for the format of the loctime property
+        Args:
+            dateStr: string to extract the dates from
+            durationThreshold: number of days allowed between two extracted dates
+        """
+        dateFrom = None
+        dateTo = None
+        if dateStr is None:
+            return None, None
+        # normalize certain foreign language month names that occur regularly
+        if "novembro" in dateStr.lower():
+            dateStr = dateStr.lower().replace("novembro", "november")
+        loctimeParts = re.split("[,)(]", dateStr)
+        if re.fullmatch("\d{4}", loctimeParts[-1].strip()):
+            year = loctimeParts[-1].strip()
+            rawDate = loctimeParts[-2].strip()
+            if len(loctimeParts) >= 3:
+                if loctimeParts[-3].lower().strip() in [cn.lower() for cn in calendar.month_name]:
+                    rawDate = f"{loctimeParts[-3]} {rawDate}"
+            dateParts: list = re.split("[-–‐&]| to ", rawDate)
+            try:
+                if len(dateParts) == 1:
+                    dateFrom = dateutil.parser.parse(f"{dateParts[0]} {year}")
+                    dateTo = dateFrom
+                elif len(dateParts) == 2:
+                    dateParts.sort(key=lambda r: len(r), reverse=True)
+                    dateOne = dateutil.parser.parse(f"{dateParts[0]} {year}")
+                    if len(dateParts[-1].strip()) <= 4:
+                        dayMonthParts = dateParts[0].split(" ")
+                        dayMonthParts.sort(key=lambda r: len(r), reverse=True)
+                        endDate = dayMonthParts[0] + dateParts[1]
+                        dateTwo = dateutil.parser.parse(f"{endDate} {year}")
+                    else:
+                        dateTwo = dateutil.parser.parse(f"{dateParts[1]} {year}")
+                    dates = [dateOne, dateTwo]
+                    dates.sort()
+                    dateFrom = dates[0]
+                    dateTo = dates[1]
+            except:
+                pass
+            if dateTo is not None and dateFrom is not None:
+                delta = dateTo - dateFrom
+                if delta < datetime.timedelta():
+                    print("Error this should not be possible")
+                elif delta > datetime.timedelta(days=durationThreshold):
+                    print(self.number, f"Event with a duration of more than {durationThreshold} days seems suspicious")
+                else:
+                    return dateFrom.date(), dateTo.date()
+            else:
+                print(self.number, dateStr, "→ Dates could not be extracted")
+            return None, None
+        else:
+            # corner case
+            return None, None
+
+    @staticmethod
+    def removePartsMatching(value:str, pattern:str, separator=','):
+        """
+        Removes parts from the given value matching the pattern
+        """
+        parts = value.split(separator)
+        resParts = []
+        for part in parts:
+            if re.search(pattern, part) is None:
+                resParts.append(part)
+        resValue = separator.join(resParts)
+        return resValue
+
+    @staticmethod
+    def rankLocations(locationStr:str, locations: typing.List[Location]):
+        """
+        rank the given locations to find the best match to the given location string
+        Args:
+            locationStr: location string
+            locations: list of locations objects
+        """
+        rankedLocations = []
+        for location in locations:
+            locationsToCheck = []
+            if isinstance(location, City):
+                locationsToCheck = [location, location.region, location.country]
+            elif isinstance(location, Region):
+                locationsToCheck = [location, location.country]
+            elif isinstance(location, Country):
+                locationsToCheck = [location]
+            score = 0
+            for ltc in locationsToCheck:
+                if ltc.name in locationStr:
+                    score += 1
+            rankedLocations.append((score, location))
+        rankedLocations.sort(key=lambda scoreTuple: scoreTuple[0], reverse=True)
+        return [location for score, location in rankedLocations]
+
+
+
     def __str__(self):
         text=f"Vol-{self.number}"
         return text

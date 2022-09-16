@@ -526,8 +526,11 @@ class VolumeListDisplay(Display):
                 volumeId = int(match.group("volumeNumber")) if match is not None else None
                 if volumeId is not None and volumeId in self.app.wdSync.volumesByNumber:
                     volume: Volume = self.app.wdSync.volumesByNumber.get(volumeId)
-                    await self.createProceedingsItemFromVolume(volume, msg)
-                    await self.createEventItemAndLinkProceedings(volume, msg)
+                    proceedingsWikidataId = await self.createProceedingsItemFromVolume(volume, msg)
+                    if proceedingsWikidataId is not None:
+                        await self.createEventItemAndLinkProceedings(volume,proceedingsWikidataId, msg)
+                    else:
+                        Alert(a=self.colA3, text=f"Event not created → Error during creation of proceedings item")
                 else:
                     Alert(a=self.colA3, text=f"Volume for selected row can not be loaded correctly")
             except Exception as ex:
@@ -541,13 +544,13 @@ class VolumeListDisplay(Display):
         urn = getattr(volume, "urn")
         wdItems = self.app.wdSync.getProceedingWdItemsByUrn(urn)
         if len(wdItems) > 0:
-            # a proceeding exists with the URN exists
+            # a proceeding exists with the URN
             alert = Alert(a=self.colA1, text=f"{volume} already in Wikidata see ")
             for wdItem in wdItems:
                 jp.Br(a=alert)
                 qId = wdItem.split("/")[-1]
                 jp.Link(a=alert, href=wdItem, text=qId)
-            return
+            return qId
         else:
             # A proceedings volume for the URN is not known → create wd entry
             wdRecord = self.app.wdSync.getWikidataProceedingsRecord(volume)
@@ -568,20 +571,24 @@ class VolumeListDisplay(Display):
                               text=f"An error occured during the creation of the proceedings entry for {volume}")
                 jp.Br(a=alert)
                 jp.P(a=alert, text=errors)
+            return qId
 
-    async def createEventItemAndLinkProceedings(self, volume: Volume, _msg):
+    async def createEventItemAndLinkProceedings(self, volume: Volume, proceedingsWikidataId:str=None, _msg=None):
         """
         Create event  wikidata item for given volume and link 
         the proceedings with the event
         
         Args:
             volume(Volume): the volume for which to create the event item
+            proceedingsWikidataId: wikidata id of the proceedings
         """
         try:
             write = not self.dryRun
             if write:
                 self.app.wdSync.login()
-            proceedingsQId, eventQId, msg = self.app.wdSync.doCreateEventItemAndLinkProceedings(volume, write=write)
+            proceedingsQId, eventQId, msg = self.app.wdSync.doCreateEventItemAndLinkProceedings(volume,
+                                                                                                proceedingsWikidataId,
+                                                                                                write=write)
             if write:
                 self.app.wdSync.logout()
             alert = Alert(a=self.colA3, text=msg)
@@ -735,17 +742,17 @@ class VolumeBrowser(App):
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
         
         # Routes
-        jp.Route('/settings',self.settings)
-        jp.Route('/volumes',self.volumes)
-        jp.Route('/volume/{volnumber}',self.volumePage)
-        jp.Route('/wikidatasync',self.wikidatasync)
+        jp.app.add_jproute('/settings',self.settings)
+        jp.app.add_jproute('/volumes',self.volumes)
+        jp.app.add_jproute('/volume/{volnumber}',self.volumePage)
+        jp.app.add_jproute('/wikidatasync',self.wikidatasync)
         self.templateEnv=TemplateEnv()
         
     def setupPage(self,header=""):
         header="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">
 <link rel="stylesheet" href="/static/css/pygments.css">
 """+header
-        self.wp=self.getWp(header)  
+        self.wp=self.getWp(header)
         self.wdSync=WikidataSync(debug=self.debug)
 
     def setupRowsAndCols(self,header=""):
@@ -764,12 +771,12 @@ class VolumeBrowser(App):
         
     def showFeedback(self,html):
         self.feedback.inner_html=html
-    
+
     async def wikidatasync(self):
         self.setupRowsAndCols()
         self.wikidataDisplay=WikidataDisplay(self,debug=self.debug)
         return self.wp
-        
+
     async def settings(self):
         '''
         settings
@@ -778,7 +785,7 @@ class VolumeBrowser(App):
         #self.wdRangeImport=WikidataRangeImport(self,a=self.rowA)
         self.volumeListRefresh=VolumeListRefresh(self,a=self.rowA)
         return self.wp
-    
+
     async def volumePage(self,request):
         '''
         show a page for the given volume
@@ -809,13 +816,13 @@ class VolumeBrowser(App):
         else:
             Alert(a=self.colA1,text=f"Volume display for {volnumberStr} failed")
         return self.wp
-    
+
     async def volumes(self):
         '''
         show the volumes table
         '''
         self.setupRowsAndCols()
-        self.volumeListDisplay=VolumeListDisplay(self, container=self.rowA ,debug=self.debug)
+        self.volumeListDisplay=VolumeListDisplay(self, container=self.rowA,debug=self.debug)
         #await asyncio.sleep(0.1)
         #await self.volumeListDisplay.onSizeColumnsToFit({})
         return self.wp

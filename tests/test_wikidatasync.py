@@ -3,13 +3,9 @@ Created on 2022-08-14
 
 @author: wf
 '''
-import csv
 import pprint
 import unittest
-from collections import Counter
 
-from lodstorage.lod import LOD
-from ptp.eventrefparser import EventReferenceParser
 from wikibaseintegrator import wbi_core, wbi_datatype
 
 from tests.basetest import Basetest

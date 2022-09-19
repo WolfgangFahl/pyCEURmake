@@ -406,6 +406,7 @@ class WikidataSync(object):
     def addLinkBetweenProceedingsAndEvent(self,
                                           volumeNumber:int,
                                           eventItemQid: str,
+                                          proceedingsWikidataId:str=None,
                                           write:bool=True,
                                           ignoreErrors:bool=False):
         """
@@ -413,6 +414,7 @@ class WikidataSync(object):
         Args:
             volumeNumber: ceurws volumenumber of the proceedings
             eventItemQid: wikidata Qid of the event
+            proceedingsWikidataId: wikidata id of the proceedings item
             write(bool): if True actually write
             ignoreErrors(bool): if True ignore errors
         """
@@ -804,7 +806,12 @@ class WikidataSync(object):
             return None, None, f"Multiple event entries exist: {','.join(wdItems)}"
         if eventQid is not None:
             # add link between Proceedings and the event item
-            proceedingsWikidataId, errors = self.addLinkBetweenProceedingsAndEvent(volumeNumber=volNumber, eventItemQid=eventQid, write=write)
+            proceedingsWikidataId, errors = self.addLinkBetweenProceedingsAndEvent(
+                    volumeNumber=volNumber,
+                    eventItemQid=eventQid,
+                    proceedingsWikidataId=proceedingsWikidataId,
+                    write=write
+            )
             msg += "Added Link between Proceedings and Event item;"
             return proceedingsWikidataId, eventQid, msg
 

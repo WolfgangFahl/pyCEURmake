@@ -112,7 +112,6 @@ class Volume(JSONAble):
             parser = LocationContext.fromCache()
             self.__class__.locationparser = parser
         locationStr = self.removePartsMatching(locationStr, pattern="\d")
-        locationStr = locationStr.replace(",", " ")
         for month in calendar.month_name:
             if month == "":
                 continue
@@ -170,7 +169,7 @@ class Volume(JSONAble):
             if len(loctimeParts) >= 3:
                 if loctimeParts[-3].lower().strip() in [cn.lower() for cn in calendar.month_name]:
                     rawDate = f"{loctimeParts[-3]} {rawDate}"
-            dateParts: list = re.split("[-–‐&]| to ", rawDate)
+            dateParts: list = re.split("[-–‐&]| to | and ", rawDate)
             try:
                 if len(dateParts) == 1:
                     dateFrom = dateutil.parser.parse(f"{dateParts[0]} {year}")

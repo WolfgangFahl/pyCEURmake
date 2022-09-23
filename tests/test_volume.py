@@ -110,7 +110,10 @@ class TestVolume(Basetest):
             ("Annecy, France, July 6–9, 2016", "2016-07-06", "2016-07-09", "Q50189", "Q142"),
             ("Lisbon, Portugal, October 11, 2010", "2010-10-11", "2010-10-11", "Q597", "Q45"),
             ("Rende, Italy, November 19‐20, 2019", "2019-11-19", "2019-11-20", "Q53946", "Q38"),
-            ("Online, September, 14 & 15, 2020", "2020-09-14", "2020-09-15", "Q7935096", None)
+            ("Online, September, 14 & 15, 2020", "2020-09-14", "2020-09-15", "Q7935096", None),
+            ("Düsseldorf, Germany, September 28-29, 2009", "2009-09-28", "2009-09-29", "Q1718", "Q183"),
+            ("Chicago, USA, October 23th and 26th, 2011", "2011-10-23", "2011-10-26", "Q1297", "Q30"),
+            ("Oum El Bouaghi, Algeria, May 25 and 26, 2021", "2021-05-25", "2021-05-26", "Q5478122", "Q262")
         ]
         for param in test_params:
             with self.subTest("Tests resolveLoctime on", param=param):

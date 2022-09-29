@@ -90,6 +90,7 @@ class TestVolumeParser(Basetest):
             (3139, 3, 3, 3),
             # (3127, 9, 0, 9),  # special case of editor definition
             # (3116, 2, 2, 2),  # affiliation reference included in link
+            (2196, 10, 10, 10)
         ]
         for param in test_params[0:]:
             with self.subTest(f"test editor parsing for Vol-{param[0]}", param=param):
@@ -123,7 +124,7 @@ class TestVolumeParser(Basetest):
         with open("/tmp/log_ceurws_editor_parsing.txt", mode="a") as fp:
             for i in range(total, end, -1):
                 if i%100 == 0:
-                    time.sleep(10)
+                    time.sleep(20)
                 url = self.volumeParser.volumeUrl(i)
                 soup = self.volumeParser.getSoup(url)
                 msg = f"({i:04}/{total})"
@@ -140,8 +141,11 @@ class TestVolumeParser(Basetest):
                     for e in res.values():
                         affiliations.extend([a.get("name") for a in e.get("affiliation")])
                     number_of_affiliation = len(set(affiliations))
-                    number_of_editors_with_affiliations = len([True for e in res.values() if e.get("affiliation", None) is not None])
-                    something_fishy = "❌" if number_of_editors !=number_of_editors_with_affiliations else ""
+                    number_of_editors_with_affiliations = len([True
+                                                               for e in res.values()
+                                                               if e.get("affiliation", None) is not None
+                                                               and e.get("affiliation", "") != ""])
+                    something_fishy = "❌" if number_of_editors != number_of_editors_with_affiliations else ""
                     msg += f"{something_fishy} #editors={number_of_editors} #affiliations={number_of_affiliation} #hompages={number_of_hompages} ({url})"
                 print(msg)
                 fp.write(msg+"\n")

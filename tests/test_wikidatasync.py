@@ -3,13 +3,15 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import csv
 import pprint
+import time
 import unittest
 
 from wikibaseintegrator import wbi_core, wbi_datatype
 
 from tests.basetest import Basetest
-from ceurws.wikidatasync import DblpEndpoint, WikidataSync
+from ceurws.wikidatasync import DblpAuthorIdentifier, DblpEndpoint, WikidataSync
 from ceurws.volumeparser import VolumeParser
 
 
@@ -320,6 +322,61 @@ class TestWikidataSync(Basetest):
                 actual = self.wdSync.getEventsOfProceedings(proceedingsId)
                 self.assertSetEqual(set(expectedEventIds), set(actual))
 
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
+    def test_getAuthorByIds(self):
+        """
+        tests getAuthorByIds
+        """
+        test_params = [
+            ({"orcid": "0000-0003-3587-0367"}, {"Q58990389"}),
+            (None, set()),
+            (dict(), set()),
+            ({"orcid": "0000-0003-3587-0367", "dblp": "00/11426"}, {"Q58990389"}),
+            ({"googleScholar": "xgXBIvQAAAAJ", "dblp": "00/11426"}, {"Q58990389", "Q20559326"}),
+            ({"googleScholar": "xgXBIvQAAAAJ", "dblp": "00/11426", "acm": "81100237147"}, {"Q58990389", "Q20559326"}),  # test empty query row error
+            ({"homepage": "http://www.stefandecker.org"}, {"Q54303353"})
+        ]
+        for param in test_params:
+            with self.subTest("Test finding authors by ssets of ids", param=param):
+                identifiers, expected_items = param
+                found_authors = self.wdSync.getAuthorByIds(identifiers)
+                ids = set(found_authors.keys())
+                self.assertSetEqual(expected_items, ids)
+
+    @unittest.skipIf(True, "Test only for evaluation of data")
+    def test_uniquenessOfEditors(self):
+        """
+        test how many ceur-ws editors can be uniquely identified by a given set of identifiers
+        """
+        classifier = ["identified", "conflict", "unknown"]
+        res = []
+        editors = self.wdSync.dbpEndpoint.getEditorsOfVolume(None)
+        total = len(editors)
+        for i, identifiers in enumerate(editors[:5]):
+            editor = identifiers.get("name")
+            print(f"({i+1:04}/{total})", end=" ")
+            authors = self.wdSync.getAuthorByIds(identifiers)
+            ids = list(authors.keys())
+            if len(authors) == 1:
+                classified_as = classifier[0]
+                print("Identified:", editor, "→", ids[0])
+            elif len(authors) == 0:
+                classified_as = classifier[2]
+                print("Nothing found for:", editor)
+            else:
+                classified_as = classifier[1]
+                print("Multiple matches found:", editor, "→", ids)
+            identifiers["classified_as"] = classified_as
+            res.append(identifiers)
+            time.sleep(1)  # endpoint cooldown
+        keys = [
+            "classified_as", "name", "affiliation", "homepage",
+            *DblpAuthorIdentifier.getAllAsMap().keys()
+        ]
+        with open("/tmp/editors.csv", mode="w") as fp:
+            dict_writer = csv.DictWriter(fp, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(res)
 
 class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""
@@ -332,7 +389,12 @@ class TestDblpEndpoint(Basetest):
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_getWikidataIdByVolumeNumber(self):
         """tests getWikidataIdByVolumeNumber"""
-        test_params = [("1", ["conf/krdb/94"]), ("2400", ["conf/sebd/2019"]), ("-1", []), (3100, ["conf/psychobit/2021"])]
+        test_params = [
+            ("1", ["conf/krdb/94"]),
+            ("2400", ["conf/sebd/2019"]),
+            ("-1", []),
+            (3100, ["conf/psychobit/2021"])
+        ]
         for param in test_params:
             with self.subTest("test wikidata id query by volume number", param=param):
                 number, expected = param
@@ -353,13 +415,54 @@ class TestDblpEndpoint(Basetest):
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_toDblpUrl(self):
         """tests toDblpUrl"""
-        test_params =[("conf/aaai/2022", False, "https://dblp.org/db/conf/aaai/aaai2022"),
-                      ("conf/aaai/2022", True, "https://dblp.org/db/conf/aaai/aaai2022.html"),
-                      ("conf/aaai/aaai2022", False, None),  # entity id is expected not the url id
-                      (None, False, None), ("", False, None),(None, True, None), ("", True, None),
-                      ("conf/aaai", False, None)]
+        test_params =[
+            ("conf/aaai/2022", False, "https://dblp.org/db/conf/aaai/aaai2022"),
+            ("conf/aaai/2022", True, "https://dblp.org/db/conf/aaai/aaai2022.html"),
+            ("conf/aaai/aaai2022", False, None),  # entity id is expected not the url id
+            (None, False, None), ("", False, None),(None, True, None), ("", True, None),
+            ("conf/aaai", False, None)
+        ]
         for param in test_params:
             with self.subTest("test dblp url generation", param=param):
                 entityId, withPostfix, expected = param
                 actual = self.dblpEndpoint.toDblpUrl(entityId, withPostfix)
                 self.assertEqual(expected, actual)
+
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
+    def test_getEditorsOfVolume(self):
+        """
+        tests getEditorsOfVolume
+        """
+        test_params = [  # (volNumber, {editor:expIds})
+            (1, {"Franz": 13, "Manfred": 8, "Martin": 2, "Werner": 10}),
+            ("1", {"Franz": 13, "Manfred": 8, "Martin": 2, "Werner": 10}),
+            (None, 4600),
+        ]
+        for param in test_params:
+            with self.subTest("test querying of ceurws volume editors", param=param):
+                number, expectedEditors = param
+                res = self.dblpEndpoint.getEditorsOfVolume(number)
+                if number is not None:
+                    for editor_record in res:
+                        editorName = editor_record.get("name")
+                        firstName = editorName.split(" ")[0]
+                        self.assertIn(firstName, expectedEditors)
+                        self.assertGreaterEqual(len(editor_record), expectedEditors[firstName])
+                else:
+                    self.assertGreaterEqual(len(res), expectedEditors)
+
+
+class TestDblpAuthorIdentifier(Basetest):
+    """
+    tests DblpAuthorIdentifier
+    """
+
+    def test_all(self):
+        """
+        test if all dblp author identifiers are defined
+        """
+        ids = DblpAuthorIdentifier.all()
+        self.assertGreaterEqual(len(ids), 17)
+        for identifier in ids:
+            self.assertIsNotNone(identifier.name)
+            self.assertIsNotNone(identifier.dblp_property)

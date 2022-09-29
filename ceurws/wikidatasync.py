@@ -5,7 +5,8 @@ Created on 2022-08-14
 '''
 import datetime
 import os
-from typing import List, Union
+from dataclasses import dataclass
+from typing import Dict, List, Union
 
 from spreadsheet.wikidata import Wikidata
 
@@ -43,14 +44,14 @@ class WikidataSync(object):
     def login(self):
         # @FIXME add username/password handling (see gsimport)
         self.wd.loginWithCredentials()
-        
+
     def logout(self):
         self.wd.logout()
-        
+
     def itemUrl(self,qId):
         url=f"{self.baseurl}/wiki/{qId}"
         return url
-        
+
     def prepareRDF(self):
         # SPARQL setup
         self.endpoints = EndpointManager.getEndpoints(lang="sparql")
@@ -60,7 +61,7 @@ class WikidataSync(object):
         qYamlFile = f"{path}/resources/queries/ceurws.yaml"
         if os.path.isfile(qYamlFile):
             self.qm = QueryManager(lang="sparql", queriesPath=qYamlFile)
-        
+
     def prepareVolumeManager(self):
         '''
         prepare my volume manager
@@ -74,7 +75,7 @@ class WikidataSync(object):
         self.volumesByNumber, _duplicates = LOD.getLookup(self.vm.getList(), 'number')
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
-        
+
     def addVolume(self,volume:Volume):
         '''
         add the given volume
@@ -108,7 +109,7 @@ class WikidataSync(object):
 
     def storeVolumes(self):
         self.vm.store()
-        
+
     def getWikidataProceedingsRecord(self, volume):
         '''
         get the wikidata Record for the given volume
@@ -174,7 +175,7 @@ class WikidataSync(object):
             if len(duplicates)<10:
                 print(duplicates)
         return wdRecords
-    
+
     def loadProceedingsFromCache(self):
         '''
         load the proceedings recors from the cache
@@ -182,7 +183,7 @@ class WikidataSync(object):
         sqlQuery="SELECT * from Proceedings"
         self.procRecords=self.sqldb.query(sqlQuery)
         return self.procRecords
-    
+
     def getProceedingsForVolume(self,searchVolnumber:int)->dict:
         '''
         get the proceedings record for the given searchVolnumber
@@ -588,7 +589,12 @@ class WikidataSync(object):
         ]
         mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
         record = {"DBLP publication ID": dblpRecordId}
-        _, errors = self.wd.addDict(itemId=proceedingsWikidataId, row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
+        _, errors = self.wd.addDict(
+                itemId=proceedingsWikidataId,
+                row=record,
+                mapDict=mapDict,
+                write=write,
+                ignoreErrors=ignoreErrors)
         return True, errors
 
     def addAcronymToItem(self, itemId: str, acronym: str, desc:str=None, label:str=None, write: bool = True, ignoreErrors: bool = False):
@@ -604,10 +610,14 @@ class WikidataSync(object):
             (qid, errors) id of the created entry and occurred errors
         """
         wdMetadata = [{"Column": "short name", "PropertyName": "short name", "PropertyId": "P1813", "Type": "text","Lookup": ""}]
-        record = {"short name": acronym, "description": desc, "label":label}
-        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
-        qId, errors = self.wd.addDict(itemId=itemId, row=record, mapDict=mapDict, write=write,
-                                      ignoreErrors=ignoreErrors)
+        record = {"short name": acronym, "description": desc, "label": label}
+        map_dict, _ = LOD.getLookup(wdMetadata, "PropertyId")
+        qId, errors = self.wd.addDict(
+                itemId=itemId,
+                row=record,
+                mapDict=map_dict,
+                write=write,
+                ignoreErrors=ignoreErrors)
         return qId, errors
 
     def addOfficialWebsiteToItem(self, itemId: str, officialWebsite: str, write: bool = True, ignoreErrors: bool = False):
@@ -615,7 +625,7 @@ class WikidataSync(object):
         add the official website to the given item
         Args:
             itemId: item to add the acronym to
-            acronym(str): acronym of the item
+            officialWebsite(str): officialWebsite of the item
             write(bool): if True actually write
             ignoreErrors(bool): if True ignore errors
 
@@ -696,7 +706,7 @@ class WikidataSync(object):
         qres = self.sparql.queryAsListOfDicts(query)
         qIds = []
         if qres is not None and qres != []:
-            qIds = [record.get("qid")[len("http://www.wikidata.org/entity/"):] for record in qres]
+            qIds = [self.removeWdPrefix(record.get("qid")) for record in qres]
         return qIds
 
     @classmethod
@@ -818,6 +828,58 @@ class WikidataSync(object):
         else:
             return None, None, f"An error occured during the creation of the proceedings entry for {volume}"
 
+    @classmethod
+    def removeWdPrefix(cls, value: str):
+        """
+        removes the wikidata entity prefix
+        Args:
+            value: wikidata entity url
+        """
+        wd_prefix =  "http://www.wikidata.org/entity/"
+        if value is not None and isinstance(value, str):
+            if value.startswith(wd_prefix):
+                value = value[len("http://www.wikidata.org/entity/"):]
+        return value
+
+    def getAuthorByIds(self, identifiers: dict) -> Dict[str, str]:
+        """
+        Based on the given identifiers get potential author items
+        the names of the identifiers must be according to DblpAuthorIdentifier
+        Args:
+            identifiers: known identifiers of the author
+        """
+        if identifiers is None or len(identifiers) == 0:
+            return dict()
+        id_map = DblpAuthorIdentifier.getAllAsMap()
+        optional_clauses = []
+        for id_name, id_value in identifiers.items():
+            if id_value is not None and id_value != "":
+                id_query = None
+                if id_name in id_map:
+                    wd_prop = id_map.get(id_name).wikidata_property
+                    id_query = DblpAuthorIdentifier.getWikidataIdQueryPart(id_name, id_value, "?person")
+                else:
+                    if id_name == "homepage":
+                        id_query = f"{{OPTIONAL{{ ?person wdt:P856 <{id_value}>.}} }}"
+                if id_query is not None:
+                    optional_clauses.append(id_query)
+        id_queries = "\nUNION\n".join(optional_clauses)
+        query = f"""SELECT ?person ?personLabel
+                    WHERE 
+                    {{
+                        {id_queries}
+                        SERVICE wikibase:label {{bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }}
+                    }}"""
+        qres = self.sparql.queryAsListOfDicts(query)
+        res = dict()
+        for record in qres:
+            if record is None or len(record) == 0:
+                continue
+            item_id = self.removeWdPrefix(record.get("person"))
+            name = record.get("personLabel")
+            res[item_id] = name
+        return res
+
 
 class DblpEndpoint:
     """
@@ -904,3 +966,134 @@ class DblpEndpoint:
         if withPostfix:
             url += postfix
         return url
+
+    def getEditorsOfVolume(self, number:Union[int, str, None]) -> List[dict]:
+        """
+        Get the editors for the given volume number
+        Args:
+            number: number of the volume if none query for all ceur-ws editors
+
+        Returns:
+            list of dictionaries where a dict represents one editor containing all identifiers of the editor
+        """
+        if number is None:
+            number_var = "?volumeNumber"
+        else:
+            number_var = f'"{number}"'
+        dblp_identifiers = DblpAuthorIdentifier.all()
+        optional_clauses: List[str] = []
+        id_vars: List[str] = []
+        for identifier in dblp_identifiers:
+            id_var = f"?{identifier.name}"
+            optional_clauses.append(f"""OPTIONAL{{
+                ?editor datacite:hasIdentifier {id_var}_blank.
+                {id_var}_blank datacite:usesIdentifierScheme {identifier.dblp_property};
+                litre:hasLiteralValue {id_var}Var.}}""")
+            id_vars.append(id_var)
+        id_selects = "\n".join([f"(group_concat({id_var}Var;separator='|') as {id_var})" for id_var in id_vars])
+        id_queries = "\n".join(optional_clauses)
+        query = f"""PREFIX datacite: <http://purl.org/spar/datacite/>
+                    PREFIX dblp: <https://dblp.org/rdf/schema#>
+                    PREFIX litre: <http://purl.org/spar/literal/>
+                    SELECT DISTINCT (group_concat(?nameVar;separator='|') as ?name) 
+                                    (group_concat(?homepageVar;separator='|') as ?homepage)
+                                    (group_concat(?affiliationVar;separator='|') as ?affiliation)
+                                    {id_selects}
+                    WHERE{{
+                        ?proceeding dblp:publishedIn "CEUR Workshop Proceedings";
+                                    dblp:publishedInSeriesVolume {number_var};
+                                    dblp:editedBy ?editor.
+                        ?editor dblp:primaryCreatorName ?nameVar.
+                        OPTIONAL{{?editor dblp:primaryHomepage ?homepageVar.}}
+                        OPTIONAL{{?editor dblp:primaryAffiliation ?affiliationVar.}}
+                        {id_queries}
+                    }}
+                    GROUP BY ?editor
+                """
+        qres = self.sparql.queryAsListOfDicts(query)
+        for record in qres:
+            for key, value in record.items():
+                if "|" in value:
+                    record[key] = value.split('"|"')  # issue in qlever
+        return qres
+
+
+@dataclass(slots=True)
+class DblpAuthorIdentifier:
+    """
+    represents an author id available in dblp
+    and the corresponding property in wikidata
+    """
+    name: str  # the name should be usable as SPARQL variable
+    dblp_property: str
+    wikidata_property: str
+
+    @classmethod
+    def all(cls) -> List['DblpAuthorIdentifier']:
+        """
+        returns all available identifiers
+        """
+        res = [
+            DblpAuthorIdentifier("dblp", "datacite:dblp", "P2456"),
+            DblpAuthorIdentifier("wikidata", "datacite:wikidata", None),
+            DblpAuthorIdentifier("orcid", "datacite:orcid", "P496"),
+            DblpAuthorIdentifier("googleScholar", "datacite:google-scholar", "P1960"),
+            DblpAuthorIdentifier("acm", "datacite:acm", "P864"),
+            DblpAuthorIdentifier("twitter", "datacite:twitter", "P2002"),
+            DblpAuthorIdentifier("github", "datacite:github", "P2037"),
+            DblpAuthorIdentifier("viaf", "datacite:viaf", "P214"),
+            DblpAuthorIdentifier("scigraph", "datacite:scigraph", "P10861"),
+            DblpAuthorIdentifier("zbmath", "datacite:zbmath", "P1556"),
+            DblpAuthorIdentifier("researchGate", "datacite:research-gate", "P6023"),
+            DblpAuthorIdentifier("mathGenealogy", "datacite:math-genealogy", "P549"),
+            DblpAuthorIdentifier("loc", "datacite:loc", "P244"),
+            DblpAuthorIdentifier("linkedin", "datacite:linkedin", "P6634"),
+            DblpAuthorIdentifier("lattes", "datacite:lattes", "P1007"),
+            DblpAuthorIdentifier("isni", "datacite:isni", "P213"),
+            DblpAuthorIdentifier("ieee", "datacite:ieee", "P6479"),
+            DblpAuthorIdentifier("gepris", "datacite:gepris", "P4872"),
+            DblpAuthorIdentifier("gnd", "datacite:gnd", "P227"),
+        ]
+        return res
+
+    @classmethod
+    def getAllAsMap(cls) -> Dict[str, 'DblpAuthorIdentifier']:
+        """
+        return all all available identifiers as map
+        """
+        res = dict()
+        for identifier in cls.all():
+            res[identifier.name] = identifier
+        return res
+
+    @classmethod
+    def getWikidataIdQueryPart(cls, id_name: str, value: str, var: str):
+        """
+        Generates for the given identifier the wikidata query
+        Args:
+            id_name: name of the identifier
+            value: the identifier value
+            var: name of the variable which should have the id
+        """
+        if not var.startswith("?"):
+            var = "?" + var
+        query = None
+        wd_prop = cls.getAllAsMap().get(id_name).wikidata_property
+        if id_name == "wikidata":
+            values = value
+            if isinstance(value, str):
+                values = [value]
+            value_urls = " ".join([f"wd:{value}" for value in values])
+            query = f"""{{ SELECT * WHERE {{ VALUES ?person {{ {value_urls} }} }} }}# {id_name}"""
+        elif id_name in cls.getAllAsMap():
+            if isinstance(value, list):
+                values = " ".join([f'"{value}"' for value in value])
+                query = f"""{{OPTIONAL{{
+                            VALUES ?{id_name} {{ {values} }}
+                            {var} wdt:{wd_prop} ?{id_name}.}} 
+                            }}  # {id_name}"""
+            else:
+                query = f"""{{OPTIONAL{{ {var} wdt:{wd_prop} "{value}".}} }}  # {id_name}"""
+        else:
+            pass
+        return query

@@ -113,13 +113,15 @@ class TestVolume(Basetest):
             ("Online, September, 14 & 15, 2020", "2020-09-14", "2020-09-15", "Q7935096", None),
             ("Düsseldorf, Germany, September 28-29, 2009", "2009-09-28", "2009-09-29", "Q1718", "Q183"),
             ("Chicago, USA, October 23th and 26th, 2011", "2011-10-23", "2011-10-26", "Q1297", "Q30"),
-            ("Oum El Bouaghi, Algeria, May 25 and 26, 2021", "2021-05-25", "2021-05-26", "Q5478122", "Q262")
+            ("Oum El Bouaghi, Algeria, May 25 and 26, 2021", "2021-05-25", "2021-05-26", "Q5478122", "Q262"),
+            # ("Seattle, USA, 18th-23rd September 2022", "2022-09-18", "2022-09-23", "Q5083", "Q30")  # corner case of date definition
+            # ("Windsor, United Kingdom, September 20-30th, 2022", "2022-09-20", "2022-09-30", "Q464955", "Q145")  # City missing in geograpy3
         ]
         for param in test_params:
             with self.subTest("Tests resolveLoctime on", param=param):
                 loctime, expectedDateFrom, expectedDateTo, expectedCity, expectedCountry = param
                 vol = Volume()
-                vol.fromDict({"number":1, "loctime": loctime})
+                vol.fromDict({"number": 1, "loctime": loctime})
                 vol.resolveLoctime()
                 self.assertEqual(datetime.datetime.fromisoformat(expectedDateFrom).date(), getattr(vol, "dateFrom"))
                 self.assertEqual(datetime.datetime.fromisoformat(expectedDateTo).date(), getattr(vol, "dateTo"))

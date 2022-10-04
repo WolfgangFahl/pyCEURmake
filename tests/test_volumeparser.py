@@ -3,7 +3,6 @@ Created on 2022-08-14
 
 @author: wf
 '''
-import pprint
 import time
 import unittest
 
@@ -11,6 +10,7 @@ from tests.basetest import Basetest
 from ceurws.volumeparser import VolumeParser
 from ceurws.ceur_ws import VolumeManager
 from lodstorage.lod import LOD
+
 
 class TestVolumeParser(Basetest):
     '''
@@ -121,7 +121,11 @@ class TestVolumeParser(Basetest):
         """
         total = 3225
         end = 600
-        with open("/tmp/log_ceurws_editor_parsing.txt", mode="a") as fp:
+        log_file = "log_ceurws_editor_parsing.txt"
+        count_editors = 0
+        count_affiliations = 0
+        count_homepages = 0
+        with open(log_file, mode="a") as fp:
             for i in range(total, end, -1):
                 if i%100 == 0:
                     time.sleep(20)
@@ -145,7 +149,13 @@ class TestVolumeParser(Basetest):
                                                                for e in res.values()
                                                                if e.get("affiliation", None) is not None
                                                                and e.get("affiliation", "") != ""])
-                    something_fishy = "❌" if number_of_editors != number_of_editors_with_affiliations else ""
-                    msg += f"{something_fishy} #editors={number_of_editors} #affiliations={number_of_affiliation} #hompages={number_of_hompages} ({url})"
+                    error_msg = "❌" if number_of_editors != number_of_editors_with_affiliations else ""
+                    msg += f"{error_msg} #editors={number_of_editors} #affiliations={number_of_affiliation} #hompages={number_of_hompages} ({url})"
+                    count_editors += int(number_of_editors)
+                    count_homepages += int(number_of_hompages)
+                    count_affiliations += int(number_of_affiliation)
                 print(msg)
                 fp.write(msg+"\n")
+        print("count_editors:", count_editors,
+              "count_affiliations:", count_affiliations,
+              "count_homepages:", count_homepages)

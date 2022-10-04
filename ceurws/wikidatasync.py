@@ -7,6 +7,7 @@ import datetime
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Union
+from urllib.error import HTTPError
 
 from spreadsheet.wikidata import Wikidata
 
@@ -146,8 +147,8 @@ class WikidataSync(object):
             "short name": getattr(volume, "acronym"),
             "locationWikidataId": getattr(volume, "cityWikidataId"),
             "countryWikidataId": getattr(volume, "countryWikidataId"),
-            "start time": getattr(volume, "dateFrom").isoformat() if getattr(volume, "dateFrom") is not None else None,
-            "end time": getattr(volume, "dateTo").isoformat() if getattr(volume, "dateTo") is not None else None
+            "start time": getattr(volume, "dateFrom").isoformat() if getattr(volume, "dateFrom", None) is not None else None,
+            "end time": getattr(volume, "dateTo").isoformat() if getattr(volume, "dateTo", None) is not None else None
         }
         if dblpEntityIds is not None and len(dblpEntityIds) > 0:
             dblpEntityId = dblpEntityIds[0]
@@ -419,7 +420,8 @@ class WikidataSync(object):
             write(bool): if True actually write
             ignoreErrors(bool): if True ignore errors
         """
-        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
+        if proceedingsWikidataId is None:
+            proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
         if proceedingsWikidataId is None:
             return None, "Volume is not unique → Proceedings item can not be determined"
         wdMetadata =[
@@ -905,7 +907,11 @@ class DblpEndpoint:
                             dblp:publishedInSeriesVolume "{number}".
                 }}
         """
-        qres = self.sparql.queryAsListOfDicts(query)
+        try:
+            qres = self.sparql.queryAsListOfDicts(query)
+        except HTTPError as ex:
+            print("dblp sparql endpoint unavailable")
+            qres = None
         qIds = []
         if qres is not None and qres != []:
             qIds = [record.get("proceeding")[len(self.DBLP_REC_PREFIX):] for record in qres]

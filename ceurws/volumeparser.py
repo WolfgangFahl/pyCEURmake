@@ -134,7 +134,7 @@ class VolumeParser(Textparser):
                     editor["homepage"] = homepage
                     affiliation_keys = editor_span.parent.next_sibling.text.strip()
                 else:
-                   affiliation_keys = editor_span.next_sibling.text.strip()
+                    affiliation_keys = editor_span.next_sibling.text.strip()
                 if affiliation_keys is None or affiliation_keys == "":
                     sup = editor_span.find_next("sup")
                     if sup is not None:

@@ -1024,7 +1024,7 @@ class DblpEndpoint:
         return qres
 
 
-@dataclass(slots=True)
+@dataclass
 class DblpAuthorIdentifier:
     """
     represents an author id available in dblp

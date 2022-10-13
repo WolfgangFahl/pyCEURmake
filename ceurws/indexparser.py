@@ -189,13 +189,14 @@ class IndexHtmlParser(Textparser):
         self.setVolumeTitle(volume, fromLine)
         
         infoPattern={}
-        for prefix,info in [
+        infoMappings = [
             ("URN","urn"),
             ("ONLINE","url"),
             ("ARCHIVE","archive"),
             ("Edited by","editors"),
             ("Submitted by","submittedBy"),
-            ("Published on CEUR-WS","pubDate")]:
+            ("Published on CEUR-WS","pubDate")]
+        for prefix, info in infoMappings:
             infoPattern[info]=re.compile(f"^\s*{prefix}:(.*)")
         for lineIndex in range(fromLine,toLine):
             line=self.lines[lineIndex]

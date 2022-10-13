@@ -25,11 +25,12 @@
       ?Volume
       ?short_name
       # identifiers
-      ?dblpEventId
+      ?dblpProceedingsId
       ?ppnId
       # event
       ?event
       ?eventLabel
+      ?dblpEventId
       # eventSeries
       #?partOfTheEventSeriesStmt
       ?eventSeries
@@ -75,7 +76,7 @@
       OPTIONAL {
       	# DBLP event ID
       	# identifier for scientific events in the DBLP computer science bibliography
-      	?item wdt:P8978 ?dblpEventId.
+      	?item wdt:P8978 ?dblpProceedingsId.
       }
       OPTIONAL {
         # K10plus PPN ID
@@ -93,6 +94,9 @@
           #?event wdt:P179 ?eventSeries.
           ?eventSeries rdfs:label ?eventSeriesLabel.
           FILTER(LANG(?eventSeriesLabel) = "en").
+        }
+        OPTIONAL{
+          ?event wdt:P10692 ?dblpEventId.
         }
       }
       # Title

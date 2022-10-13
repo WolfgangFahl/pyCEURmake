@@ -10,7 +10,7 @@ from jpwidgets.bt5widgets import Alert, App, IconButton, Switch, ProgressBar
 from jpwidgets.widgets import LodGrid
 from ceurws.ceur_ws import  Volume
 from ceurws.querydisplay import QueryDisplay
-from ceurws.wikidatasync import WikidataSync
+from ceurws.wikidatasync import DblpEndpoint, WikidataSync
 from ceurws.template import TemplateEnv
 import pprint
 import sys
@@ -342,7 +342,7 @@ class VolumeDisplay(Display):
             links=""
             if wdProc is not None:
                 itemLink=self.createLink(wdProc["item"], "wikidataitem")
-                dblpLink=self.createExternalLink(wdProc,"dblpEventId","dblp","https://dblp.org/db/",emptyIfNone=True)
+                dblpLink=self.createExternalLink(wdProc,"dblpEventId","dblp",DblpEndpoint.DBLP_EVENT_PREFIX,emptyIfNone=True)
                 k10PlusLink=self.createExternalLink(wdProc, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",emptyIfNone=True)
                 delim=""
                 for link in [itemLink,dblpLink,k10PlusLink]:
@@ -700,7 +700,7 @@ class WikidataDisplay(Display):
             eventLink=self.createItemLink(row,"event")
             eventSeriesLink=self.createItemLink(row, "eventSeries")
             #@TODO - use formatterUris from Wikidata
-            dblpLink=self.createExternalLink(row,"dblpEventId","dblp","https://dblp.org/rec/")
+            dblpLink=self.createExternalLink(row,"dblpProceedingsId","dblp",DblpEndpoint.DBLP_REC_PREFIX)
             k10PlusLink=self.createExternalLink(row, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=")
             lod.append(
                 {

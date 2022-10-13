@@ -505,7 +505,7 @@ class WikidataSync(object):
             {
                 "Entity": entity,
                 "Column": "dblpEventId",
-                "PropertyName": "URN-NBN",
+                "PropertyName": "DBLP event ID",
                 "PropertyId": "P10692",
                 "Type": "extid",
                 "Qualifier": None,
@@ -1020,7 +1020,7 @@ class DblpEndpoint:
         for record in qres:
             for key, value in record.items():
                 if "|" in value:
-                    record[key] = value.split('"|"')  # issue in qlever
+                    record[key] = value.split('"|"')  # issue in qlever see https://github.com/ad-freiburg/qlever/discussions/806
         return qres
 
 

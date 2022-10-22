@@ -65,6 +65,9 @@ class Display:
             formatterUrl(str): the prefix for the url to use
         '''
         value=self.getRowValue(row, key)
+        wdPrefix="http://www.wikidata.org/entity/"
+        if value.startswith(wdPrefix):
+            value=value.replace(wdPrefix, "")
         if value==Display.noneValue: return "" if emptyIfNone else Display.noneValue
         url=formatterUrl+value
         link=self.createLink(url, text)
@@ -342,10 +345,11 @@ class VolumeDisplay(Display):
             links=""
             if wdProc is not None:
                 itemLink=self.createLink(wdProc["item"], "wikidataitem")
+                scholiaLink=self.createExternalLink(wdProc, "item", "scholia", "https://scholia.toolforge.org/venue/", emptyIfNone=True)
                 dblpLink=self.createExternalLink(wdProc,"dblpEventId","dblp",DblpEndpoint.DBLP_EVENT_PREFIX,emptyIfNone=True)
                 k10PlusLink=self.createExternalLink(wdProc, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",emptyIfNone=True)
                 delim=""
-                for link in [itemLink,dblpLink,k10PlusLink]:
+                for link in [itemLink,scholiaLink,dblpLink,k10PlusLink]:
                     if link:
                         links+=delim+link
                         delim="&nbsp;"

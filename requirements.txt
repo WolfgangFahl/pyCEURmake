@@ -21,8 +21,6 @@ lxml~=4.9.1
 # https://pypi.org/project/pyJustpyWidgets/
 pyJustpyWidgets~=0.0.28
 # https://pypi.org/project/justpy/
-#justpy~=0.2.7
 justpy~=0.9.4
-justpy~=0.9.1
 # https://pypi.org/project/pyGenericSpreadSheet/
-pyGenericSpreadSheet~=0.1.21
+pyGenericSpreadSheet~=0.1.22

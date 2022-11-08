@@ -5,6 +5,8 @@ Created on 2022-08-14
 '''
 import asyncio
 import re
+import time
+
 import justpy as jp
 from jpwidgets.bt5widgets import Alert, App, IconButton, Switch, ProgressBar
 from jpwidgets.widgets import LodGrid
@@ -192,6 +194,9 @@ class VolumeListRefresh(Display):
             _alert.inner_html=f"found {len(addedVolumeNumberList)} new volumes"
             total=len(addedVolumeNumberList)
             for i,volumeNumber in enumerate(addedVolumeNumberList):
+                if i % 100 == 0 and i != 0:
+                    self.app.wdSync.storeVolumes()
+                    time.sleep(60)
                 volume=volumesByNumber[volumeNumber]
                 self.updateRecentlyAddedVolume(volume,_alert,i+1,total)
                 _importSpan=self.createVolumeSpan(a=self.colD1,volume=volume)

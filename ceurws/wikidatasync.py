@@ -135,8 +135,8 @@ class WikidataSync(object):
         '''
         get the wikidata Record for the given volume
         '''
-        volumeTitle = getattr(volume, "title")
-        volumeNumber = getattr(volume, "number")
+        volumeTitle = getattr(volume, "title", None)
+        volumeNumber = getattr(volume, "number", None)
         dblpEntityIds = self.dbpEndpoint.getDblpIdByVolumeNumber(number=volumeNumber)
         instanceOf, description = self.getEventTypeFromTitle(volumeTitle)
         record = {
@@ -144,9 +144,9 @@ class WikidataSync(object):
             "label": self.getEventNameFromTitle(volumeTitle),
             "description": description,
             "instanceOf": instanceOf,
-            "short name": getattr(volume, "acronym"),
-            "locationWikidataId": getattr(volume, "cityWikidataId"),
-            "countryWikidataId": getattr(volume, "countryWikidataId"),
+            "short name": getattr(volume, "acronym", None),
+            "locationWikidataId": getattr(volume, "cityWikidataId", None),
+            "countryWikidataId": getattr(volume, "countryWikidataId", None),
             "start time": getattr(volume, "dateFrom").isoformat() if getattr(volume, "dateFrom", None) is not None else None,
             "end time": getattr(volume, "dateTo").isoformat() if getattr(volume, "dateTo", None) is not None else None,
             "referenceUrl": volume.getVolumeUrl()

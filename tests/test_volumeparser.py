@@ -3,8 +3,12 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import json
+import pprint
 import time
 import unittest
+
+import requests
 
 from tests.basetest import Basetest
 from ceurws.volumeparser import VolumeParser
@@ -134,6 +138,9 @@ class TestVolumeParser(Basetest):
                 msg = f"({i:04}/{total})"
                 try:
                     res = self.volumeParser.parseEditors(soup)
+                    with open("/tmp/editors.json", mode="a", encoding='utf8') as f:
+                        json.dump(res, fp=f, ensure_ascii=False)
+                        f.write("\n")
                 except Exception as ex:
                     msg += " ❌ Error"
                     res = None
@@ -159,3 +166,36 @@ class TestVolumeParser(Basetest):
         print("count_editors:", count_editors,
               "count_affiliations:", count_affiliations,
               "count_homepages:", count_homepages)
+
+    @unittest.skipIf(True, "Analyses how often rdfa is used on the volume pages")
+    def test_rdfa(self):
+        count = 0
+        for i in range(3231, 1, -1):
+            if i % 200 == 0:
+                time.sleep(20)
+            print(f"{i:04}/3230)", end="")
+            url = f"http://ceur-ws.org/Vol-{i}/"
+            resp = requests.get(url)
+            if resp.status_code != 200:
+                print("error", end="")
+            pageStatement = 'prefix="'
+            if pageStatement in resp.text:
+                count += 1
+                print(url, end="")
+            elif pageStatement in f'<link rel="foaf:page" href="{url}">':
+                count += 1
+                print(url, end="")
+            elif pageStatement in f'foaf:name':
+                count += 1
+                print(url, end="")
+            print("")
+        print(count)
+
+    @unittest.skipIf(True, "Only for manual testing if the parsing of a volume does not work")
+    def test_vol3264(self):
+        """
+        tests parsing of volume 3240
+        """
+        url = self.volumeParser.volumeUrl(3264)
+        record = self.volumeParser.parse(url)
+        print(json.dumps(record))

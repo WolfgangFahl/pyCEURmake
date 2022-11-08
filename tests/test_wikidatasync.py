@@ -8,7 +8,8 @@ import pprint
 import time
 import unittest
 
-from wikibaseintegrator import wbi_core, wbi_datatype
+from wikibaseintegrator import wbi_login, WikibaseIntegrator
+from wikibaseintegrator import datatypes as wbi_datatype
 
 from tests.basetest import Basetest
 from ceurws.wikidatasync import DblpAuthorIdentifier, DblpEndpoint, WikidataSync
@@ -226,25 +227,30 @@ class TestWikidataSync(Basetest):
             """
         qres = self.wdSync.sparql.queryAsListOfDicts(query)
         print(len(qres), "Volume urls have a missing language qualifier!")
-        qualifier = st=wbi_datatype.ItemID(value="Q1860",prop_nr="P407", is_qualifier=True)
+        qualifier = st=wbi_datatype.Item(value="Q1860",prop_nr="P407")
         self.wdSync.wd.loginWithCredentials()
         for record in qres:
             proceeedingQid = record.get("proceeding")[len("http://www.wikidata.org/entity/"):]
             volumeNumber = record.get("volNumber")
             print(proceeedingQid, volumeNumber)
-            wbPage = wbi_core.ItemEngine(item_id=proceeedingQid, mediawiki_api_url=self.wdSync.wd.apiurl)
+            wbi=WikibaseIntegrator(login=self.wdSync.wd.login)
+            wbPage = wbi.item.get(entity_id=proceeedingQid, mediawiki_api_url=self.wdSync.wd.apiurl)
             urlStatement = None
-            for statement in wbPage.statements:
-                if getattr(statement, "prop_nr") == "P973":
-                    if isinstance(statement, wbi_datatype.Url):
-                        urlStatement = wbi_datatype.Url(value=statement.value,prop_nr=statement.prop_nr, qualifiers=[qualifier])
+            for statement in wbPage.claims:
+                if statement.mainsnak.property_number == "P973":
+                    if isinstance(statement, wbi_datatype.URL):
+                        urlStatement = wbi_datatype.URL(
+                                value=statement.mainsnak.datavalue.get("value"),
+                                prop_nr=statement.mainsnak.property_number,
+                                qualifiers=[qualifier])
                         break
             if urlStatement is not None:
-                wbPage.update([urlStatement])
+                wbPage.claims.remove("P973")
+                wbPage.claims.add(urlStatement)
                 if self.debug:
                     pprint.pprint(wbPage.get_json_representation())
                 if write:
-                    wbPage.write(self.wdSync.wd.login)
+                    wbPage.write()
         self.wdSync.wd.logout()
 
     @unittest.skipIf(True,"Only to manually add missing dblp publication ids")
@@ -377,6 +383,24 @@ class TestWikidataSync(Basetest):
             dict_writer = csv.DictWriter(fp, keys)
             dict_writer.writeheader()
             dict_writer.writerows(res)
+
+    @unittest.skipIf(True, "parses all volumes and stores them → takes 2-3 hours (server timeouts)")
+    def test_parse(self):
+        total = 3251
+        for i in range(3200, total + 1):
+            print(f"{i:04}/{total}", end="")
+            if i % 50 == 0 and i != 0:
+                self.wdSync.storeVolumes()
+                time.sleep(60)
+            volume = self.wdSync.volumesByNumber.get(i, None)
+            if volume is None:
+                continue
+            try:
+                volume.extractValuesFromVolumePage()
+                print("")
+            except Exception as ex:
+                print("error")
+        self.wdSync.storeVolumes()
 
 class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""

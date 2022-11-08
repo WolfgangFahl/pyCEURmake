@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Union
 from urllib.error import HTTPError
 
-from spreadsheet.wikidata import Wikidata
+from spreadsheet.wikidata import PropertyMapping, UrlReference, WdDatatype, Wikidata
 
 from utils.download import Download
 from lodstorage.lod import LOD
@@ -148,7 +148,8 @@ class WikidataSync(object):
             "locationWikidataId": getattr(volume, "cityWikidataId"),
             "countryWikidataId": getattr(volume, "countryWikidataId"),
             "start time": getattr(volume, "dateFrom").isoformat() if getattr(volume, "dateFrom", None) is not None else None,
-            "end time": getattr(volume, "dateTo").isoformat() if getattr(volume, "dateTo", None) is not None else None
+            "end time": getattr(volume, "dateTo").isoformat() if getattr(volume, "dateTo", None) is not None else None,
+            "referenceUrl": volume.getVolumeUrl()
         }
         if dblpEntityIds is not None and len(dblpEntityIds) > 0:
             dblpEntityId = dblpEntityIds[0]
@@ -261,10 +262,10 @@ class WikidataSync(object):
         """
         if write:
             self.login()
-        qid,errors=self.doAddProceedingsToWikidata(record, write, ignoreErrors)
+        qid, errors = self.doAddProceedingsToWikidata(record, write, ignoreErrors)
         if write:
             self.logout()
-        return qid,errors
+        return qid, errors
 
     def doAddProceedingsToWikidata(self, record:dict, write:bool=True, ignoreErrors:bool=False):
         """
@@ -276,103 +277,25 @@ class WikidataSync(object):
             ignoreErrors(bool): if True ignore errors
             
         """
-        # see https://docs.google.com/spreadsheets/d/1fTMUuXXq_7lJgUzwLntrg4GUQ-lmlXYhS-I1Fhwc9dQ/edit#gid=0
-        wdMetadata = [
-            {
-                "Entity": "proceedings",
-                "Column": None,
-                "PropertyName": "instanceof",
-                "PropertyId": "P31",
-                "Value": "Q1143604",
-                "Type": None,
-                "Qualifier": None,
-                "Lookup": None
-            },
-            {
-                "Entity": "proceedings",
-                "Column": None,
-                "PropertyName": "part of the series",
-                "PropertyId": "P179",
-                "Value": "Q27230297",
-                "Type": None,
-                "Qualifier": None,
-                "Lookup": None
-            },
-            {
-                "Entity": "proceedings",
-                "Column": "volume",
-                "PropertyName": "volume",
-                "PropertyId": "P478",
-                "Type": "string",
-                "Qualifier": "part of the series",
-                "Lookup": ""
-            },
-            {
-                "Entity": "proceedings",
-                "Column": "short name",
-                "PropertyName": "short name",
-                "PropertyId": "P1813",
-                "Type": "text",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": "proceedings",
-                "Column": "title",
-                "PropertyName": "title",
-                "PropertyId": "P1476",
-                "Type": "text",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": "proceedings",
-                "Column": "pubDate",
-                "PropertyName": "publication date",
-                "PropertyId": "P577",
-                "Type": "date",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": "proceedings",
-                "Column": "ceurwsUrl",
-                "PropertyName": "described at URL",
-                "PropertyId": "P973",
-                "Type": "url",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": "proceedings",
-                "Column": "language of work or name",
-                "PropertyName": "language of work or name",
-                "PropertyId": "P407",
-                "Type": "itemid",
-                "Qualifier": "described at URL",
-                "Lookup": ""
-            },
-            {
-                "Entity": "proceedings",
-                "Column": "fullWorkUrl",
-                "PropertyName": "full work available at URL",
-                "PropertyId": "P953",
-                "Type": "url",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": "proceedings",
-                "Column": "urn",
-                "PropertyName": "URN-NBN",
-                "PropertyId": "P4109",
-                "Type": "extid",
-                "Qualifier": None,
-                "Lookup": ""
-             }
+        mappings = [
+            PropertyMapping(column="instanceof", propertyName="instanceof", propertyId="P31", propertyType=WdDatatype.itemid, value="Q1143604"),
+            PropertyMapping(column="part of the series", propertyName="part of the series", propertyId="P179", propertyType=WdDatatype.itemid, value="Q27230297"),
+            PropertyMapping(column="volume", propertyName="volume", propertyId="P478", propertyType=WdDatatype.string, qualifierOf="part of the series"),  # ToDo: refactor qualifier of anchor column or property name?
+            PropertyMapping(column="short name", propertyName="short name", propertyId="P1813", propertyType=WdDatatype.text),
+            PropertyMapping(column="pubDate", propertyName="publication date", propertyId="P577", propertyType=WdDatatype.date),
+            PropertyMapping(column="title", propertyName="title", propertyId="P1476", propertyType=WdDatatype.text),
+            PropertyMapping(column="ceurwsUrl", propertyName="described at URL", propertyId="P973", propertyType=WdDatatype.url),
+            PropertyMapping(column="language of work or name", propertyName="language of work or name", propertyId="P407", propertyType=WdDatatype.itemid, qualifierOf="ceurwsUrl"),
+            PropertyMapping(column="fullWorkUrl", propertyName="full work available at URL", propertyId="P953", propertyType=WdDatatype.url),
+            PropertyMapping(column="urn", propertyName="URN-NBN", propertyId="P4109", propertyType=WdDatatype.extid),
         ]
-        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
-        qId, errors = self.wd.addDict(row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
+        reference = UrlReference(url=record.get("ceurwsUrl"))
+        qId, errors = self.wd.add_record(
+                record=record,
+                property_mappings=mappings,
+                write=write,
+                ignore_errors=ignoreErrors,
+                reference=reference)
         return qId, errors
 
     def askWikidata(self, askQuery:str) -> bool:
@@ -405,16 +328,17 @@ class WikidataSync(object):
         query = f"""ASK{{ wd:{item} wdt:{propertyId} ?value.}}"""
         return self.askWikidata(query)
 
-    def addLinkBetweenProceedingsAndEvent(self,
-                                          volumeNumber:int,
-                                          eventItemQid: str,
-                                          proceedingsWikidataId:str=None,
-                                          write:bool=True,
-                                          ignoreErrors:bool=False):
+    def addLinkBetweenProceedingsAndEvent(
+            self,
+            volumeNumber:int,
+            eventItemQid: str,
+            proceedingsWikidataId:str=None,
+            write:bool=True,
+            ignoreErrors:bool=False):
         """
         add the link between the wikidata proceedings item and the given event wikidata item
         Args:
-            volumeNumber: ceurws volumenumber of the proceedings
+            volumeNumber: ceurws volume number of the proceedings
             eventItemQid: wikidata Qid of the event
             proceedingsWikidataId: wikidata id of the proceedings item
             write(bool): if True actually write
@@ -424,22 +348,24 @@ class WikidataSync(object):
             proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
         if proceedingsWikidataId is None:
             return None, "Volume is not unique → Proceedings item can not be determined"
-        wdMetadata =[
-            {"Entity": "proceedings",
-             "Column": "isProceedingsFrom",
-             "PropertyName": "is proceedings from",
-             "PropertyId": "P4745",
-             "Type": "itemid",
-             "Qualifier": None,
-             "Lookup": ""}
+        mappings = [
+            PropertyMapping(
+                    column="isProceedingsFrom",
+                    propertyName="is proceedings from",
+                    propertyId="P4745",
+                    propertyType=WdDatatype.itemid)
         ]
-        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
+        volume_url = Volume.getVolumeUrlOf(volumeNumber)
+        reference = UrlReference(volume_url)
         record = {"isProceedingsFrom": eventItemQid}
-        _, errors = self.wd.addDict(itemId=proceedingsWikidataId,
-                                    row=record,
-                                    mapDict=mapDict,
-                                    write=write,
-                                    ignoreErrors=ignoreErrors)
+        _, errors = self.wd.add_record(
+                item_id=proceedingsWikidataId,
+                record=record,
+                property_mappings=mappings,
+                write=write,
+                ignore_errors=ignoreErrors,
+                reference=reference
+        )
         return proceedingsWikidataId, errors
 
     def doAddEventToWikidata(self, record: dict, write: bool = True, ignoreErrors: bool = False):
@@ -455,103 +381,29 @@ class WikidataSync(object):
         """
         entityQid = record.get("instanceOf")
         entity = record.get("description")
-        wdMetadata =[
-             {
-                "Entity": entity,
-                "Column": None,
-                "PropertyName": "instanceof",
-                "PropertyId": "P31",
-                "Value": entityQid,
-                "Type": None,
-                "Qualifier": None,
-                "Lookup": None
-            },
-            {
-                "Entity": entity,
-                "Column": "short name",
-                "PropertyName": "short name",
-                "PropertyId": "P1813",
-                "Type": "text",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": entity,
-                "Column": "describedAt",
-                "PropertyName": "described at URL",
-                "PropertyId": "P973",
-                "Type": "url",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": entity,
-                "Column": "language of work or name",
-                "PropertyName": "language of work or name",
-                "PropertyId": "P407",
-                "Type": "itemid",
-                "Qualifier": "described at URL",
-                "Lookup": ""
-            },
-            {
-                "Entity": entity,
-                "Column": "title",
-                "PropertyName": "title",
-                "PropertyId": "P1476",
-                "Type": "text",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": entity,
-                "Column": "dblpEventId",
-                "PropertyName": "DBLP event ID",
-                "PropertyId": "P10692",
-                "Type": "extid",
-                "Qualifier": None,
-                "Lookup": ""
-             },
-            {
-                "Entity": entity,
-                "Column": "start time",
-                "PropertyName": "start time",
-                "PropertyId": "P580",
-                "Value": entityQid,
-                "Type": "date",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": entity,
-                "Column": "end time",
-                "PropertyName": "end time",
-                "PropertyId": "P582",
-                "Value": entityQid,
-                "Type": "date",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": entity,
-                "Column": "locationWikidataId",
-                "PropertyName": "location",
-                "PropertyId": "P276",
-                "Type": "itemid",
-                "Qualifier": None,
-                "Lookup": ""
-            },
-            {
-                "Entity": entity,
-                "Column": "countryWikidataId",
-                "PropertyName": "country",
-                "PropertyId": "P17",
-                "Type": "itemid",
-                "Qualifier": None,
-                "Lookup": ""
-            }
+        mappings = [
+            PropertyMapping(column="instanceof", propertyName="instanceof", propertyId="P31", propertyType=WdDatatype.itemid, value=entityQid),
+            PropertyMapping(column="short name", propertyName="short name", propertyId="P1813", propertyType=WdDatatype.text),
+            PropertyMapping(column="describedAt", propertyName="described at URL", propertyId="P973", propertyType=WdDatatype.url),
+            PropertyMapping(column="language of work or name", propertyName="language of work or name", propertyId="P407", propertyType=WdDatatype.itemid, qualifierOf="describedAt", value="Q1860"),
+            PropertyMapping(column="title", propertyName="title", propertyId="P1476", propertyType=WdDatatype.text),
+            PropertyMapping(column="describedAt", propertyName="described at URL", propertyId="P973", propertyType=WdDatatype.url),
+            PropertyMapping(column="dblpEventId", propertyName="DBLP event ID", propertyId="P10692", propertyType=WdDatatype.extid),
+            PropertyMapping(column="start time", propertyName="start time", propertyId="P580", propertyType=WdDatatype.date),
+            PropertyMapping(column="end time", propertyName="end time", propertyId="P582", propertyType=WdDatatype.date),
+            PropertyMapping(column="locationWikidataId", propertyName="location", propertyId="P276", propertyType=WdDatatype.itemid),
+            PropertyMapping(column="countryWikidataId", propertyName="country", propertyId="P17", propertyType=WdDatatype.itemid),
+
         ]
-        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
-        qId, errors = self.wd.addDict(row=record, mapDict=mapDict, write=write, ignoreErrors=ignoreErrors)
+        reference_url = record.pop("referenceUrl")
+        reference = UrlReference(url=reference_url)
+        qId, errors = self.wd.add_record(
+                record=record,
+                property_mappings=mappings,
+                write=write,
+                ignore_errors=ignoreErrors,
+                reference=reference
+        )
         return qId, errors
 
     def addDblpPublicationId(self,
@@ -580,6 +432,7 @@ class WikidataSync(object):
                 return False, f"More than one proceedings record found ({dblpRecordIds})"
             else:
                 return False, f"Proceedings of volume {volumeNumber} are not in dblp"
+        mappings = [PropertyMapping(column="DBLP publication ID", propertyName="DBLP publication ID", propertyId="P8978", propertyType=WdDatatype.extid)]
         wdMetadata =[
             {"Entity": "proceedings",
              "Column": "DBLP publication ID",
@@ -590,13 +443,17 @@ class WikidataSync(object):
              "Lookup": ""}
         ]
         mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
+        volume_url = Volume.getVolumeUrlOf(volumeNumber)
+        reference = UrlReference(volume_url)
         record = {"DBLP publication ID": dblpRecordId}
-        _, errors = self.wd.addDict(
-                itemId=proceedingsWikidataId,
-                row=record,
-                mapDict=mapDict,
+        _, errors = self.wd.add_record(
+                item_id=proceedingsWikidataId,
+                record=record,
+                property_mappings=mappings,
                 write=write,
-                ignoreErrors=ignoreErrors)
+                ignore_errors=ignoreErrors,
+                reference=reference
+        )
         return True, errors
 
     def addAcronymToItem(self, itemId: str, acronym: str, desc:str=None, label:str=None, write: bool = True, ignoreErrors: bool = False):
@@ -634,6 +491,10 @@ class WikidataSync(object):
         Returns:
             (qid, errors) id of the created entry and occurred errors
         """
+        mappings = [
+            PropertyMapping(column="official website", propertyName="official website", propertyId="P856", propertyType=WdDatatype.url),
+            PropertyMapping(column="language of work or name", propertyName="language of work or name", propertyId="P407", propertyType=WdDatatype.itemid),
+        ]
         wdMetadata = [{
                 "Column": "official website",
                 "PropertyName": "official website",
@@ -649,10 +510,15 @@ class WikidataSync(object):
                 "Qualifier": "official website",
                 "Lookup": ""
             }]
-        record = {"official website": officialWebsite, "language of work or name": "Q1860"}
         mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
-        qId, errors = self.wd.addDict(itemId=itemId, row=record, mapDict=mapDict, write=write,
-                                      ignoreErrors=ignoreErrors)
+        record = {"official website": officialWebsite, "language of work or name": "Q1860"}
+        qId, errors = self.wd.add_record(
+                item_id=itemId,
+                record=record,
+                property_mappings=mapDict,
+                write=write,
+                ignore_errors=ignoreErrors
+        )
         return qId, errors
 
     def getWikidataIdByVolumeNumber(self, number) -> str:

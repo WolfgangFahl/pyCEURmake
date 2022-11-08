@@ -250,12 +250,13 @@ class WikidataRangeImport(Display):
             volume: volume to create the event and proceedings link for
         """
         proceedingsQId, eventQId, msg = self.app.wdSync.doCreateEventItemAndLinkProceedings(volume, write=True)
-        self.createEventProceedingsList(self.colD1,
-                                        self.wdSync,
-                                        volume=volume,
-                                        proceedingsId=proceedingsQId,
-                                        eventId=eventQId,
-                                        msg=msg)
+        self.createEventProceedingsList(
+                self.colD1,
+                self.wdSync,
+                volume=volume,
+                proceedingsId=proceedingsQId,
+                eventId=eventQId,
+                msg=msg)
         
     async def onUploadButtonClick(self, _msg):
         self.app.clearErrors()
@@ -540,6 +541,9 @@ class VolumeListDisplay(Display):
         """
         Create wikidata item for proceedings of given volume
         """
+        write = not self.dryRun
+        if write:
+            self.app.wdSync.login()
         # check if already in wikidata → use URN
         urn = getattr(volume, "urn")
         wdItems = self.app.wdSync.getProceedingWdItemsByUrn(urn)
@@ -558,8 +562,6 @@ class VolumeListDisplay(Display):
                 prettyData = pprint.pformat(msg.data)
                 text = f"{prettyData}"
                 alert = Alert(a=self.colA3, text=text)
-
-            write = not self.dryRun
             qId, errors = self.app.wdSync.addProceedingsToWikidata(wdRecord, write=write, ignoreErrors=self.ignoreErrors)
             if qId is not None:
                 alert = Alert(a=self.colA3, text=f"Proceedings entry for {volume} was created!")
@@ -586,18 +588,23 @@ class VolumeListDisplay(Display):
             write = not self.dryRun
             if write:
                 self.app.wdSync.login()
-            proceedingsQId, eventQId, msg = self.app.wdSync.doCreateEventItemAndLinkProceedings(volume,
-                                                                                                proceedingsWikidataId,
-                                                                                                write=write)
+            proceedingsQId, eventQId, msg = self.app.wdSync.doCreateEventItemAndLinkProceedings(
+                    volume,
+                    proceedingsWikidataId,
+                    write=write)
             if write:
                 self.app.wdSync.logout()
             alert = Alert(a=self.colA3, text=msg)
             if proceedingsQId is not None:
                 jp.Br(a=alert)
-                jp.Link(a=alert,href=f"https://www.wikidata.org/entity/{proceedingsQId}", text=f"Proceedings: {proceedingsQId}")
+                jp.Link(a=alert,
+                        href=f"https://www.wikidata.org/entity/{proceedingsQId}",
+                        text=f"Proceedings: {proceedingsQId}")
             if eventQId is not None:
                 jp.Br(a=alert)
-                jp.Link(a=alert, href=f"https://www.wikidata.org/entity/{eventQId}", text=f"Event: {eventQId}")
+                jp.Link(a=alert,
+                        href=f"https://www.wikidata.org/entity/{eventQId}",
+                        text=f"Event: {eventQId}")
         except Exception as ex:
             self.app.handleException(ex)
     

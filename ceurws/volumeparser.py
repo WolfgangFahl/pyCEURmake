@@ -109,7 +109,8 @@ class VolumeParser(Textparser):
             scrapedDict["title"]=scrapedDict["h1"]
         if self.hasValue(scrapedDict, "h1") and self.hasValue(scrapedDict, "title") and not self.hasValue(scrapedDict, "acronym"):
             scrapedDict["acronym"] = scrapedDict["h1"]
-            
+        #editorsRecords = self.parseEditors(soup)
+        #scrapedDict["editors"] = editorsRecords
         return scrapedDict
 
     def parseEditors(self, soup: BeautifulSoup):
@@ -120,7 +121,16 @@ class VolumeParser(Textparser):
             soup: volume web page
         """
         possible_start_elements = soup.find_all("b")
-        edited_by = [e for e in possible_start_elements if "edited by" in e.text.lower()][0]
+        # find start
+        start_elements = []
+        for e in possible_start_elements:
+            start_tags = ["edited by", "program committee"]
+            for tag in start_tags:
+                if tag in e.text.lower():
+                    start_elements.append(e)
+        if len(start_elements) == 0:
+            return None
+        edited_by = start_elements[0]
         editor_h3 = edited_by.find_next("h3")
         editor_records: typing.Dict[str, dict] = dict()
         editor_spans = editor_h3.find_all(attrs={"class":"CEURVOLEDITOR"})

@@ -156,6 +156,8 @@ class WikidataSync(object):
             record["describedAt"] = self.dbpEndpoint.toDblpUrl(dblpEntityId)
             record["language of work or name"] = "Q1860"
             record["dblpEventId"] = self.dbpEndpoint.convertEntityIdToUrlId(entityId=dblpEntityId)
+        if volume.isVirtualEvent():
+            record["instanceOf"] = [instanceOf, "Q7935096"]
         return record
 
     def update(self,withStore:bool=True):

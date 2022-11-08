@@ -57,7 +57,8 @@ class Volume(JSONAble):
                 "valid": True,
                 "conference": Conference,
                 "editors":[Editor],
-                "sessions":[Session]
+                "sessions":[Session],
+                "virtualEvent": False
             }
         ]
         return samples
@@ -68,6 +69,32 @@ class Volume(JSONAble):
         """
         number = getattr(self, "number", "Volume has no number")
         return number
+
+    def getVolumeUrl(self) -> typing.Union[str, None]:
+        """
+        get the url of the volume page
+        """
+        number = getattr(self, "number")
+        url = self.getVolumeUrlOf(number)
+        return url
+
+    @staticmethod
+    def getVolumeUrlOf(number: typing.Union[str, int]) -> typing.Union[str, None]:
+        """
+        get the volume url of the given volume number
+        Args:
+            number: volume number
+        """
+        url = None
+        if number is not None:
+            url = f"http://ceur-ws.org/Vol-{number}/"
+        return url
+
+    def isVirtualEvent(self) -> bool:
+        """
+        Returns True if the event is a virtual event
+        """
+        return getattr(self, "virtualEvent", False)
 
     def normalize(self):
         """
@@ -136,10 +163,7 @@ class Volume(JSONAble):
         virtualEventKeywords = ["virtual", "online"]
         for keyword in virtualEventKeywords:
             if keyword in locationStr.lower():
-                city = "virtual event"
-                cityWikidataId = "Q7935096"  # virtual event
-                country = None
-                print(self.getVolumeNumber(), locationStr, "→ virtual event")
+                setattr(self, "virtualEvent", True)
         if city is not None:
             setattr(self, "city", city)
             setattr(self, "cityWikidataId", cityWikidataId)

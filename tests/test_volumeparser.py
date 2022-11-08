@@ -131,8 +131,8 @@ class TestVolumeParser(Basetest):
         count_homepages = 0
         with open(log_file, mode="a") as fp:
             for i in range(total, end, -1):
-                if i%100 == 0:
-                    time.sleep(20)
+                if i%50 == 0:
+                    time.sleep(30)
                 url = self.volumeParser.volumeUrl(i)
                 soup = self.volumeParser.getSoup(url)
                 msg = f"({i:04}/{total})"

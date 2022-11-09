@@ -156,10 +156,8 @@ class Volume(JSONAble):
                 cityWikidataId = bestMatch.wikidataid
                 country = bestMatch.country.name
                 countryWikidataId = bestMatch.country.wikidataid
-                print(self.getVolumeNumber(), locationStr, "→", bestMatch.name,  bestMatch.country.name)
             elif isinstance(bestMatch, Country):
                 country = bestMatch.wikidataid
-                print(self.getVolumeNumber(), locationStr, "→", bestMatch.name)
         virtualEventKeywords = ["virtual", "online"]
         for keyword in virtualEventKeywords:
             if keyword in locationStr.lower():

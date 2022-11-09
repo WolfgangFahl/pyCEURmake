@@ -110,7 +110,7 @@ class TestVolume(Basetest):
             ("Annecy, France, July 6–9, 2016", "2016-07-06", "2016-07-09", "Q50189", "Q142"),
             ("Lisbon, Portugal, October 11, 2010", "2010-10-11", "2010-10-11", "Q597", "Q45"),
             ("Rende, Italy, November 19‐20, 2019", "2019-11-19", "2019-11-20", "Q53946", "Q38"),
-            ("Online, September, 14 & 15, 2020", "2020-09-14", "2020-09-15", "Q7935096", None),
+            ("Online, September, 14 & 15, 2020", "2020-09-14", "2020-09-15", None, None),
             ("Düsseldorf, Germany, September 28-29, 2009", "2009-09-28", "2009-09-29", "Q1718", "Q183"),
             ("Chicago, USA, October 23th and 26th, 2011", "2011-10-23", "2011-10-26", "Q1297", "Q30"),
             ("Oum El Bouaghi, Algeria, May 25 and 26, 2021", "2021-05-25", "2021-05-26", "Q5478122", "Q262"),
@@ -128,21 +128,32 @@ class TestVolume(Basetest):
                 self.assertEqual(expectedCity, getattr(vol, "cityWikidataId", None))
                 self.assertEqual(expectedCountry, getattr(vol, "countryWikidataId",None))
 
+    def test_resolveLoctime_virtual_events(self):
+        """
+        test extraction of virtual event information
+        """
+        test_params = [
+
+        ]
+        for param in test_params:
+            with self.subTest("Tests resolveLoctime on", param=param):
+                loctime, expectedDateFrom, expectedDateTo, expectedCity, expectedCountry = param
+
     def test_locationExtraction(self):
         """
         tests locationExtraction
         """
         test_params=[
-            ("Waterloo, Ontario, Canada,  4-7  2010", "Q639408", "Q16"), # not to be confused with Waterloo Sierra Leone
-            ("Waterloo, Sierra Leone", "Q623241", "Q1044")
+            ("Online, September, 14 & 15, 2020", True),
+            ("Waterloo, Sierra Leone", False),
+            ("Virtual Event, Pescara, Italy, September 12, 2022", True)
         ]
         for param in test_params:
             with self.subTest("Tests resolveLoctime on", param=param):
-                locStr, expectedCity, expectedCountry = param
+                locStr, is_virtual_event = param
                 vol = Volume()
                 vol.extractAndSetLocation(locationStr=locStr)
-                self.assertEqual(expectedCity, getattr(vol, "cityWikidataId"))
-                self.assertEqual(expectedCountry, getattr(vol, "countryWikidataId"))
+                self.assertEqual(is_virtual_event, vol.isVirtualEvent())
 
     def test_removePartsMatching(self):
         """

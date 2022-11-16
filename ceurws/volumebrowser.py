@@ -494,7 +494,8 @@ class VolumeListDisplay(Display):
                         "valid": validMark
                     }
                 )  
-            self.agGrid.load_lod(lod)
+            columnDefs=[]
+            self.agGrid.load_lod(lod,columnDefs=columnDefs)
             self.setDefaultColDef(self.agGrid)
             self.agGrid.options.columnDefs[0].checkboxSelection = True
             self.agGrid.html_columns=[0,1,2]

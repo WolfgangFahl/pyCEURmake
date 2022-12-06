@@ -38,13 +38,13 @@ class Version(object):
 {description}
 
   Created by {authors} on {date} last updated {updated}"""
-            
+
 class Display:
     '''
     generic Display
     '''
     noneValue="-"
-    
+
     def createLink(self,url,text):
         '''
         create a link from the given url and text
@@ -55,7 +55,7 @@ class Display:
         '''
         link=f"<a href='{url}' target='_blank' style='color:blue'>{text}</a>"
         return link
-    
+
     def createExternalLink(self,row:dict,key:str,text:str,formatterUrl:str,emptyIfNone:bool=False):
         '''
         create an ExternalLink for the given row entry with the given key, text and formatterUrl
@@ -74,7 +74,7 @@ class Display:
         url=formatterUrl+value
         link=self.createLink(url, text)
         return link
-    
+
     def createVolumeSpan(self,a,volume:Volume):
         '''
         create a Volume span linking to our local volume display
@@ -116,13 +116,13 @@ class Display:
             jp.Link(a=li2, href=wdSync.itemUrl(eventId), text=eventId)
         li3 = jp.Li(a=ul, classes="list-group-item", text=wdSync.getEventNameFromTitle(getattr(volume, "title")))
         li4 = jp.Li(a=ul, classes="list-group-item", text=msg)
-    
+
     def getValue(self,obj,attr):
         value=getattr(obj,attr,Display.noneValue)
         if value is None:
             value=Display.noneValue
         return value
-    
+
     def getRowValue(self,row,key):
         value=None
         if key in row:
@@ -130,15 +130,15 @@ class Display:
         if value is None:
             value=Display.noneValue
         return value
-       
-    def setDefaultColDef(self,agGrid):
+
+    def setDefaultColDef(self, agGrid):
         defaultColDef=agGrid.options.defaultColDef
         defaultColDef.resizable=True
         defaultColDef.sortable=True
         # https://www.ag-grid.com/javascript-data-grid/grid-size/
         defaultColDef.wrapText=True
         defaultColDef.autoHeight=True
-        
+
     def addFitSizeButton(self,a):
         self.onSizeColumnsToFitButton=Switch(
             a=a,
@@ -148,15 +148,15 @@ class Display:
             #classes="btn btn-primary btn-sm col-1"
         )
         self.onSizeColumnsToFitButton.on("input",self.onSizeColumnsToFit)
-        
-    async def onSizeColumnsToFit(self,_msg:dict):   
+
+    async def onSizeColumnsToFit(self,_msg:dict):
         try:
             await asyncio.sleep(0.2)
             if self.agGrid:
                 await self.agGrid.run_api('sizeColumnsToFit()', self.app.wp)
         except Exception as ex:
             self.app.handleException(ex)
-            
+
 class VolumeListRefresh(Display):
     '''
     refresher for the list of volumes
@@ -216,14 +216,14 @@ class WikidataRangeImport(Display):
     '''
     import a range of volumes
     '''
-    
+
     def __init__(self,app,a):
         self.app=app
         self.rowA=jp.Div(classes="row",a=a)
         self.rowB=jp.Div(classes="row",a=a)
         self.rowC=jp.Div(classes="row",a=a)
         self.rowD=jp.Div(classes="row",a=a)
-        
+
         self.colA1=jp.Div(classes="col-3",a=self.rowA)
         self.colA2=jp.Div(classes="col-3",a=self.rowA)
         self.colA3=jp.Div(classes="col-3",a=self.rowA)
@@ -233,11 +233,11 @@ class WikidataRangeImport(Display):
         self.toValue=self.app.createInput(labelText="to", placeholder="to",change=self.onChangeTo, a=self.colA2)
         self.uploadButton=IconButton(a=self.colA3,iconName="upload-multiple",click=self.onUploadButtonClick,classes="btn btn-primary btn-sm col-1")
         self.progressBar = ProgressBar(a=self.rowC)
-        
+
     def feedback(self,msg):
         self.rowB.inner_html=msg
         print(msg)
-        
+
     def importVolume(self, volume: Volume):
         '''
         import the given volume showing the given progress
@@ -265,7 +265,7 @@ class WikidataRangeImport(Display):
                 proceedingsId=proceedingsQId,
                 eventId=eventQId,
                 msg=msg)
-        
+
     async def onUploadButtonClick(self, _msg):
         self.app.clearErrors()
         step=-1 if self.fromVolume>=self.toVolume else 1
@@ -291,13 +291,13 @@ class WikidataRangeImport(Display):
             except Exception as ex:
                 self.app.handleException(ex)
         self.app.wdSync.logout()
-        
+
     async def onChangeFrom(self,msg):
         self.fromVolume=int(msg.value)
-        
+
     async def onChangeTo(self,msg):
         self.toVolume=int(msg.value)
-        
+
 class VolumeDisplay(Display):
     '''
     displays a single volume
@@ -320,7 +320,7 @@ class VolumeDisplay(Display):
         self.volumeRefreshButton=None
         self.wikidataButton=None
         self.volume=None
-            
+
     def showVolume(self,volume):
         '''
         show the given volume
@@ -372,10 +372,10 @@ class VolumeDisplay(Display):
             <iframe src='{volume.url}' style='min-height: calc(100%); width: calc(100%);'></iframe>"""
             self.volumeHeaderDiv.inner_html=headerHtml
             self.volumeDiv.inner_html=iframeHtml
-    
+
         except Exception as ex:
             self.app.handleException(ex)
-            
+
     async def onRefreshButtonClick(self,_msg):
         try:
             self.volume.extractValuesFromVolumePage()
@@ -383,8 +383,8 @@ class VolumeDisplay(Display):
             self.showVolume(self.volume)
             self.app.wdSync.storeVolumes()
         except Exception as ex:
-            self.app.handleException(ex)  
-            
+            self.app.handleException(ex)
+
     async def onWikidataButtonClick(self,_msg):
         '''
         handle wikidata sync request
@@ -394,11 +394,11 @@ class VolumeDisplay(Display):
             qId,err=self.app.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
             if qId is not None:
                 alert=Alert(a=self.volumeToolbar,text=f"wikidata export")
-                _wdSpan=self.createWikidataSpan(a=alert,wdSync=self.app.wdSync,qId=qId, volume=self.volume)   
+                _wdSpan=self.createWikidataSpan(a=alert,wdSync=self.app.wdSync,qId=qId, volume=self.volume)
             else:
                 self.app.feedback(f"error:{err}")
         except Exception as ex:
-            self.app.handleException(ex)  
+            self.app.handleException(ex)
 
 class VolumeSearch():
     '''
@@ -421,7 +421,7 @@ class VolumeSearch():
             title=f"Vol-{volume.number}:{volume.title}"
             self.volumeInput.dataList.addOption(title,volume.number)
         self.volumeDisplay=volumeDisplay
-        
+
     def updateVolume(self,volume:Volume):
         '''
         update the volume info according to the search result
@@ -442,18 +442,18 @@ class VolumeSearch():
                 volumeNumber=int(volumeNumberStr)
             except ValueError as _ve:
                 # ignore invalid values
-                pass      
+                pass
             if volumeNumber in self.app.wdSync.volumesByNumber:
                 volume=self.app.wdSync.volumesByNumber[volumeNumber]
                 self.updateVolume(volume)
         except Exception as ex:
             self.app.handleException(ex)
-            
+
 class VolumeListDisplay(Display):
     '''
     display all Volumes
     '''
-    
+
     def __init__(self, app, container, debug:bool=False):
         '''
         constructor
@@ -461,7 +461,7 @@ class VolumeListDisplay(Display):
         self.app=app
         self.debug=debug
         self.dryRun=True
-        self.ignoreErrors=False 
+        self.ignoreErrors=False
         self.container = jp.Div(classes="container", a=container)
         self.rowA = jp.Div(classes="row", a=self.container)
         self.colA1 = jp.Div(classes="col-2", a=self.rowA)
@@ -475,9 +475,9 @@ class VolumeListDisplay(Display):
         self.ignoreErrorsButton.on("input",self.onChangeIgnoreErrors)
         self.addFitSizeButton(a=self.colA3)
         self.app.wp.on("page_ready", self.onSizeColumnsToFit)
-     
+
         try:
-            self.agGrid=LodGrid(a=self.colB1)
+
             lod=[]
             volumeList=self.app.wdSync.vm.getList()
             reverseVolumeList=sorted(volumeList, key=lambda volume:volume.number, reverse=True)
@@ -493,15 +493,16 @@ class VolumeListDisplay(Display):
                         "SubmittedBy": self.getValue(volume,"submittedBy"),
                         "valid": validMark
                     }
-                )  
+                )
+            self.agGrid = jp.AgGrid(a=self.colB1)
             self.agGrid.load_lod(lod)
             self.setDefaultColDef(self.agGrid)
             self.agGrid.options.columnDefs[0].checkboxSelection = True
-            self.agGrid.html_columns=[0,1,2]
-            self.agGrid.on('rowSelected', self.onRowSelected)     
+            self.agGrid.html_columns = [0, 1, 2]
+            self.agGrid.on('rowSelected', self.onRowSelected)
         except Exception as ex:
             self.app.handleException(ex)
-            
+
     def onChangeDryRun(self,msg:dict):
         '''
         handle change of DryRun setting
@@ -510,7 +511,7 @@ class VolumeListDisplay(Display):
             msg(dict): the justpy message
         '''
         self.dryRun=msg.value
-        
+
     async def onChangeIgnoreErrors(self,msg:dict):
         '''
         handle change of IgnoreErrors setting
@@ -518,7 +519,7 @@ class VolumeListDisplay(Display):
         Args:
             msg(dict): the justpy message
         '''
-        self.ignoreErrors=msg.value    
+        self.ignoreErrors=msg.value
 
     async def onRowSelected(self, msg):
         '''
@@ -528,7 +529,7 @@ class VolumeListDisplay(Display):
             msg(dict): row selection information
         '''
         if msg.get("selected", False):
-            try: 
+            try:
                 self.app.clearErrors()
                 data = msg.get("data")
                 volPattern = "http://ceur-ws.org/Vol-(?P<volumeNumber>\d{1,4})/"
@@ -616,7 +617,7 @@ class VolumeListDisplay(Display):
                         text=f"Event: {eventQId}")
         except Exception as ex:
             self.app.handleException(ex)
-    
+
 class WikidataDisplay(Display):
     '''
     display wiki data query results
@@ -643,8 +644,8 @@ class WikidataDisplay(Display):
         '''
         filenameprefix=f"{name}"
         qd=QueryDisplay(app=self.app,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.app.wdSync.sparql,endpointConf=self.app.wdSync.endpointConf)
-        return qd    
-    
+        return qd
+
     async def onReadProceedingsClick(self,_msg):
         '''
         read Proceedings button has been clicked
@@ -657,7 +658,7 @@ class WikidataDisplay(Display):
             await self.onSizeColumnsToFit(_msg)
         except Exception as ex:
             self.app.handleException(ex)
-    
+
     async def onWikidataRefreshButtonClick(self,_msg):
         '''
         wikidata Refresh button has been clicked
@@ -680,7 +681,7 @@ class WikidataDisplay(Display):
         _alert=Alert(a=self.app.colA1,text=f"found {len(wdRecords)} wikidata CEUR-WS proceedings records")
         self.reloadAgGrid(wdRecords)
         pass
-    
+
     def createItemLink(self,row,key):
         '''
         create an item link
@@ -691,7 +692,7 @@ class WikidataDisplay(Display):
         itemLabel=row[f"{key}Label"]
         itemLink=self.createLink(item,itemLabel)
         return itemLink
-    
+
     def reloadAgGrid(self,olod:list,showLimit=10):
         '''
         reload the given grid
@@ -699,7 +700,7 @@ class WikidataDisplay(Display):
         if self.debug:
             pprint.pprint(olod[:showLimit])
         if self.agGrid is None:
-            self.agGrid=LodGrid(a=self.app.rowB) 
+            self.agGrid=jp.AgGrid(a=self.app.rowB)
         reverseLod=sorted(olod, key=lambda row: int(row["sVolume"]) if "sVolume" in row else int(row["Volume"]), reverse=True)
         lod=[]
         for row in reverseLod:
@@ -711,7 +712,7 @@ class WikidataDisplay(Display):
                 volNumber=int(volume)
                 volumeLink=self.createLink(f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volNumber:04}")
             else:
-                volumeLink="?"   
+                volumeLink="?"
             itemLink=self.createItemLink(row, "item")
             eventLink=self.createItemLink(row,"event")
             eventSeriesLink=self.createItemLink(row, "eventSeries")
@@ -735,7 +736,7 @@ class WikidataDisplay(Display):
         self.setDefaultColDef(self.agGrid)
         self.agGrid.options.columnDefs[0].checkboxSelection = True
         self.agGrid.html_columns=[0,1,2,3,4,5,6]
-  
+
 class VolumeBrowser(App):
     '''
     CEUR-WS Volume Browser
@@ -756,14 +757,14 @@ class VolumeBrowser(App):
         self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake/issues/16",target="_blank")
         self.addMenuLink(text='Documentation',icon='file-document',href="https://ceur-ws.bitplan.com/index.php/Volume_Browser",target="_blank")
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
-        
+
         # Routes
         jp.app.add_jproute('/settings',self.settings)
         jp.app.add_jproute('/volumes',self.volumes)
         jp.app.add_jproute('/volume/{volnumber}',self.volumePage)
         jp.app.add_jproute('/wikidatasync',self.wikidatasync)
         self.templateEnv=TemplateEnv()
-        
+
     def setupPage(self,header=""):
         header="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">
 <link rel="stylesheet" href="/static/css/pygments.css">
@@ -777,14 +778,14 @@ class VolumeBrowser(App):
         self.rowB=jp.Div(classes="row",a=self.contentbox)
         self.rowC=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
         self.rowD=jp.Div(classes="row",a=self.contentbox)
-        
+
         self.colA1=jp.Div(classes="col-12",a=self.rowA)
         self.colC1=jp.Div(classes="col-12",a=self.rowC)
         self.colD1=jp.Div(classes="col-12",a=self.rowD)
-        
+
         self.feedback=jp.Div(a=self.colD1)
         self.errors=jp.Span(a=self.colD1,style='color:red')
-        
+
     def showFeedback(self,html):
         self.feedback.inner_html=html
 
@@ -809,13 +810,13 @@ class VolumeBrowser(App):
         self.setupPage()
         self.rowA=jp.Div(classes="row",a=app.contentbox)
         self.rowB=jp.Div(classes="row min-vh-100 vh-100",a=app.contentbox)
-        self.colA1=jp.Div(classes="col-12",a=self.rowA)   
+        self.colA1=jp.Div(classes="col-12",a=self.rowA)
         self.feedback=jp.Span(a=self.colA1)
         self.errors=jp.Span(a=self.colA1,style='color:red')
         if "volnumber" in request.path_params:
             volnumberStr=request.path_params["volnumber"]
         else:
-            volnumberStr=None    
+            volnumberStr=None
         volumeToolbar=jp.Div(a=self.rowA,classes="col-12")
         volumeHeaderDiv=jp.Div(a=self.rowA,classes="col-12")
         volumeDiv=self.rowB
@@ -842,7 +843,7 @@ class VolumeBrowser(App):
         #await asyncio.sleep(0.1)
         #await self.volumeListDisplay.onSizeColumnsToFit({})
         return self.wp
-    
+
     async def content(self):
         '''
         show the content
@@ -854,7 +855,7 @@ class VolumeBrowser(App):
         volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
         self.volumeSearch=VolumeSearch(self,self.colA1,volumeDisplay)
         return self.wp
-        
+
 DEBUG = 0
 if __name__ == "__main__":
     if DEBUG:

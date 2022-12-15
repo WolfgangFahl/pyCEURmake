@@ -19,120 +19,83 @@
     PREFIX wdt: <http://www.wikidata.org/prop/direct/>
     PREFIX wikibase: <http://wikiba.se/ontology#>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    SELECT ?item ?itemLabel ?itemDescription
-      ?ceurwspart
-      ?sVolume
-      ?Volume
-      ?short_name
-      # identifiers
-      ?dblpProceedingsId
-      ?ppnId
-      # event
-      ?event
-      ?eventLabel
-      ?dblpEventId
-      # eventSeries
-      #?partOfTheEventSeriesStmt
-      ?eventSeries
-      ?eventSeriesLabel
-      ?eventSeriesOrdinal
-      # details
-      ?title
-      ?language_of_work_or_name ?language_of_work_or_nameLabel
-      ?URN_NBN ?URN_NBNUrl
-      ?publication_date
-      ?fullWorkUrl
-      ?described_at_URL
-      ?homePage
-    
+    SELECT 
+      ?item 
+      ?itemLabel 
+      ?itemDescription 
+      ?ceurwspart 
+      ?sVolume 
+      ?Volume 
+      ?short_name 
+      ?dblpProceedingsId 
+      ?ppnId 
+      ?event 
+      ?eventLabel 
+      ?dblpEventId 
+      ?eventSeries 
+      ?eventSeriesLabel 
+      ?eventSeriesOrdinal 
+      ?title 
+      ?language_of_work_or_name 
+      ?language_of_work_or_nameLabel 
+      ?URN_NBN 
+      ?publication_date 
+      ?fullWorkUrl 
+      ?described_at_URL 
+      ?homePage 
     WHERE {
-      ?item rdfs:label ?itemLabel.
-      FILTER(LANG(?itemLabel) = "en")
+      ?item wdt:P31 wd:Q1143604;
+        wdt:P179 wd:Q27230297;
+        rdfs:label ?itemLabel.
+      FILTER((LANG(?itemLabel)) = "en")
       OPTIONAL {
         ?item schema:description ?itemDescription.
-        FILTER(LANG(?itemDescription) = "en")
+        FILTER((LANG(?itemDescription)) = "en")
       }
-    
-      # Instance of Proceedings
-      ?item wdt:P31 wd:Q1143604.
-      # Part of the series
-      ?item p:P179 ?partOfTheSeries.
-      # CEUR Workshop proceedings
-      ?partOfTheSeries ps:P179 wd:Q27230297.
-    
-      # Volume directly with the proceeedings
-      OPTIONAL {
-        ?item wdt:P478 ?Volume.
-      }
-      # Volumes via a a qualifier of the part of the series relation
-      OPTIONAL {
-        ?partOfTheSeries pq:P478 ?sVolume.
-      }
-      # Acronym
-      OPTIONAL {
-        ?item wdt:P1813 ?short_name.
-      }
-      # External Identifiers
-      OPTIONAL {
-      	# DBLP event ID
-      	# identifier for scientific events in the DBLP computer science bibliography
-      	?item wdt:P8978 ?dblpProceedingsId.
-      }
-      OPTIONAL {
-        # K10plus PPN ID
-        ?item wdt:P6721 ?ppnId.
-      }
-      # event
-      OPTIONAL {
-        ?item wdt:P4745 ?event.
-        ?event rdfs:label ?eventLabel.
-        FILTER(LANG(?eventLabel) = "en")
-        OPTIONAL {
-          ?event p:P179 ?partOfTheEventSeriesStmt.
-          ?partOfTheEventSeriesStmt ps:P179 ?eventSeries.
-          ?partOfTheEventSeriesStmt pq:P1545 ?eventSeriesOrdinal.
-          #?event wdt:P179 ?eventSeries.
-          ?eventSeries rdfs:label ?eventSeriesLabel.
-          FILTER(LANG(?eventSeriesLabel) = "en").
-        }
-        OPTIONAL{
-          ?event wdt:P10692 ?dblpEventId.
-        }
-      }
-      # Title
-      OPTIONAL {
-        ?item wdt:P1476 ?title.
-      }
-      # Language
+      OPTIONAL { ?item wdt:P478 ?Volume. }
+      OPTIONAL { ?item (p:P179/pq:P478) ?_sVolume. BIND(xsd:integer(?_sVolume) as ?sVolume)}
+      OPTIONAL { ?item wdt:P1813 ?short_name. }
+      OPTIONAL { ?item wdt:P8978 ?dblpProceedingsId. }
+      OPTIONAL { ?item wdt:P6721 ?ppnId. }
+      OPTIONAL {?item wdt:P4109 ?URN_NBN.}        
+      OPTIONAL { ?item wdt:P1476 ?title. }
+      OPTIONAL { ?item wdt:P577 ?publication_date. }
+      OPTIONAL { ?item wdt:P953 ?fullWorkUrl. }
+      OPTIONAL { ?item wdt:P973 ?described_at_URL. }
+      OPTIONAL { ?item wdt:P856 ?homePage. }
       OPTIONAL {
         ?item wdt:P407 ?language_of_work_or_name.
         ?language_of_work_or_name rdfs:label ?language_of_work_or_nameLabel.
-        FILTER(LANG(?language_of_work_or_nameLabel) = "en")
+        FILTER((LANG(?language_of_work_or_nameLabel)) = "en")
       }
-      # The URN shouldn't be optional
-      OPTIONAL {
-        ?item wdt:P4109 ?URN_NBN.
-        wd:P4109 wdt:P1630 ?URN_NBNFormatterUrl.
-        BIND(IRI(REPLACE(?URN_NBN, '^(.+)$', ?URN_NBNFormatterUrl)) AS ?URN_NBNUrl).
-      }
-      # publication date
-      OPTIONAL {
-        ?item wdt:P577 ?publication_date.
-      }
-      # full work available at
-      OPTIONAL {
-        ?item wdt:P953 ?fullWorkUrl
-      }
-      # described at url
-      OPTIONAL {
-        ?item wdt:P973 ?described_at_URL.
-      }
-      # homepage -> replace with full work available at
-      OPTIONAL {
-        ?item wdt:P856 ?homePage
+      {
+        SELECT 
+          ?item 
+          (GROUP_CONCAT(?_event; SEPARATOR = "|") AS ?event) 
+          (GROUP_CONCAT(?_eventLabel; SEPARATOR = "|") AS ?eventLabel) 
+          (GROUP_CONCAT(?_eventSeries; SEPARATOR = "|") AS ?eventSeries) 
+          (GROUP_CONCAT(?_eventSeriesLabel; SEPARATOR = "|") AS ?eventSeriesLabel) 
+          (GROUP_CONCAT(?_eventSeriesOrdinal; SEPARATOR = "|") AS ?eventSeriesOrdinal)
+          (GROUP_CONCAT(?_dblpEventId; SEPARATOR = "|") AS ?dblpEventId) 
+        WHERE {
+          ?item wdt:P31 wd:Q1143604;
+            wdt:P179 wd:Q27230297;
+            wdt:P4745 ?_event.
+          ?_event rdfs:label ?_eventLabel.
+          FILTER((LANG(?_eventLabel)) = "en")
+          OPTIONAL { ?_event wdt:P10692 ?_dblpEventId. }
+          OPTIONAL {
+            ?_event p:P179 ?_partOfTheEventSeriesStmt.
+            ?_partOfTheEventSeriesStmt ps:P179 ?_eventSeries;
+              pq:P1545 ?_eventSeriesOrdinal.
+            ?_eventSeries rdfs:label ?_eventSeriesLabel.
+            FILTER((LANG(?_eventSeriesLabel)) = "en")
+          }
+        }
+        GROUP BY ?item
       }
     }
-    ORDER BY xsd:integer(?sVolume)
+    ORDER BY ?sVolume
 'SubmittedByGt6':
   sql: |
     SELECT count(*) as count,submittedBy

@@ -471,19 +471,24 @@ class VolumeSearch():
         except Exception as ex:
             self.app.handleException(ex)
 
-class VolumeListDisplay(Display):
-    '''
-    display all Volumes
-    '''
 
-    def __init__(self, app, container, debug:bool=False):
-        '''
+class VolumeListDisplay(Display):
+    """
+    display all Volumes
+    """
+
+    def __init__(self, app, container, debug: bool = False):
+        """
         constructor
-        '''
-        self.app=app
-        self.debug=debug
-        self.dryRun=True
-        self.ignoreErrors=False
+        Args:
+            app:
+            container: main container of the content
+            debug: If True plot debug messages
+        """
+        self.app = app
+        self.debug = debug
+        self.dryRun = True
+        self.ignoreErrors = False
         self.container = jp.Div(classes="container", a=container)
         self.rowA = jp.Div(classes="row", a=self.container)
         self.colA1 = jp.Div(classes="col-2", a=self.rowA)
@@ -491,10 +496,10 @@ class VolumeListDisplay(Display):
         self.colA3 = jp.Div(classes="col-8", a=self.rowA)
         self.rowB = jp.Div(classes="row", a=self.container)
         self.colB1 = jp.Div(classes="col-12", a=self.rowB)
-        self.dryRunButton=Switch(a=self.colA1,labelText="dry run",checked=self.dryRun,disable=True)
-        self.dryRunButton.on("input",self.onChangeDryRun)
-        self.ignoreErrorsButton=Switch(a=self.colA2,labelText="ignore errors",checked=self.ignoreErrors)
-        self.ignoreErrorsButton.on("input",self.onChangeIgnoreErrors)
+        self.dryRunButton = Switch(a=self.colA1, labelText="dry run", checked=self.dryRun, disable=True)
+        self.dryRunButton.on("input", self.onChangeDryRun)
+        self.ignoreErrorsButton = Switch(a=self.colA2, labelText="ignore errors", checked=self.ignoreErrors)
+        self.ignoreErrorsButton.on("input", self.onChangeIgnoreErrors)
         self.addFitSizeButton(a=self.colA3)
         self.app.wp.on("page_ready", self.onSizeColumnsToFit)
 
@@ -504,7 +509,7 @@ class VolumeListDisplay(Display):
             volumeList=self.app.wdSync.vm.getList()
             reverseVolumeList=sorted(volumeList, key=lambda volume:volume.number, reverse=True)
             for volume in reverseVolumeList:
-                validMark= "✅" if volume.valid else "❌"
+                validMark = "✅" if volume.valid else "❌"
                 lod.append(
                     {
                         "Vol": self.createLink(volume.url,f"Vol-{volume.number:04}"),
@@ -525,14 +530,14 @@ class VolumeListDisplay(Display):
         except Exception as ex:
             self.app.handleException(ex)
 
-    def onChangeDryRun(self,msg:dict):
-        '''
+    def onChangeDryRun(self, msg: dict):
+        """
         handle change of DryRun setting
-        
+
         Args:
-            msg(dict): the justpy message
-        '''
-        self.dryRun=msg.value
+            msg(Dict): the justpy event message
+        """
+        self.dryRun = msg.checked
 
     async def onChangeIgnoreErrors(self,msg:dict):
         '''
@@ -541,7 +546,7 @@ class VolumeListDisplay(Display):
         Args:
             msg(dict): the justpy message
         '''
-        self.ignoreErrors=msg.value
+        self.ignoreErrors=msg.checked
 
     async def onRowSelected(self, msg):
         '''

@@ -170,7 +170,15 @@ class WikidataSync(object):
         primaryKey = "URN_NBN"
         withCreate = True
         withDrop = True
-        entityInfo=self.sqldb.createTable(wdRecords, "Proceedings", primaryKey,withCreate, withDrop,sampleRecordCount=5000,failIfTooFew=False)
+        entityInfo = self.sqldb.createTable(
+                wdRecords,
+                "Proceedings",
+                primaryKey,
+                withCreate,
+                withDrop,
+                sampleRecordCount=5000,
+                failIfTooFew=False
+        )
         procsByURN, duplicates = LOD.getLookup(wdRecords, 'URN_NBN')
         if withStore:
             self.sqldb.store(procsByURN.values(), entityInfo, executeMany=True, fixNone=True)
@@ -252,7 +260,7 @@ class WikidataSync(object):
         wdItems = [record.get("event")[len("http://www.wikidata.org/entity/"):] for record in qres]
         return wdItems
 
-    def addProceedingsToWikidata(self, record:dict, write:bool=True, ignoreErrors:bool=False):
+    def addProceedingsToWikidata(self, record: dict, write: bool = True, ignoreErrors: bool = False):
         """
         Creates a wikidata entry for the given record
         
@@ -269,7 +277,7 @@ class WikidataSync(object):
             self.logout()
         return qid, errors
 
-    def doAddProceedingsToWikidata(self, record:dict, write:bool=True, ignoreErrors:bool=False):
+    def doAddProceedingsToWikidata(self, record: dict, write: bool = True, ignoreErrors: bool = False):
         """
         Creates a wikidata proceedings entry for the given record
         

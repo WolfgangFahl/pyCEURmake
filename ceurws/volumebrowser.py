@@ -9,70 +9,79 @@ import time
 
 import justpy as jp
 from jpwidgets.bt5widgets import Alert, App, IconButton, Switch, ProgressBar
-from jpwidgets.widgets import LodGrid
-from ceurws.ceur_ws import  Volume
+from ceurws.ceur_ws import Volume
 from ceurws.querydisplay import QueryDisplay
 from ceurws.wikidatasync import DblpEndpoint, WikidataSync
 from ceurws.template import TemplateEnv
 import pprint
 import sys
 
+
 class Version(object):
-    '''
+    """
     Version handling for VolumBrowser
-    '''
-    name="CEUR-WS Volume Browser"
-    version='0.0.2'
+    """
+    name = "CEUR-WS Volume Browser"
+    version = '0.0.2'
     date = '2022-08-14'
     updated = '2022-09-07'
-    description='CEUR-WS Volume browser'
-    authors='Wolfgang Fahl'
-    license=f'''Copyright 2022 contributors. All rights reserved.
+    description = 'CEUR-WS Volume browser'
+    authors = 'Wolfgang Fahl'
+    license = f'''Copyright 2022 contributors. All rights reserved.
 
   Licensed under the Apache License 2.0
   http://www.apache.org/licenses/LICENSE-2.0
 
   Distributed on an "AS IS" basis without warranties
   or conditions of any kind, either express or implied.'''
-    longDescription=f"""{name} version {version}
+    longDescription = f"""{name} version {version}
 {description}
 
   Created by {authors} on {date} last updated {updated}"""
 
-class Display:
-    '''
-    generic Display
-    '''
-    noneValue="-"
 
-    def createLink(self,url,text):
-        '''
+class Display:
+    """
+    generic Display
+    """
+    noneValue = "-"
+
+    def createLink(self, url: str, text: str):
+        """
         create a link from the given url and text
-        
+
         Args:
             url(str): the url to create a link for
             text(str): the text to add for the link
-        '''
-        link=f"<a href='{url}' target='_blank' style='color:blue'>{text}</a>"
+        """
+        link = f"<a href='{url}' target='_blank' style='color:blue'>{text}</a>"
         return link
 
-    def createExternalLink(self,row:dict,key:str,text:str,formatterUrl:str,emptyIfNone:bool=False):
-        '''
+    def createExternalLink(self, row: dict, key: str, text: str, formatterUrl: str, emptyIfNone: bool = False) -> str:
+        """
         create an ExternalLink for the given row entry with the given key, text and formatterUrl
-        
+
         Args:
             row(dict): the row to extract the value from
             key(str): the key
             text(str): the text to display for the link
             formatterUrl(str): the prefix for the url to use
-        '''
-        value=self.getRowValue(row, key)
-        wdPrefix="http://www.wikidata.org/entity/"
+            emptyIfNone(bool): if True return empty string if value is Display.noneValue
+
+        Returns:
+            str - html link for external id
+        """
+        value = self.getRowValue(row, key)
+        wdPrefix = "http://www.wikidata.org/entity/"
         if value.startswith(wdPrefix):
-            value=value.replace(wdPrefix, "")
-        if value==Display.noneValue: return "" if emptyIfNone else Display.noneValue
-        url=formatterUrl+value
-        link=self.createLink(url, text)
+            value = value.replace(wdPrefix, "")
+        if value == Display.noneValue:
+            if emptyIfNone:
+                return ""
+            else:
+                return Display.noneValue
+        url = formatterUrl + value
+        link = self.createLink(url, text)
         return link
 
     def createVolumeSpan(self,a,volume:Volume):
@@ -102,9 +111,17 @@ class Display:
         jp.Link(a=wdSpan, href=href, text=f"{qId} ")
         return wdSpan
 
-    def createEventProceedingsList(self, a, wdSync:WikidataSync, volume:Volume, proceedingsId:str=None, eventId:str=None, msg:str=None):
+    def createEventProceedingsList(
+            self,
+            a,
+            wdSync: WikidataSync,
+            volume: Volume,
+            proceedingsId: str = None,
+            eventId: str = None,
+            msg: str = None
+    ):
         """
-        Create a unordered horizontal list with the given ids
+        Create an unordered horizontal list with the given ids
         """
         ul = jp.Ul(a=a, classes="list-group list-group-horizontal")
         li = jp.Li(a=ul, classes="list-group-item", text=f"Vol-{getattr(volume, 'number')}")
@@ -123,7 +140,7 @@ class Display:
             value=Display.noneValue
         return value
 
-    def getRowValue(self,row,key):
+    def getRowValue(self, row, key):
         value=None
         if key in row:
             value=row[key]
@@ -212,10 +229,11 @@ class VolumeListRefresh(Display):
         except Exception as ex:
                 self.app.handleException(ex)
 
+
 class WikidataRangeImport(Display):
-    '''
+    """
     import a range of volumes
-    '''
+    """
 
     def __init__(self,app,a):
         self.app=app
@@ -239,9 +257,9 @@ class WikidataRangeImport(Display):
         print(msg)
 
     def importVolume(self, volume: Volume):
-        '''
+        """
         import the given volume showing the given progress
-        '''
+        """
         wdRecord=self.app.wdSync.getWikidataProceedingsRecord(volume)
         msg=f"Importing {volume} to wikidata"
         self.feedback(msg)
@@ -298,21 +316,23 @@ class WikidataRangeImport(Display):
     async def onChangeTo(self,msg):
         self.toVolume=int(msg.value)
 
+
 class VolumeDisplay(Display):
-    '''
+    """
     displays a single volume
-    '''
+    """
+
     def __init__(self,app,volumeToolbar,volumeHeaderDiv,volumeDiv):
-        '''
+        """
         constructor
-        
+
         Args:
             app(App): The bootstrap 5 app
-            volnumber(int): the volume number 
+            volnumber(int): the volume number
             volumeToolbar(jp.Div): the div for the toolbar
             volumeHeaderDiv(jp.Div): the div for the header
             volumeDiv(jp.Div): the div for the volume content
-        '''
+        """
         self.app=app
         self.volumeToolbar=volumeToolbar
         self.volumeHeaderDiv=volumeHeaderDiv
@@ -322,12 +342,12 @@ class VolumeDisplay(Display):
         self.volume=None
 
     def showVolume(self,volume):
-        '''
+        """
         show the given volume
-        
+
         Args:
             volume(Volume): the volume to show
-        '''
+        """
         try:
             self.volume=volume
             if self.volumeRefreshButton is None:
@@ -400,19 +420,21 @@ class VolumeDisplay(Display):
         except Exception as ex:
             self.app.handleException(ex)
 
+
 class VolumeSearch():
-    '''
+    """
     volume search
-    '''
+    """
+
     def __init__(self,app,volumeInputDiv,volumeDisplay:VolumeDisplay,debug:bool=False):
-        '''
+        """
         constructor
-        
+
         Args:
             app(App): the justpy bootstrap5 app
             volumeInputDiv(): the input Div
             debug(bool): if True swith debugging on
-        '''
+        """
         self.app=app
         self.debug=debug
         self.app.addMenuLink(text='Endpoint',icon='web',href=self.app.wdSync.endpointConf.website,target="_blank")
@@ -618,40 +640,63 @@ class VolumeListDisplay(Display):
         except Exception as ex:
             self.app.handleException(ex)
 
+
 class WikidataDisplay(Display):
-    '''
+    """
     display wiki data query results
-    '''
-    def __init__(self,app,debug:bool=False):
+    """
+
+    def __init__(self, app, debug: bool = False):
+        """
+        constructor
+        """
         self.app=app
         self.debug=debug
         self.agGrid=None
         self.app.addMenuLink(text='Endpoint',icon='web',href=self.app.wdSync.endpointConf.website,target="_blank")
         self.pdQueryDisplay=self.createQueryDisplay("Proceedings", self.app.rowA)
-        self.readProceedingsButton=jp.Button(text="from cache",classes="btn btn-primary",a=self.app.colA1,click=self.onReadProceedingsClick)
-        self.wikidataRefreshButton=jp.Button(text="refresh wikidata",classes="btn btn-primary",a=self.app.colA1,click=self.onWikidataRefreshButtonClick)
+        self.readProceedingsButton = jp.Button(
+                text="from cache",
+                classes="btn btn-primary",
+                a=self.app.colA1,
+                click=self.onReadProceedingsClick
+        )
+        self.wikidataRefreshButton = jp.Button(
+                text="refresh wikidata",
+                classes="btn btn-primary",
+                a=self.app.colA1,
+                click=self.onWikidataRefreshButtonClick
+        )
         self.addFitSizeButton(a=self.app.colA1)
         self.app.wp.on("page_ready", self.onSizeColumnsToFit)
 
-    def createQueryDisplay(self,name,a)->QueryDisplay:
-        '''
+    def createQueryDisplay(self, name: str, a: jp.Component) -> QueryDisplay:
+        """
         Args:
             name(str): the name of the query
             a(jp.Component): the ancestor
 
         Returns:
             QueryDisplay: the created QueryDisplay
-        '''
-        filenameprefix=f"{name}"
-        qd=QueryDisplay(app=self.app,name=name,a=a,filenameprefix=filenameprefix,text=name,sparql=self.app.wdSync.sparql,endpointConf=self.app.wdSync.endpointConf)
+        """
+        filenameprefix = f"{name}"
+        qd = QueryDisplay(
+                app=self.app,
+                name=name,
+                a=a,
+                filenameprefix=filenameprefix,
+                text=name,
+                sparql=self.app.wdSync.sparql,
+                endpointConf=self.app.wdSync.endpointConf
+        )
         return qd
 
-    async def onReadProceedingsClick(self,_msg):
-        '''
+    async def onReadProceedingsClick(self, _msg):
+        """
         read Proceedings button has been clicked
-        '''
+        """
         try:
-            proceedingsRecords=self.app.wdSync.loadProceedingsFromCache()
+            proceedingsRecords = self.app.wdSync.loadProceedingsFromCache()
             self.app.showFeedback(f"found {len(proceedingsRecords)} cached wikidata proceedings records")
             self.reloadAgGrid(proceedingsRecords)
             await self.app.wp.update()
@@ -660,11 +705,11 @@ class WikidataDisplay(Display):
             self.app.handleException(ex)
 
     async def onWikidataRefreshButtonClick(self,_msg):
-        '''
+        """
         wikidata Refresh button has been clicked
-        '''
+        """
         try:
-            _alert=Alert(a=self.app.colA1,text="running SPARQL query to retrieve CEUR-WS proceedings from Wikidata ...")
+            _alert = Alert(a=self.app.colA1, text="running SPARQL query to retrieve CEUR-WS proceedings from Wikidata ...")
             await self.app.wp.update()
             self.updateWikidata()
             await self.app.wp.update()
@@ -673,52 +718,70 @@ class WikidataDisplay(Display):
             self.app.handleException(ex)
 
     def updateWikidata(self):
-        '''
+        """
         update Wikidata
-        '''
+        """
         self.pdQueryDisplay.showSyntaxHighlightedQuery(self.app.wdSync.wdQuery)
-        wdRecords=self.app.wdSync.update()
-        _alert=Alert(a=self.app.colA1,text=f"found {len(wdRecords)} wikidata CEUR-WS proceedings records")
+        wdRecords = self.app.wdSync.update()
+        _alert = Alert(a=self.app.colA1, text=f"found {len(wdRecords)} wikidata CEUR-WS proceedings records")
         self.reloadAgGrid(wdRecords)
         pass
 
-    def createItemLink(self,row,key):
-        '''
+    def createItemLink(self, row: dict, key: str, separator: str = None) -> str:
+        """
         create an item link
-        '''
-        value=self.getRowValue(row, key)
-        if value==Display.noneValue: return value
-        item=row[key]
-        itemLabel=row[f"{key}Label"]
-        itemLink=self.createLink(item,itemLabel)
+        Args:
+            row: row object with the data
+            key: key of the value for which the link is created
+            separator: If not None split the value on the separator and create multiple links
+        """
+        value = self.getRowValue(row, key)
+        if value == Display.noneValue:
+            return value
+        item = row[key]
+        itemLabel = row[f"{key}Label"]
+        itemLink = ""
+        if separator is not None:
+            item_parts = item.split(separator)
+            itemLabel_parts = itemLabel.split(separator)
+            links = []
+            for url, label in zip(item_parts, itemLabel_parts):
+                link = self.createLink(url, label)
+                links.append(link)
+            itemLink = "<br>".join(links)
+        else:
+            itemLink = self.createLink(item, itemLabel)
         return itemLink
 
-    def reloadAgGrid(self,olod:list,showLimit=10):
-        '''
+    def reloadAgGrid(self, olod: list, showLimit: int = 10):
+        """
         reload the given grid
-        '''
+        """
         if self.debug:
             pprint.pprint(olod[:showLimit])
         if self.agGrid is None:
-            self.agGrid=jp.AgGrid(a=self.app.rowB)
-        reverseLod=sorted(olod, key=lambda row: int(row["sVolume"]) if "sVolume" in row else int(row["Volume"]), reverse=True)
-        lod=[]
+            self.agGrid = jp.AgGrid(a=self.app.rowB)
+        reverseLod = sorted(
+                olod,
+                key=lambda row: int(row["sVolume"]) if "sVolume" in row else int(row["Volume"]),
+                reverse=True
+        )
+        lod = []
         for row in reverseLod:
-            volume=self.getRowValue(row, "sVolume")
-            if volume=="?":
-                volume=self.getRowValue(row, "Volume")
-            volNumber="?"
-            if volume!="?":
-                volNumber=int(volume)
-                volumeLink=self.createLink(f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volNumber:04}")
+            volume = self.getRowValue(row, "sVolume")
+            if volume == "?":
+                volume = self.getRowValue(row, "Volume")
+            volNumber = "?"
+            if volume != "?":
+                volNumber = int(volume)
+                volumeLink = self.createLink(f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volNumber:04}")
             else:
-                volumeLink="?"
-            itemLink=self.createItemLink(row, "item")
-            eventLink=self.createItemLink(row,"event")
-            eventSeriesLink=self.createItemLink(row, "eventSeries")
-            #@TODO - use formatterUris from Wikidata
-            dblpLink=self.createExternalLink(row,"dblpProceedingsId","dblp",DblpEndpoint.DBLP_REC_PREFIX)
-            k10PlusLink=self.createExternalLink(row, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=")
+                volumeLink = "?"
+            itemLink = self.createItemLink(row, "item")
+            eventLink = self.createItemLink(row, "event", separator="|")
+            eventSeriesLink = self.createItemLink(row, "eventSeries", separator="|")
+            dblpLink = self.createExternalLink(row, "dblpProceedingsId", "dblp", DblpEndpoint.DBLP_REC_PREFIX)
+            k10PlusLink = self.createExternalLink(row, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=")
             lod.append(
                 {
                     "item": itemLink,
@@ -820,7 +883,12 @@ class VolumeBrowser(App):
         volumeToolbar=jp.Div(a=self.rowA,classes="col-12")
         volumeHeaderDiv=jp.Div(a=self.rowA,classes="col-12")
         volumeDiv=self.rowB
-        self.volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
+        self.volumeDisplay = VolumeDisplay(
+                self,
+                volumeToolbar=volumeToolbar,
+                volumeHeaderDiv=volumeHeaderDiv,
+                volumeDiv=volumeDiv
+        )
         volume=None
         if volnumberStr:
             try:

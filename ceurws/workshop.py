@@ -8,7 +8,7 @@ import xmltodict
 
 class Workshop(object):
     '''
-
+    a single Workshop
     '''
 
     def __init__(self):

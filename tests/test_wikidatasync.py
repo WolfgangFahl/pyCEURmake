@@ -8,7 +8,7 @@ import pprint
 import time
 import unittest
 
-from wikibaseintegrator import wbi_login, WikibaseIntegrator
+from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator import datatypes as wbi_datatype
 
 from tests.basetest import Basetest

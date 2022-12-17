@@ -410,7 +410,7 @@ class VolumeManager(EntityManager):
 
 class Paper(JSONAble):
     """
-    Represents a conference
+    Represents a paper
     """
 
     @staticmethod
@@ -449,6 +449,12 @@ class Paper(JSONAble):
         ]
         
     def __str__(self):
+        """
+        return my string representation
+        
+        Returns:
+            str: my text representation
+        """
         text=self.title
         return text
 

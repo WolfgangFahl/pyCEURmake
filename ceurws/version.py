@@ -9,7 +9,7 @@ class Version(object):
     Version handling for pyCEURmake
     '''
     name="pyCEURmake"
-    version='0.0.8'
+    version='0.0.9'
     date = '2020-11-12'
-    updated = '2022-11-08'
+    updated = '2022-12-17'
     description='python api providing access to view and add ceur-ws volumes'

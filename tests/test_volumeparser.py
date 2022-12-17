@@ -104,7 +104,7 @@ class TestVolumeParser(Basetest):
                 res = self.volumeParser.parseEditors(soup)
                 #pprint.pprint(res)
                 number_of_editors = len(res)
-                number_of_hompages = len(
+                number_of_homepages = len(
                         [e.get("homepage")
                          for e in res.values()
                          if e.get("homepage", None) is not None])
@@ -113,9 +113,9 @@ class TestVolumeParser(Basetest):
                     affiliations.extend([a.get("name") for a in e.get("affiliation")])
                 number_of_affiliations = len(set(affiliations))
                 print(
-                    f"Vol-{number}:#editors={number_of_editors} #hompages={number_of_hompages} #affiliations={number_of_affiliations} ({url})")
+                    f"Vol-{number}:#editors={number_of_editors} #homepages={number_of_homepages} #affiliations={number_of_affiliations} ({url})")
                 self.assertEqual(exp_editors, number_of_editors)
-                self.assertEqual(exp_homepages, number_of_hompages)
+                self.assertEqual(exp_homepages, number_of_homepages)
                 self.assertEqual(exp_affiliations, number_of_affiliations)
 
     @unittest.skipIf(True, "Only for manual testing")

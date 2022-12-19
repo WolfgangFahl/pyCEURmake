@@ -70,34 +70,34 @@
         ?language_of_work_or_name rdfs:label ?language_of_work_or_nameLabel.
         FILTER((LANG(?language_of_work_or_nameLabel)) = "en")
       }
-      {
-        SELECT 
-          ?item 
-          (GROUP_CONCAT(?_event; SEPARATOR = "|") AS ?event) 
-          (GROUP_CONCAT(?_eventLabel; SEPARATOR = "|") AS ?eventLabel) 
-          (GROUP_CONCAT(?_eventSeries; SEPARATOR = "|") AS ?eventSeries) 
-          (GROUP_CONCAT(?_eventSeriesLabel; SEPARATOR = "|") AS ?eventSeriesLabel) 
-          (GROUP_CONCAT(?_eventSeriesOrdinal; SEPARATOR = "|") AS ?eventSeriesOrdinal)
-          (GROUP_CONCAT(?_dblpEventId; SEPARATOR = "|") AS ?dblpEventId) 
-        WHERE {
-          ?item wdt:P31 wd:Q1143604;
-            wdt:P179 wd:Q27230297;
-            wdt:P4745 ?_event.
-          ?_event rdfs:label ?_eventLabel.
-          FILTER((LANG(?_eventLabel)) = "en")
-          OPTIONAL { ?_event wdt:P10692 ?_dblpEventId. }
-          OPTIONAL {
-            ?_event p:P179 ?_partOfTheEventSeriesStmt.
-            ?_partOfTheEventSeriesStmt ps:P179 ?_eventSeries;
-              pq:P1545 ?_eventSeriesOrdinal.
-            ?_eventSeries rdfs:label ?_eventSeriesLabel.
-            FILTER((LANG(?_eventSeriesLabel)) = "en")
-          }
-        }
-        GROUP BY ?item
-      }
     }
     ORDER BY ?sVolume
+'EventsByProceeding':
+  'sparql': |
+    SELECT DISTINCT
+      ?item 
+      (GROUP_CONCAT(?_event; SEPARATOR = "|") AS ?event) 
+      (GROUP_CONCAT(?_eventLabel; SEPARATOR = "|") AS ?eventLabel) 
+      (GROUP_CONCAT(?_eventSeries; SEPARATOR = "|") AS ?eventSeries) 
+      (GROUP_CONCAT(?_eventSeriesLabel; SEPARATOR = "|") AS ?eventSeriesLabel) 
+      (GROUP_CONCAT(?_eventSeriesOrdinal; SEPARATOR = "|") AS ?eventSeriesOrdinal)
+      (GROUP_CONCAT(?_dblpEventId; SEPARATOR = "|") AS ?dblpEventId) 
+    WHERE {
+      ?item wdt:P31 wd:Q1143604;
+        wdt:P179 wd:Q27230297;
+        wdt:P4745 ?_event.
+      ?_event rdfs:label ?_eventLabel.
+      FILTER((LANG(?_eventLabel)) = "en")
+      OPTIONAL { ?_event wdt:P10692 ?_dblpEventId. }
+      OPTIONAL {
+        ?_event p:P179 ?_partOfTheEventSeriesStmt.
+        ?_partOfTheEventSeriesStmt ps:P179 ?_eventSeries;
+          pq:P1545 ?_eventSeriesOrdinal.
+        ?_eventSeries rdfs:label ?_eventSeriesLabel.
+        FILTER((LANG(?_eventSeriesLabel)) = "en")
+      }
+    }
+    GROUP BY ?item
 'SubmittedByGt6':
   sql: |
     SELECT count(*) as count,submittedBy

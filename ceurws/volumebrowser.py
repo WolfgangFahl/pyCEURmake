@@ -19,7 +19,7 @@ import sys
 
 class Version(object):
     """
-    Version handling for VolumBrowser
+    Version handling for VolumeBrowser
     """
     name = "CEUR-WS Volume Browser"
     version = '0.0.2'

@@ -265,8 +265,6 @@ class Volume(JSONAble):
         rankedLocations.sort(key=lambda scoreTuple: scoreTuple[0], reverse=True)
         return [location for score, location in rankedLocations]
 
-
-
     def __str__(self):
         text=f"Vol-{self.number}"
         return text
@@ -293,7 +291,7 @@ class Volume(JSONAble):
         """
         return
     
-    def extractValuesFromVolumePage(self,timeout=3,withPapers:bool=True):
+    def extractValuesFromVolumePage(self, timeout: float = 3, withPapers: bool = True):
         '''
         extract values from the given volume page
         '''
@@ -301,8 +299,8 @@ class Volume(JSONAble):
         self.h1="?"
         if self.url is None:
             return
-        volumeParser=VolumeParser(timeout=timeout)
-        parseDict=volumeParser.parse(self.url)
+        volumeParser = VolumeParser(timeout=timeout)
+        parseDict = volumeParser.parse_volume(self.getVolumeNumber())
         self.fromDict(parseDict)
         
         if withPapers:

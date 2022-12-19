@@ -160,18 +160,29 @@ class WikidataSync(object):
             record["instanceOf"] = [instanceOf, "Q7935096"]
         return record
 
-    def update(self,withStore:bool=True):
-        '''
+    def update(self, withStore: bool = True):
+        """
         update my table from the Wikidata Proceedings SPARQL query
-        '''
+        """
         if self.debug:
             print(f"Querying proceedings from {self.baseurl} ...")
-        wdRecords = self.sparql.queryAsListOfDicts(self.wdQuery.query)
+        # query proceedings
+        wd_proceedings_records: List[dict] = self.sparql.queryAsListOfDicts(self.wdQuery.query)
+        # query events
+        event_query = self.qm.queriesByName["EventsByProceeding"]
+        wd_event_records: List[dict] = self.sparql.queryAsListOfDicts(event_query.query)
+        # add events to proceeding records
+        proceedings_event_map, _duplicates = LOD.getLookup(wd_event_records, "item")
+        for proceedings_record in wd_proceedings_records:
+            item = proceedings_record.get("item")
+            if item in proceedings_event_map:
+                event_record = proceedings_event_map.get(item)
+                proceedings_record.update(**event_record)
         primaryKey = "URN_NBN"
         withCreate = True
         withDrop = True
         entityInfo = self.sqldb.createTable(
-                wdRecords,
+                wd_proceedings_records,
                 "Proceedings",
                 primaryKey,
                 withCreate,
@@ -179,14 +190,14 @@ class WikidataSync(object):
                 sampleRecordCount=5000,
                 failIfTooFew=False
         )
-        procsByURN, duplicates = LOD.getLookup(wdRecords, 'URN_NBN')
+        procsByURN, duplicates = LOD.getLookup(wd_proceedings_records, 'URN_NBN')
         if withStore:
             self.sqldb.store(procsByURN.values(), entityInfo, executeMany=True, fixNone=True)
         if len(duplicates)>0:
             print(f"found {len(duplicates)} duplicates URN entries")
             if len(duplicates)<10:
                 print(duplicates)
-        return wdRecords
+        return wd_proceedings_records
 
     def loadProceedingsFromCache(self):
         '''

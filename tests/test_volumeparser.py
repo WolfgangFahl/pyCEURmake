@@ -11,7 +11,7 @@ import unittest
 import requests
 
 from tests.basetest import Basetest
-from ceurws.volumeparser import VolumeParser
+from ceurws.volumeparser import VolumePageCache, VolumeParser
 from ceurws.ceur_ws import VolumeManager
 from lodstorage.lod import LOD
 
@@ -34,29 +34,28 @@ class TestVolumeParser(Basetest):
         '''
         test the volumeparser
         '''
-        debug=self.debug
+        debug = self.debug
         # title >=559
         # acronym > = 901
-        dolimit=self.inPublicCI()
-        dolimit=True
-        debug=True
+        dolimit = self.inPublicCI()
+       # dolimit = True
+       #  debug = True
         if dolimit: 
-            start=745
-            limit=746 
+            start = 745
+            limit = 746
         else: 
-            start=1
-            limit=len(self.volumeList)+1
+            start = 1
+            limit = len(self.volumeList)+1
         for volnumber in range(start,limit):
-            volumeUrl=self.volumeParser.volumeUrl(volnumber)
-            scrapedDict=self.volumeParser.parse(volumeUrl)
+            scrapedDict = self.volumeParser.parse_volume(volnumber, use_cache=True)
             if debug:
-                print (scrapedDict)
+                print(scrapedDict)
             
     def testLocTime(self):
         '''
         test the loctime parts and splits
         '''
-        for volnumber,volume in self.volumesByNumber.items():
+        for volnumber, volume in self.volumesByNumber.items():
             parts=[]
             if hasattr(volume,"loctime") and volume.loctime is not None:
                 parts=volume.loctime.split(",")
@@ -66,9 +65,8 @@ class TestVolumeParser(Basetest):
         """
         tests why the extraction of the acronym fails for some volumes
         """
-        volumeWithKnownIssue = "435"
-        volumeUrl = self.volumeParser.volumeUrl(volumeWithKnownIssue)
-        scrapedDict=self.volumeParser.parse(volumeUrl)
+        volumeWithKnownIssue = 435
+        scrapedDict=self.volumeParser.parse_volume(volumeWithKnownIssue)
         self.assertEqual("SWAT4LS 2008", scrapedDict.get("acronym"))
         self.assertEqual("http://www.swat4ls.org/", scrapedDict.get("homepage"))
         print(scrapedDict)
@@ -196,6 +194,18 @@ class TestVolumeParser(Basetest):
         """
         tests parsing of volume 3240
         """
-        url = self.volumeParser.volumeUrl(3264)
-        record = self.volumeParser.parse(url)
+        vol_number = 3264
+        record = self.volumeParser.parse_volume(vol_number)
         print(json.dumps(record))
+
+    def test_volume_caching(self):
+        """
+        tests caching of volumes
+        """
+        vol = 3000
+        self.assertFalse(VolumePageCache.is_cached(vol))
+        self.volumeParser.get_volume_page(vol)
+        self.assertTrue(VolumePageCache.is_cached(vol))
+        VolumePageCache.delete(number=vol)
+        self.assertFalse(VolumePageCache.is_cached(vol))
+

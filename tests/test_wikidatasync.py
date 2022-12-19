@@ -297,7 +297,7 @@ class TestWikidataSync(Basetest):
         self.wdSync.login()
         for wdUrl, volumeNumber in volumesWithMissingAcronym:
             qId = wdUrl[len("http://www.wikidata.org/entity/"):]
-            scrapedDict = volumeParser.parse(volumeParser.volumeUrl(volumeNumber))
+            scrapedDict = volumeParser.parse_volume(volumeNumber)
             acronym = scrapedDict.get("acronym")
             if acronym is not None and len(acronym) < 20:
                 print(f"{qId}:✅ Adding Acronym {acronym}")

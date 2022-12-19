@@ -5,7 +5,10 @@ Created on 2020-08-20
 
 this is a redundant copy of the sources at https://github.com/WolfgangFahl/ConferenceCorpus/blob/main/corpus/datasources/webscrape.py
 '''
+import typing
 import urllib.request
+from dataclasses import dataclass
+from urllib.error import HTTPError
 from urllib.request import build_opener, HTTPCookieProcessor
 from bs4 import BeautifulSoup
 import re
@@ -22,16 +25,22 @@ class WebScrape(object):
     https://www.w3.org/MarkUp/2009/rdfa-for-html-authors
     '''
 
-    def __init__(self,debug:bool=False,showHtml:bool=False,timeout:float=20,agent='Mozilla/5.0'):
-        '''
+    def __init__(
+            self,
+            debug: bool = False,
+            showHtml: bool = False,
+            timeout: float = 20,
+            agent: str = 'Mozilla/5.0'
+    ):
+        """
         Constructor
-        
+
         Args:
             debug(bool): if True show debugging information
             showHtml(bool): if True show the HTML retrieved
-            timeout(float): the default timeout 
+            timeout(float): the default timeout
             agent(str): the agent to mimic
-        '''
+        """
         self.err=None
         self.valid=False
         self.debug=debug
@@ -39,16 +48,16 @@ class WebScrape(object):
         self.timeout=timeout
         self.agent=agent
         
-    def findLinkForRegexp(self,regex:str):
-        '''
+    def findLinkForRegexp(self, regex: str):
+        """
         find a link for the given regular expression
-        
+
         Args:
             regex(str): the regular expression to find a link for
-        
+
         Return:
             m(object),text(str): the match/text tuple or None,None
-        '''
+        """
         m=None
         text=None
         link=self.soup.find('a',href=re.compile(regex))
@@ -59,7 +68,7 @@ class WebScrape(object):
                 text=link.text 
         return m,text
         
-    def fromTag(self,soup,tag,attr=None,value=None):
+    def fromTag(self, soup: BeautifulSoup, tag: str, attr: str = None, value: str = None):
         '''
         get metadata from a given tag, attribute and value
         e.g. <span class="CEURVOLACRONYM">DL4KG2020</span>
@@ -84,27 +93,35 @@ class WebScrape(object):
         else:
             return None
         
-    def getSoup(self,url:str,showHtml:bool=False)->BeautifulSoup:
-        '''
-        get the beautiful Soup parser 
-        
+    def getSoup(self, url: str, showHtml: bool = False) -> BeautifulSoup:
+        """
+        get the beautiful Soup parser
+
         Args:
            url(str): the url to open
            showHtml(boolean): True if the html code should be pretty printed and shown
-           
+
         Return:
             BeautifulSoup: the html parser
-        '''
-        req=urllib.request.Request(url,headers={'User-Agent': f'{self.agent}'})
-        # handle cookies
-        opener = build_opener(HTTPCookieProcessor())
-        response = opener.open(req,timeout=self.timeout)
-        html = response.read()
-        soup = BeautifulSoup(html, 'html.parser', from_encoding='utf-8')  
-        if showHtml:
+        """
+        html = self.get_html_from_url(url)
+        return self.get_soup_from_string(html, show_html=showHtml)
+
+    def get_soup_from_string(self, html: str, show_html: bool = False) -> BeautifulSoup:
+        """
+        get the beautiful Soup parser for the given html string
+
+        Args:
+            html: html content to parse
+            show_html: True if the html code should be pretty printed and shown
+
+        Returns:
+            BeautifulSoup: the html parser
+        """
+        soup = BeautifulSoup(html, 'html.parser', from_encoding='utf-8')
+        if show_html:
             self.printPrettyHtml(soup)
-            
-        return soup    
+        return soup
     
     def printPrettyHtml(self,soup):
         '''
@@ -116,29 +133,25 @@ class WebScrape(object):
         prettyHtml=soup.prettify()
         print(prettyHtml)   
             
-    def parseWithScrapeDescription(self,url,scrapeDescr=None):
-        '''
+    def parseWithScrapeDescription(
+            self,
+            soup: BeautifulSoup,
+            scrapeDescr: typing.Union[typing.List['ScrapeDescription'], None] = None
+    ) -> dict:
+        """
         parse the given url with the given encoding
-        
+        Args:
+            soup: html parser to parse the content from
+            scrapeDescr: description of the
+
         Return:
              a dict with the results
-        '''
-        try:
-            scrapeDict={}
-            self.soup=self.getSoup(url, self.showHtml)        
-            for scrapeItem in scrapeDescr:
-                key=scrapeItem['key']
-                tag=scrapeItem['tag']
-                attr=scrapeItem['attribute']
-                value=scrapeItem['value']
-                value=self.fromTag(self.soup, tag,attr,value)
-                scrapeDict[key]=value;  
-            self.valid=True
-        
-        except urllib.error.HTTPError as herr:
-            self.err=herr
-        except urllib.error.URLError as terr:
-            self.err=terr
+        """
+        scrapeDict = dict()
+        for scrapeItem in scrapeDescr:
+            value = self.fromTag(soup, scrapeItem.tag, scrapeItem.attribute, scrapeItem.value)
+            scrapeDict[scrapeItem.key] = value
+        self.valid = True
         return scrapeDict
                 
     def parseRDFa(self,url):
@@ -165,9 +178,48 @@ class WebScrape(object):
                     if name is not None and value is not None:
                         triples.append((subject,name,value))
             self.valid=True
-        except urllib.error.HTTPError as herr:
+        except HTTPError as herr:
             self.err=herr
         except urllib.error.URLError as terr:
             self.err=terr
-        return triples    
+        return triples
+
+    def get_html_from_url(self, url: str) -> typing.Union[str, bytes, None]:
+        """
+        Get the html response from the given url
+        Args:
+            url: url to the get the content from
+
+        Returns:
+            str: content of the url as string
+            bytes: If the content of the url contains encoding errors
+            None: If the url is not reachable
+        """
+        req = urllib.request.Request(url, headers={'User-Agent': f'{self.agent}'})
+        # handle cookies
+        opener = build_opener(HTTPCookieProcessor())
+        try:
+            response = opener.open(req, timeout=self.timeout)
+        except HTTPError as herr:
+            self.err = herr
+            print(f"{url.split('/')[-1]} not available")
+            return None
+        html = response.read()
+        try:
+            html = html.decode(response.headers.get_content_charset())
+        except UnicodeDecodeError as ex:
+            print(f"ERROR: Could not properly decode the html code of <{url}>")
+            print(ex)
+        return html
+
+
+@dataclass
+class ScrapeDescription:
+    """
+    Description of rdfa elements to scrape
+    """
+    key: str
+    tag: str  # the tag to search
+    attribute: str  # the attribute to expect
+    value: str  # the value to expect
     

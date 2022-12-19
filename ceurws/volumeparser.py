@@ -1,48 +1,58 @@
-'''
+"""
 Created on 2022-08-14
 
 @author: wf
-'''
+"""
+import os.path
+import pathlib
 import re
 import typing
 
 from bs4 import BeautifulSoup, PageElement, NavigableString
 
-from utils.webscrape import WebScrape
+from utils.webscrape import ScrapeDescription, WebScrape
 from ceurws.textparser import Textparser
 
+
 class VolumeParser(Textparser):
-    '''
+    """
     CEUR-WS VolumeParser
-    '''
-    def __init__(self,baseurl:str='http://ceur-ws.org',timeout=3,showHtml:bool=False,debug:bool=False):
-        '''
+    """
+
+    def __init__(
+            self,
+            baseurl: str = 'http://ceur-ws.org',
+            timeout: float = 3,
+            showHtml: bool = False,
+            debug: bool = False
+    ):
+        """
         Constructor
-        
+
         Args:
             baseurl(str): the baseurl of the CEUR-WS website,
             timeout(float): the number of seconds to wait
             showHtml(bool): if True show the HTML code
-            debug(bool): if TRUE switch debugging on
-        '''
-        Textparser.__init__(self,debug=debug)
-        self.showHtml=showHtml
-        self.baseurl=baseurl
-        self.timeout=timeout
-        self.scrape=WebScrape(timeout=timeout)
+            debug(bool): if True switch debugging on
+        """
+        Textparser.__init__(self, debug=debug)
+        self.showHtml = showHtml
+        self.baseurl = baseurl
+        self.timeout = timeout
+        self.scrape = WebScrape(timeout=timeout)
         
     def volumeUrl(self, volnumber: typing.Union[str, int]):
-        '''
+        """
         get the url for the given volume number
-        
+
         Args:
             volnumber(str): the volume number
-            
+
         Returns:
             str: url - the url of the volume
-        '''
+        """
         # e.g. http://ceur-ws.org/Vol-2635/
-        url=f"{self.baseurl}/Vol-{volnumber}"
+        url = f"{self.baseurl}/Vol-{volnumber}"
         return url
 
     def getSoup(self, url: str) -> BeautifulSoup:
@@ -55,40 +65,93 @@ class VolumeParser(Textparser):
             parsed webpage
         """
         return self.scrape.getSoup(url, showHtml=self.showHtml)
+
+    def get_volume_page(self, number: int, recache: bool = False) -> typing.Union[str, None]:
+        """
+        Get the html content of the given volume number.
+        Retrieves the volume page from cache or from ceur-ws.org
+        Caches the volume page if not already cached
+        Args:
+            number: volume number
+            recache: If True update the cache with a new fetch from the web. Otherwise, cache is used if present
+
+        Returns:
+            html of volume page or None if the volume page is not found
+        """
+        if not recache and VolumePageCache.is_cached(number):
+            volume_page = VolumePageCache.get(number)
+        else:
+            url = self.volumeUrl(number)
+            volume_page = self.scrape.get_html_from_url(url)
+            VolumePageCache.cache(number, volume_page)
+        return volume_page
+
+    def parse_volume(self, number: int, use_cache: bool = True) -> dict:
+        """
+        parse the given volume
+        caches the volume pages at ~/.ceurws/volumes
+
+        Args:
+            number: volume number of the volume to parse
+            use_cache: If True use volume page from cache if present otherwise load from web and cache
+
+        Returns:
+            dict: extracted information
+        """
+        html = self.get_volume_page(number, recache=not use_cache)
+        if html is None:
+            if self.debug:
+                print(f"Vol-{number} could not be retrieved")
+            return dict()
+        soup = self.scrape.get_soup_from_string(html, show_html=self.showHtml)
+        parsed_dict = self.parse_soup(soup)
+        return parsed_dict
         
     def parse(self, url: str) -> dict:
-        '''
+        """
         parse the given url
         Args:
              url: URL to parse the volume information from
 
-         Returns:
-             extracted information
-        '''
+        Returns:
+            dict: extracted information
+        """
+        soup = self.getSoup(url)
+        parsed_dict = self.parse_soup(soup)
+        return parsed_dict
+
+    def parse_soup(self, soup: BeautifulSoup) -> dict:
+        """
+        parse the volume page data from the given soup
+        Args:
+            soup: html parser to extract the content from
+
+        Returns:
+            dict: parsed content
+        """
         # first try RDFa annotations
-        _valid,_err,scrapedDict=self.parseRDFa(url)
+        scrapedDict = self.parseRDFa(soup)
         for key in scrapedDict:
-            scrapedDict[key]=Textparser.sanitize(scrapedDict[key])
+            scrapedDict[key] = Textparser.sanitize(scrapedDict[key])
         
         # second part
-        soup = self.getSoup(url)
-        for descValue in ["description","descripton"]:
+        for descValue in ["description", "descripton"]:
             # descripton is a typo in the Volume index files not here!
-            firstDesc=soup.find("meta", {"name" : descValue})
+            firstDesc = soup.find("meta", {"name": descValue})
             if firstDesc is not None:
-                desc=firstDesc["content"]
-                desc=Textparser.sanitize(desc,["CEUR Workshop Proceedings "])
-                scrapedDict["desc"]=desc
+                desc = firstDesc["content"]
+                desc = Textparser.sanitize(desc, ["CEUR Workshop Proceedings "])
+                scrapedDict["desc"] = desc
                 break
 
         # first H1 has title info
-        firstH1=soup.find('h1')
+        firstH1 = soup.find('h1')
         if firstH1 is not None:
             if len(firstH1.contents[0].text) < 20:
                 scrapedDict["acronym"] = firstH1.contents[0].text
-            h1=firstH1.text
-            h1=Textparser.sanitize(h1,['<TD bgcolor="#FFFFFF">'])
-            scrapedDict["h1"]=h1
+            h1 = firstH1.text
+            h1 = Textparser.sanitize(h1, ['<TD bgcolor="#FFFFFF">'])
+            scrapedDict["h1"] = h1
             link = firstH1.find("a")
             if link is not None and len(link.text) < 20:
                 acronym = link.text
@@ -97,16 +160,16 @@ class VolumeParser(Textparser):
                 scrapedDict["homepage"] = eventHomepage
             
         # first h3 has loctime
-        firstH3=soup.find('h3')
+        firstH3 = soup.find('h3')
         if firstH3 is not None:
-            h3=firstH3.text
-            h3=Textparser.sanitize(h3)
-            scrapedDict["h3"]=h3
+            h3 = firstH3.text
+            h3 = Textparser.sanitize(h3)
+            scrapedDict["h3"] = h3
             
         if self.hasValue(scrapedDict, "desc") and not self.hasValue(scrapedDict,"acronym"):
-            scrapedDict["acronym"]=scrapedDict["desc"]
-        if self.hasValue(scrapedDict, "h1") and not self.hasValue(scrapedDict,"title"):
-            scrapedDict["title"]=scrapedDict["h1"]
+            scrapedDict["acronym"] = scrapedDict["desc"]
+        if self.hasValue(scrapedDict, "h1") and not self.hasValue(scrapedDict, "title"):
+            scrapedDict["title"] = scrapedDict["h1"]
         if self.hasValue(scrapedDict, "h1") and self.hasValue(scrapedDict, "title") and not self.hasValue(scrapedDict, "acronym"):
             scrapedDict["acronym"] = scrapedDict["h1"]
         #editorsRecords = self.parseEditors(soup)
@@ -133,7 +196,7 @@ class VolumeParser(Textparser):
         edited_by = start_elements[0]
         editor_h3 = edited_by.find_next("h3")
         editor_records: typing.Dict[str, dict] = dict()
-        editor_spans = editor_h3.find_all(attrs={"class":"CEURVOLEDITOR"})
+        editor_spans = editor_h3.find_all(attrs={"class": "CEURVOLEDITOR"})
         if editor_spans is not None and len(editor_spans) > 0:
 
             for editor_span in editor_spans:
@@ -193,7 +256,7 @@ class VolumeParser(Textparser):
         """
         Parse out the affiliations and their reference key
         Args:
-            soup:
+            start:
 
         Returns:
             dict
@@ -245,16 +308,100 @@ class VolumeParser(Textparser):
                 affiliation_map[key] = {"name": affiliation, "homepage": homepages}
         return affiliation_map
 
+    def parseRDFa(self, soup: BeautifulSoup) -> dict:
+        """
+        tries to parse rdfa content from the given soup
+        Args:
+            soup: html parser to extract the content from
 
-
-    def parseRDFa(self,url):
-        scrapeDescr=[
-            {'key':'acronym', 'tag':'span','attribute':'class', 'value':'CEURVOLACRONYM'},
-            {'key':'title',   'tag':'span','attribute':'class', 'value':'CEURFULLTITLE'},
-            {'key':'loctime', 'tag':'span','attribute':'class', 'value':'CEURLOCTIME'},
-            {'key':'colocated', 'tag':'span','attribute':'class', 'value':'CEURCOLOCATED'}
+        Returns:
+            dict: dict with the extracted content
+        """
+        scrapeDescr = [
+            ScrapeDescription(key='acronym', tag='span', attribute='class', value='CEURVOLACRONYM'),
+            ScrapeDescription(key='title', tag='span', attribute='class', value='CEURFULLTITLE'),
+            ScrapeDescription(key='loctime', tag='span', attribute='class', value='CEURLOCTIME'),
+            ScrapeDescription(key='colocated', tag='span', attribute='class', value='CEURCOLOCATED')
         ]
-        scrapedDict=self.scrape.parseWithScrapeDescription(url,scrapeDescr)
-        valid=self.scrape.valid
-        err=self.scrape.err
-        return valid,err,scrapedDict
+        scrapedDict = self.scrape.parseWithScrapeDescription(soup, scrapeDescr)
+        return scrapedDict
+
+
+class VolumePageCache:
+    """
+    Cache interface for ceur-ws volume pages
+    """
+
+    cache_location = f"{pathlib.Path.home()}/.ceurws/volumes"
+
+    @classmethod
+    def is_cached(cls, number: int) -> bool:
+        """
+        Check if the volume page of the given volume number is cached
+        Args:
+            number: volume number of the volume page
+
+        Returns:
+            True if the corresponding volume page is cached
+        """
+        return os.path.exists(cls._get_volume_cache_path(number))
+
+    @classmethod
+    def cache(cls, number: int, html: typing.Union[str, bytes]):
+        """
+        cache the volume page corresponding to the given number
+        Args:
+            number: number of the volume to cache
+            html: html of the volume page to cache
+        """
+        if html is None:
+            return
+        pathlib.Path(cls.cache_location).mkdir(parents=True, exist_ok=True)
+        filename = cls._get_volume_cache_path(number)
+        mode = "w"
+        if isinstance(html, bytes):
+            mode += "b"
+        with open(filename, mode=mode) as f:
+            f.write(html)
+
+    @classmethod
+    def _get_volume_cache_path(cls, number: int):
+        """
+        get the name of the volume cache file
+        """
+        return f"{cls.cache_location}/Vol-{number}.html"
+
+    @classmethod
+    def get(cls, number: int) -> typing.Union[str, bytes, None]:
+        """
+        Get the cached volume page of the given volume number.
+        If the volume page is not cached None is returned.
+        Args:
+            number: volume number to retrieve
+
+        Returns:
+            str: cached volume page
+            bytes: if the cached volume page contains encoding errors
+            None: if no volume with the given number is cached
+        """
+        volume_page = None
+        if cls.is_cached(number):
+            filepath = cls._get_volume_cache_path(number)
+            try:
+                with open(filepath, mode="r") as f:
+                    volume_page = f.read()
+            except UnicodeDecodeError as _ex:
+                with open(filepath, mode="rb") as f:
+                    volume_page = f.read()
+        return volume_page
+
+    @classmethod
+    def delete(cls, number: int):
+        """
+        Delete the cache corresponding to the given volume number
+        Args:
+            number: volume number
+        """
+        if cls.is_cached(number):
+            filepath = cls._get_volume_cache_path(number)
+            os.remove(filepath)

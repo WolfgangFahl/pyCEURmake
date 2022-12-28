@@ -93,7 +93,9 @@ class Display:
             volume(Volume): the Volume
         '''
         wdSpan=jp.Span(a=a)
-        jp.Link(a=wdSpan, href=f"/volume/{volume.number}",text=f"{volume}:{volume.acronym} ")
+        jp.Link(a=wdSpan, href=f"/volume/{volume.number}",text=f"{volume}:{volume.acronym}")
+        space=jp.Span(a=wdSpan)
+        space.inner_html="&nbsp;"
         return wdSpan
 
     def createWikidataSpan(self,a,wdSync,qId:str,volume:Volume):

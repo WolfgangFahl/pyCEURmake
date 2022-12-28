@@ -849,18 +849,23 @@ class VolumeBrowser(App):
         self.wdSync=WikidataSync(debug=self.debug)
 
     def setupRowsAndCols(self,header=""):
+        """
+        set up my rows and colors
+        """
         self.setupPage(header)
         self.rowA=jp.Div(classes="row",a=self.contentbox)
         self.rowB=jp.Div(classes="row",a=self.contentbox)
         self.rowC=jp.Div(classes="row min-vh-100 vh-100",a=self.contentbox)
         self.rowD=jp.Div(classes="row",a=self.contentbox)
+        self.rowE=jp.Div(classes="row",a=self.contentbox)
 
         self.colA1=jp.Div(classes="col-12",a=self.rowA)
         self.colC1=jp.Div(classes="col-12",a=self.rowC)
         self.colD1=jp.Div(classes="col-12",a=self.rowD)
+        self.colE1=jp.Div(classes="col-12",a=self.rowE)
 
         self.feedback=jp.Div(a=self.colD1)
-        self.errors=jp.Span(a=self.colD1,style='color:red')
+        self.errors=jp.Span(a=self.colE1,style='color:red')
 
     def showFeedback(self,html):
         self.feedback.inner_html=html

@@ -235,7 +235,7 @@ class VolumeListRefresh(Display):
 
             _alert.inner_html="Done"
         except Exception as ex:
-            _alert.inner_html=f"Error: {str(ex)}"
+            _error=jp.Span(a=_alert,text="Error: {str(ex)}",style="color:red")
             self.app.handleException(ex)
 
 class WikidataRangeImport(Display):

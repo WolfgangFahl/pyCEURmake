@@ -4,7 +4,6 @@ Created on 2022-08-14
 @author: wf
 '''
 import json
-import pprint
 import time
 import unittest
 
@@ -15,13 +14,15 @@ from ceurws.volumeparser import VolumePageCache, VolumeParser
 from ceurws.ceur_ws import VolumeManager
 from lodstorage.lod import LOD
 
-
 class TestVolumeParser(Basetest):
     '''
     Test parsing Volume pages
     '''
     
     def setUp(self, debug=False, profile=True):
+        """
+        
+        """
         Basetest.setUp(self, debug=debug, profile=profile)
         self.url= 'http://ceur-ws.org'
         self.volumeParser=VolumeParser(self.url,showHtml=False)
@@ -31,15 +32,15 @@ class TestVolumeParser(Basetest):
         self.volumesByNumber, _duplicates = LOD.getLookup(self.volumeList, 'number')
         
     def testVolumeParser(self):
-        '''
+        """
         test the volumeparser
-        '''
+        """
         debug = self.debug
         # title >=559
         # acronym > = 901
         dolimit = self.inPublicCI()
-       # dolimit = True
-       #  debug = True
+        # dolimit = True
+        #  debug = True
         if dolimit: 
             start = 745
             limit = 746
@@ -50,6 +51,19 @@ class TestVolumeParser(Basetest):
             scrapedDict = self.volumeParser.parse_volume(volnumber, use_cache=True)
             if debug:
                 print(scrapedDict)
+                
+    def testIssue41(self):
+        """
+        test issue 41
+        https://github.com/WolfgangFahl/pyCEURmake/issues/41
+        'NavigableString' object has no attribute 'text'
+        """
+        volnumber=3297
+        scrapedDict=self.volumeParser.parse_volume(volnumber, use_cache=False)
+        debug=True
+        if debug:
+            print(scrapedDict)
+        
             
     def testLocTime(self):
         '''

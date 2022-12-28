@@ -93,7 +93,7 @@ class Display:
             volume(Volume): the Volume
         '''
         wdSpan=jp.Span(a=a)
-        jp.Link(a=wdSpan, href=f"/volume/{volume.number}",text=f"{volume}:{volume.acronym}")
+        jp.Link(a=wdSpan, href=f"/volume/{volume.number}",text=f"{volume}:{volume.acronym} ")
         return wdSpan
 
     def createWikidataSpan(self,a,wdSync,qId:str,volume:Volume):
@@ -194,9 +194,15 @@ class VolumeListRefresh(Display):
         self.progressBar = ProgressBar(a=self.rowC)
 
     def updateRecentlyAddedVolume(self,volume,feedback,index,total):
-        '''
+        """
         update a recently added Volume
-        '''
+        
+        Args:
+            volume(Volume): the volume to update
+            feedback: the div where to but the feedback message
+            index(int): the relative index of the volume currently being added
+            total(int): the total number of volumes currently being added
+        """
         feedback.inner_html=f"reading {index}/{total} from {volume.url}"
         volume.extractValuesFromVolumePage()
         self.app.wdSync.addVolume(volume)

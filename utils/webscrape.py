@@ -118,7 +118,7 @@ class WebScrape(object):
         Returns:
             BeautifulSoup: the html parser
         """
-        soup = BeautifulSoup(html, 'html.parser', from_encoding='utf-8')
+        soup = BeautifulSoup(html, 'html.parser')
         if show_html:
             self.printPrettyHtml(soup)
         return soup

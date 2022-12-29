@@ -40,7 +40,7 @@ class TestVolumeParser(Basetest):
         # acronym > = 901
         dolimit = self.inPublicCI()
         # dolimit = True
-        #  debug = True
+        debug = True
         if dolimit: 
             start = 745
             limit = 746
@@ -50,7 +50,7 @@ class TestVolumeParser(Basetest):
         for volnumber in range(start,limit):
             scrapedDict = self.volumeParser.parse_volume(volnumber, use_cache=True)
             if debug:
-                print(scrapedDict)
+                print(f"Vol-{volnumber}:{scrapedDict}")
                 
     def testIssue41(self):
         """
@@ -58,12 +58,13 @@ class TestVolumeParser(Basetest):
         https://github.com/WolfgangFahl/pyCEURmake/issues/41
         'NavigableString' object has no attribute 'text'
         """
-        volnumber=3297
-        scrapedDict=self.volumeParser.parse_volume(volnumber, use_cache=False)
+        testcases=[(49,"DL-2001"),(40,"Semantic Web Workshop 2001")]
         debug=True
-        if debug:
-            print(scrapedDict)
-        
+        for volnumber,expected_acronym in testcases:
+            scrapedDict=self.volumeParser.parse_volume(volnumber, use_cache=False)
+            if debug:
+                print(scrapedDict)
+            self.assertEqual(expected_acronym,scrapedDict["acronym"])
             
     def testLocTime(self):
         '''

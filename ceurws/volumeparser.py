@@ -147,14 +147,18 @@ class VolumeParser(Textparser):
         # first H1 has title info
         firstH1 = soup.find('h1')
         if firstH1 is not None:
-            if len(firstH1.contents[0].text) < 20:
-                scrapedDict["acronym"] = firstH1.contents[0].text
             h1 = firstH1.text
             h1 = Textparser.sanitize(h1, ['<TD bgcolor="#FFFFFF">'])
             scrapedDict["h1"] = h1
             link = firstH1.find("a")
             if link is not None and len(link.text) < 20:
-                acronym = link.text
+                acronym = link.text.strip()
+                if not acronym:
+                    if len(h1)<28:
+                        acronym=h1
+                    else:
+                        acronym=h1.split()[0]
+                    
                 eventHomepage = link.attrs.get("href")
                 scrapedDict["acronym"] = acronym
                 scrapedDict["homepage"] = eventHomepage

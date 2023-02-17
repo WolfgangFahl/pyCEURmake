@@ -13,7 +13,6 @@ from pathlib import Path
 from ceurws.indexparser import IndexHtmlParser
 from ceurws.volumeparser import VolumeParser
 from utils.download import Download
-from ptp.eventrefparser import Tokenizer, CountryCategory, CityCategory, CityPrefixCategory
 from geograpy.locator import City, Country, Location, LocationContext, Region
 
 

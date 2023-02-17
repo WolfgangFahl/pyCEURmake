@@ -24,3 +24,4 @@ pyJustpyWidgets>=0.1.11
 justpy>=0.11.6
 # https://pypi.org/project/pyGenericSpreadSheet/
 pyGenericSpreadSheet>=0.1.23
+

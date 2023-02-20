@@ -795,13 +795,15 @@ class VolumeBrowser(App):
     CEUR-WS Volume Browser
     '''
 
-    def __init__(self,version):
+    def __init__(self,version,args=None):
         '''
         Constructor
         
         Args:
             version(Version): the version info for the app
+            args(Args): command line arguments
         '''
+        self.args=args
         App.__init__(self, version,title="CEUR-WS Volume Browser")
         self.addMenuLink(text='Home',icon='home', href="/")
         self.addMenuLink(text='Volumes',icon='table-large',href="/volumes")
@@ -810,7 +812,7 @@ class VolumeBrowser(App):
         self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake/issues/16",target="_blank")
         self.addMenuLink(text='Documentation',icon='file-document',href="https://ceur-ws.bitplan.com/index.php/Volume_Browser",target="_blank")
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
-
+        
         # Routes
         jp.app.add_jproute('/settings',self.settings)
         jp.app.add_jproute('/volumes',self.volumes)
@@ -918,6 +920,13 @@ class VolumeBrowser(App):
         volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
         self.volumeSearch=VolumeSearch(self,self.colA1,volumeDisplay)
         return self.wp
+    
+    def start(self,host,port,debug):
+        """
+        start the server
+        """
+        self.debug=debug
+        jp.justpy(self.content,host=host,port=port)
 
 DEBUG = 0
 if __name__ == "__main__":

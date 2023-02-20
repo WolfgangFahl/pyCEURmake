@@ -3,13 +3,31 @@ Created on 2022-09-11
 
 @author: wf
 '''
-
+import ceurws
 class Version(object):
-    '''
-    Version handling for pyCEURmake
-    '''
-    name="pyCEURmake"
-    version='0.0.9'
-    date = '2020-11-12'
-    updated = '2022-12-17'
-    description='python api providing access to view and add ceur-ws volumes'
+    """
+    Version handling for VolumeBrowser
+    """
+    name = "CEUR-WS Volume Browser"
+    version = ceurws.__version__
+    date = '2022-08-14'
+    updated = '2023-02-20'
+    description = 'CEUR-WS Volume browser',
+    
+    authors = 'Tim Holzheim, Wolfgang Fahl'
+    
+    doc_url="https://wiki.bitplan.com/index.php/pyCEURmake"
+    chat_url="https://github.com/WolfgangFahl/pyCEURmake/discussions"
+    cm_url="https://github.com/WolfgangFahl/pyCEURmake"
+
+    license = f'''Copyright 2022 contributors. All rights reserved.
+
+  Licensed under the Apache License 2.0
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Distributed on an "AS IS" basis without warranties
+  or conditions of any kind, either express or implied.'''
+    longDescription = f"""{name} version {version}
+{description}
+
+  Created by {authors} on {date} last updated {updated}"""

@@ -1,3 +1,6 @@
 #!/bin/bash
 # WF 2020-03-25
+# workaround ugly 
+#  WARNING! You are attempting to install newspaper's python2 repository on python3. PLEASE RUN `$ pip3 install newspaper3k` for python3 or `$ pip install newspaper` for python2
+pip install newspaper3k
 pip install .

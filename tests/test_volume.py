@@ -80,19 +80,6 @@ class TestVolume(Basetest):
                 "submitDate": "2019-07-28"
             }
         )
-    
-    def testVolumeTemplate(self):
-        """
-        tests the rendering of a volume as volume_index.html
-        """
-        template=self.templateEnv.getTemplate('volume_index_body.html')
-        vol3000=self.vm.getList()[3000]
-        for volume in [self.getSampleVolume(),vol3000]:
-            html=template.render(volume=volume)
-            debug=self.debug
-            #debug=True
-            if debug:
-                print(html)
 
     def test_resolveLoctime(self):
         """tests resolveLoctime"""

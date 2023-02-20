@@ -1,6 +1,7 @@
 import calendar
 import datetime
 import os
+
 import re
 import typing
 
@@ -12,9 +13,8 @@ from urllib.request import Request, urlopen
 from pathlib import Path
 from ceurws.indexparser import IndexHtmlParser
 from ceurws.volumeparser import VolumeParser
-from utils.download import Download
+from ceurws.utils.download import Download
 from geograpy.locator import City, Country, Location, LocationContext, Region
-
 
 class CEURWS:
     '''
@@ -26,7 +26,6 @@ class CEURWS:
     CACHE_FILE=f"{CACHE_DIR}/ceurws.db"
     CACHE_HTML=f"{CACHE_DIR}/index.html"
     CONFIG=StorageConfig(cacheFile=CACHE_FILE)
-
 
 class Volume(JSONAble):
     """
@@ -617,11 +616,3 @@ class ConferenceManager(EntityManager):
                                             config=CEURWS.CONFIG,
                                             name=self.__class__.__name__)
 
-if __name__ == '__main__':
-    manager=VolumeManager()
-    try:
-        manager.loadFromBackup()
-        for volume in manager.getList():
-            print(volume)
-    except Exception as ex:
-        print(ex)

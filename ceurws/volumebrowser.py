@@ -15,30 +15,7 @@ from ceurws.wikidatasync import DblpEndpoint, WikidataSync
 from ceurws.template import TemplateEnv
 import pprint
 import sys
-
-
-class Version(object):
-    """
-    Version handling for VolumeBrowser
-    """
-    name = "CEUR-WS Volume Browser"
-    version = '0.0.2'
-    date = '2022-08-14'
-    updated = '2022-09-07'
-    description = 'CEUR-WS Volume browser'
-    authors = 'Wolfgang Fahl'
-    license = f'''Copyright 2022 contributors. All rights reserved.
-
-  Licensed under the Apache License 2.0
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Distributed on an "AS IS" basis without warranties
-  or conditions of any kind, either express or implied.'''
-    longDescription = f"""{name} version {version}
-{description}
-
-  Created by {authors} on {date} last updated {updated}"""
-
+from ceurws.version import Version
 
 class Display:
     """

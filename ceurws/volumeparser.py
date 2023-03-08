@@ -10,7 +10,7 @@ import typing
 
 from bs4 import BeautifulSoup, PageElement, NavigableString
 
-from utils.webscrape import ScrapeDescription, WebScrape
+from ceurws.utils.webscrape import ScrapeDescription, WebScrape
 from ceurws.textparser import Textparser
 
 

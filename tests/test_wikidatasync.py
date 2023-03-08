@@ -420,6 +420,7 @@ class TestWikidataSync(Basetest):
                 event_ids = self.wdSync.getEventsOfProceedingsByVolnumber(test_param.volumenumber)
                 self.assertListEqual(test_param.expected_qids, event_ids)
 
+    @unittest.skip("Only for manually adding missing event homepages")
     def test_add_missing_event_homepages(self):
         parser = VolumeParser('http://ceur-ws.org', showHtml=False)
         start = 1030
@@ -434,7 +435,7 @@ class TestWikidataSync(Basetest):
             PropertyMapping(column="homepage", propertyType=WdDatatype.url, propertyId="P856",propertyName="official homepage"),
             PropertyMapping(column=None,propertyType=WdDatatype.itemid, propertyId="P407",propertyName="language of work or name", qualifierOf="homepage", value="Q1860"),
         ]
-        self.wdSync.wd.loginWithCredentials()
+        # self.wdSync.wd.loginWithCredentials()
         for volnumber, homepage in homepages:
             print(volnumber, end="→")
             event_qids = self.wdSync.getEventsOfProceedingsByVolnumber(volnumber)

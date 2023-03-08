@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 
 from spreadsheet.wikidata import PropertyMapping, UrlReference, WdDatatype, Wikidata
 
-from utils.download import Download
+from ceurws.utils.download import Download
 from lodstorage.lod import LOD
 from ceurws.ceur_ws import Volume, VolumeManager, CEURWS
 from lodstorage.sparql import SPARQL

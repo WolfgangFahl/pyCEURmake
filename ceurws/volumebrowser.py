@@ -15,30 +15,7 @@ from ceurws.wikidatasync import DblpEndpoint, WikidataSync
 from ceurws.template import TemplateEnv
 import pprint
 import sys
-
-
-class Version(object):
-    """
-    Version handling for VolumeBrowser
-    """
-    name = "CEUR-WS Volume Browser"
-    version = '0.0.2'
-    date = '2022-08-14'
-    updated = '2022-09-07'
-    description = 'CEUR-WS Volume browser'
-    authors = 'Wolfgang Fahl'
-    license = f'''Copyright 2022 contributors. All rights reserved.
-
-  Licensed under the Apache License 2.0
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Distributed on an "AS IS" basis without warranties
-  or conditions of any kind, either express or implied.'''
-    longDescription = f"""{name} version {version}
-{description}
-
-  Created by {authors} on {date} last updated {updated}"""
-
+from ceurws.version import Version
 
 class Display:
     """
@@ -818,13 +795,15 @@ class VolumeBrowser(App):
     CEUR-WS Volume Browser
     '''
 
-    def __init__(self,version):
+    def __init__(self,version,args=None):
         '''
         Constructor
         
         Args:
             version(Version): the version info for the app
+            args(Args): command line arguments
         '''
+        self.args=args
         App.__init__(self, version,title="CEUR-WS Volume Browser")
         self.addMenuLink(text='Home',icon='home', href="/")
         self.addMenuLink(text='Volumes',icon='table-large',href="/volumes")
@@ -833,7 +812,7 @@ class VolumeBrowser(App):
         self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake/issues/16",target="_blank")
         self.addMenuLink(text='Documentation',icon='file-document',href="https://ceur-ws.bitplan.com/index.php/Volume_Browser",target="_blank")
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
-
+        
         # Routes
         jp.app.add_jproute('/settings',self.settings)
         jp.app.add_jproute('/volumes',self.volumes)
@@ -888,6 +867,7 @@ class VolumeBrowser(App):
         '''
         show a page for the given volume
         '''
+        app=self
         self.setupPage()
         self.rowA=jp.Div(classes="row",a=app.contentbox)
         self.rowB=jp.Div(classes="row min-vh-100 vh-100",a=app.contentbox)
@@ -941,6 +921,13 @@ class VolumeBrowser(App):
         volumeDisplay=VolumeDisplay(self,volumeToolbar=volumeToolbar,volumeHeaderDiv=volumeHeaderDiv,volumeDiv=volumeDiv)
         self.volumeSearch=VolumeSearch(self,self.colA1,volumeDisplay)
         return self.wp
+    
+    def start(self,host,port,debug):
+        """
+        start the server
+        """
+        self.debug=debug
+        jp.justpy(self.content,host=host,port=port)
 
 DEBUG = 0
 if __name__ == "__main__":

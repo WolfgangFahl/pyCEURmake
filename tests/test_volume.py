@@ -114,6 +114,8 @@ class TestVolume(Basetest):
             ("Düsseldorf, Germany, September 28-29, 2009", "2009-09-28", "2009-09-29", "Q1718", "Q183"),
             ("Chicago, USA, October 23th and 26th, 2011", "2011-10-23", "2011-10-26", "Q1297", "Q30"),
             ("Oum El Bouaghi, Algeria, May 25 and 26, 2021", "2021-05-25", "2021-05-26", "Q5478122", "Q262"),
+            ("Hersonissos, Greece, May 30th, 2022", "2022-05-30", "2022-05-30", "Q1018106", "Q41"),
+            ("Arequipa, Peru, November 08-10, 2022", "2022-11-08", "2022-11-10", "Q159273", "Q419"),
             # ("Seattle, USA, 18th-23rd September 2022", "2022-09-18", "2022-09-23", "Q5083", "Q30")  # corner case of date definition
             # ("Windsor, United Kingdom, September 20-30th, 2022", "2022-09-20", "2022-09-30", "Q464955", "Q145")  # City missing in geograpy3
         ]

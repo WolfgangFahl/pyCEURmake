@@ -271,6 +271,25 @@ class WikidataSync(object):
         wdItems = [record.get("event")[len("http://www.wikidata.org/entity/"):] for record in qres]
         return wdItems
 
+    def getEventsOfProceedingsByVolnumber(self, volnumber: Union[int, str]) -> List[str]:
+        """
+        get the item ids of the events the given proceedings ids is the proceedings from
+        Args:
+            volnumber: Volume number of the proceedings
+
+        Returns:
+            List of the events
+        """
+        query = f"""SELECT ?event 
+                    WHERE {{
+                    ?proceeding wdt:P31 wd:Q1143604; 
+                                p:P179 [ps:P179 wd:Q27230297; pq:P478 "{volnumber}"]; 
+                                wdt:P4745 ?event.}}
+        """
+        qres = self.sparql.queryAsListOfDicts(query)
+        wdItems = [record.get("event")[len("http://www.wikidata.org/entity/"):] for record in qres]
+        return wdItems
+
     def addProceedingsToWikidata(self, record: dict, write: bool = True, ignoreErrors: bool = False):
         """
         Creates a wikidata entry for the given record

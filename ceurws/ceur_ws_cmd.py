@@ -34,10 +34,6 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     parser.add_argument("-V", "--version", action='version', version=version_msg)
     return parser
 
-__version__ = Version.version
-__date__ = Version.date
-__updated__ = Version.updated
-
 def main(argv=None): # IGNORE:C0111
     '''main program.'''
 
@@ -45,8 +41,8 @@ def main(argv=None): # IGNORE:C0111
         argv=sys.argv[1:]
         
     program_name = "ceur-ws"
-    program_version =f"v{__version__}" 
-    program_build_date = str(__updated__)
+    program_version =f"v{Version.version}" 
+    program_build_date = str(Version.date)
     program_version_message = f'{program_name} ({program_version},{program_build_date})'
 
     try:

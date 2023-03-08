@@ -224,3 +224,20 @@ class TestVolumeParser(Basetest):
         VolumePageCache.delete(number=vol)
         self.assertFalse(VolumePageCache.is_cached(vol))
 
+    def test_extraction_of_event_homepages(self):
+        """
+        tests parsing the event homepage from the volume page
+        """
+        start = 3190
+        limit = 3200
+        homepages = []
+        for volnumber in range(start, limit):
+            scrapedDict = self.volumeParser.parse_volume(volnumber, use_cache=True)
+            homepage = scrapedDict.get("homepage", None)
+            if homepage is not None and homepage.startswith("http"):
+                homepages.append(scrapedDict["homepage"].strip())
+                # print(volnumber, scrapedDict["homepage"])
+        print(f"Found {len(homepages)} event homepages")
+        print(f"Found {len(set(homepages))} unique event homepages")
+
+

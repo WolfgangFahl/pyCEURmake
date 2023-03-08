@@ -4,10 +4,13 @@ Created on 2022-08-14
 @author: wf
 '''
 import csv
+import dataclasses
 import pprint
 import time
+import typing
 import unittest
 
+from spreadsheet.wikidata import PropertyMapping, UrlReference, WdDatatype
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator import datatypes as wbi_datatype
 
@@ -401,6 +404,57 @@ class TestWikidataSync(Basetest):
             except Exception as ex:
                 print("error")
         self.wdSync.storeVolumes()
+
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
+    def test_getEventsOfProceedingsByVolnumber(self):
+        """
+        test retrieval of event ids by given volume number
+        """
+        @dataclasses.dataclass
+        class TestParam:
+            volumenumber: typing.Union[int, str]
+            expected_qids: typing.List[str]
+        test_params = [TestParam(3200, ["Q113729248"]), TestParam("3200", ["Q113729248"])]
+        for test_param in test_params:
+            with self.subTest(test_param=test_param):
+                event_ids = self.wdSync.getEventsOfProceedingsByVolnumber(test_param.volumenumber)
+                self.assertListEqual(test_param.expected_qids, event_ids)
+
+    def test_add_missing_event_homepages(self):
+        parser = VolumeParser('http://ceur-ws.org', showHtml=False)
+        start = 1030
+        limit = 3200
+        homepages = []
+        for volnumber in range(start, limit):
+            scrapedDict = parser.parse_volume(volnumber, use_cache=True)
+            homepage = scrapedDict.get("homepage", None)
+            if homepage is not None and homepage.startswith("http"):
+                homepages.append((volnumber, scrapedDict["homepage"].strip()))
+        prop_mapping = [
+            PropertyMapping(column="homepage", propertyType=WdDatatype.url, propertyId="P856",propertyName="official homepage"),
+            PropertyMapping(column=None,propertyType=WdDatatype.itemid, propertyId="P407",propertyName="language of work or name", qualifierOf="homepage", value="Q1860"),
+        ]
+        self.wdSync.wd.loginWithCredentials()
+        for volnumber, homepage in homepages:
+            print(volnumber, end="→")
+            event_qids = self.wdSync.getEventsOfProceedingsByVolnumber(volnumber)
+            if len(event_qids) == 1:
+                event_qid = event_qids[0]
+                event_record = self.wdSync.wd.get_record(event_qid, prop_mapping)
+                if event_record.get("homepage", None) is None:
+                    print("adding", homepage)
+                    record = {"homepage": homepage}
+                    self.wdSync.wd.add_record(
+                            record=record,
+                            item_id=event_qid,
+                            property_mappings=prop_mapping,
+                            write=True,
+                            reference=UrlReference(url=parser.volumeUrl(volnumber))
+                    )
+                else:
+                    print("event has already a homepage")
+            else:
+                print("more than one event or no event")
 
 class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""

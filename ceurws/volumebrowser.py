@@ -867,6 +867,7 @@ class VolumeBrowser(App):
         '''
         show a page for the given volume
         '''
+        app=self
         self.setupPage()
         self.rowA=jp.Div(classes="row",a=app.contentbox)
         self.rowB=jp.Div(classes="row min-vh-100 vh-100",a=app.contentbox)

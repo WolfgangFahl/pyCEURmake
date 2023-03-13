@@ -355,12 +355,21 @@ class VolumeDisplay(Display):
             self.wikidataButton.disabled=wdProc is not None
             links=""
             if wdProc is not None:
+                # wikidata proceedings link
                 itemLink=self.createLink(wdProc["item"], "wikidataitem")
-                scholiaLink=self.createExternalLink(wdProc, "item", "scholia", "https://scholia.toolforge.org/venue/", emptyIfNone=True)
+                # dblp proceedings link
                 dblpLink=self.createExternalLink(wdProc,"dblpEventId","dblp",DblpEndpoint.DBLP_EVENT_PREFIX,emptyIfNone=True)
+                # k10plus proceedings link
                 k10PlusLink=self.createExternalLink(wdProc, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",emptyIfNone=True)
+                # scholia proceedings link
+                scholiaLink=self.createExternalLink(wdProc, "item", "scholia", "https://scholia.toolforge.org/venue/", emptyIfNone=True)
+                # scholia event link
+                scholiaEventLink=self.createExternalLink(wdProc, "event", "event",  "https://scholia.toolforge.org/event/", emptyIfNone=True)
+                # scholia event series link
+                scholiaEventSeriesLink=self.createExternalLink(wdProc, "eventSeries", "series",  "https://scholia.toolforge.org/event-series/", emptyIfNone=True)
+                # scholia colocated with link
                 delim=""
-                for link in [itemLink,scholiaLink,dblpLink,k10PlusLink]:
+                for link in [itemLink,dblpLink,k10PlusLink,scholiaLink,scholiaEventLink,scholiaEventSeriesLink]:
                     if link:
                         links+=delim+link
                         delim="&nbsp;"

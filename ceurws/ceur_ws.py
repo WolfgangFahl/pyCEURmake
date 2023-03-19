@@ -457,14 +457,14 @@ class Paper(JSONAble):
 
 class PaperManager(EntityManager):
     """
-    Contains multiple ceurws sessions
+    Contains multiple ceurws papers
     """
 
     def __init__(self):
         super(PaperManager, self).__init__(listName="papers",
-                                            clazz=Editor,
+                                            clazz=Paper,
                                             tableName="papers",
-                                            entityName=Session.__class__.__name__,
+                                            entityName=Paper.__class__.__name__,
                                             primaryKey="id",
                                             entityPluralName="papers",
                                             config=CEURWS.CONFIG,
@@ -608,9 +608,9 @@ class ConferenceManager(EntityManager):
 
     def __init__(self):
         super(ConferenceManager, self).__init__(listName="conferences",
-                                            clazz=Editor,
+                                            clazz=Conference,
                                             tableName="conferences",
-                                            entityName=Session.__class__.__name__,
+                                            entityName=Conference.__class__.__name__,
                                             primaryKey="id",
                                             entityPluralName="conferences",
                                             config=CEURWS.CONFIG,

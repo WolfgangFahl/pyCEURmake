@@ -831,7 +831,8 @@ class VolumeBrowser(App):
         self.templateEnv=TemplateEnv()
         self.wdSync=None
         
-        @JustpyApp.app.get("/volumes.json")
+        @jp.app.get("/volumes.json")
+        @jp.app.get("/allvolumes.json")
         async def volumes():
             """
             direct fastapi return of volumes

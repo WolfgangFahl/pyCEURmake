@@ -8,6 +8,7 @@ import re
 import time
 
 import justpy as jp
+from jpcore.justpy_app import JustpyApp
 from jpwidgets.bt5widgets import Alert, App, IconButton, Switch, ProgressBar
 from ceurws.ceur_ws import Volume
 from ceurws.querydisplay import QueryDisplay
@@ -828,6 +829,17 @@ class VolumeBrowser(App):
         jp.app.add_jproute('/volume/{volnumber}',self.volumePage)
         jp.app.add_jproute('/wikidatasync',self.wikidatasync)
         self.templateEnv=TemplateEnv()
+        self.wdSync=None
+        
+        @JustpyApp.app.get("/volumes.json")
+        async def volumes():
+            """
+            direct fastapi return of volumes
+            """
+            if self.wdSync is None:
+                self.wdSync=WikidataSync(debug=self.debug)
+            volumeList=self.wdSync.vm.getList()
+            return volumeList
 
     def setupPage(self,header=""):
         header="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">

@@ -12,6 +12,7 @@ import traceback
 import webbrowser
 # import after app!
 from jpcore.justpy_app import JustpyServer
+from ceurws.namedqueries import NamedQueries
   
 def getArgParser(description:str,version_msg)->ArgumentParser:
     """
@@ -26,12 +27,13 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     """
     parser = ArgumentParser(description=description, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument("-a","--about",help="show about info [default: %(default)s]",action="store_true")
+    parser.add_argument("-c","--client", action="store_true", help="start client [default: %(default)s]")
     parser.add_argument("-d", "--debug", dest="debug", action="store_true", help="show debug info [default: %(default)s]")
     parser.add_argument("--host",default=JustpyServer.getDefaultHost(),help="the host to serve / listen from [default: %(default)s]")
     parser.add_argument("-l", "--list", action="store_true", help="list all volumes [default: %(default)s]")
     parser.add_argument("--port",type=int,default=9998,help="the port to serve from [default: %(default)s]")
     parser.add_argument("-s","--serve", action="store_true", help="start webserver [default: %(default)s]")
-    parser.add_argument("-c","--client", action="store_true", help="start client [default: %(default)s]")
+    parser.add_argument("-nq","--namedqueries", action="store_true", help="generate named queries [default: %(default)s]")
     parser.add_argument("-V", "--version", action='version', version=version_msg)
     return parser
 
@@ -64,6 +66,10 @@ def main(argv=None): # IGNORE:C0111
         if args.client:
             url=f"http://{args.host}:{args.port}"
             webbrowser.open(url)
+        if args.namedqueries:
+            nq=NamedQueries()
+            yaml=nq.toYaml()
+            print(yaml)
         if args.list:
             manager=VolumeManager()       
             manager.loadFromBackup()

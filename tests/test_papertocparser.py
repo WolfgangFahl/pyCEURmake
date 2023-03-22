@@ -31,24 +31,24 @@ class TestPaperTocParser(Basetest):
         self.volumesByNumber, _duplicates = LOD.getLookup(self.volumeList, 'number')
         
     def check_paper_toc_parser(self,vol_number:str,counter:Counter,debug:bool=False,show_failure:bool=True):
-        record,soup = self.volumeParser.parse_volume(vol_number)
-        if debug:
-            print(json.dumps(record,indent=2))
-        if soup:
-            try: 
-                ptp=PaperTocParser(number=vol_number,soup=soup,debug=debug)
-                paper_records=ptp.parsePapers()
-                if debug:
-                    print(json.dumps(paper_records,indent=2))
-                for paper_record in paper_records:
-                    for key in paper_record:
-                        counter[key]+=1
-                return paper_records
-            except Exception as ex:
-                counter["failure"]+=1
-                if show_failure:
-                    print(f"{vol_number} paper toc parsing fails with {str(ex)})")
-                return []
+        try:
+            record,soup = self.volumeParser.parse_volume(vol_number)
+            if debug:
+                print(json.dumps(record,indent=2))
+            if soup:
+                    ptp=PaperTocParser(number=vol_number,soup=soup,debug=debug)
+                    paper_records=ptp.parsePapers()
+                    if debug:
+                        print(json.dumps(paper_records,indent=2))
+                    for paper_record in paper_records:
+                        for key in paper_record:
+                            counter[key]+=1
+                    return paper_records
+        except Exception as ex:
+            counter["failure"]+=1
+            if show_failure:
+                print(f"{vol_number} paper toc parsing fails with {str(ex)})")
+            return []
         
     def test_volExamples(self):
         """

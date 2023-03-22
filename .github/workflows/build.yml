@@ -40,7 +40,7 @@ jobs:
       run: |
         scripts/install
 
-     - name: Cache Sqlite
+    - name: Cache Sqlite
       id: cache-sqlite
       uses: actions/cache@v3
       with:

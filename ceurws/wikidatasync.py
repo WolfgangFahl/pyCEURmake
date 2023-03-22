@@ -5,6 +5,7 @@ Created on 2022-08-14
 '''
 import datetime
 import os
+import sys
 from dataclasses import dataclass
 from typing import Dict, List, Union
 from urllib.error import HTTPError
@@ -13,7 +14,7 @@ from spreadsheet.wikidata import PropertyMapping, UrlReference, WdDatatype, Wiki
 
 from ceurws.utils.download import Download
 from lodstorage.lod import LOD
-from ceurws.ceur_ws import Volume, VolumeManager, CEURWS
+from ceurws.ceur_ws import Volume, VolumeManager, CEURWS, PaperManager
 from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
 from lodstorage.query import QueryManager, EndpointManager
@@ -34,6 +35,7 @@ class WikidataSync(object):
         '''
         self.debug = debug
         self.prepareVolumeManager()
+        self.preparePaperManager()
         self.prepareRDF()
         self.wdQuery = self.qm.queriesByName["Proceedings"]
         self.baseurl=baseurl
@@ -62,6 +64,16 @@ class WikidataSync(object):
         qYamlFile = f"{path}/resources/queries/ceurws.yaml"
         if os.path.isfile(qYamlFile):
             self.qm = QueryManager(lang="sparql", queriesPath=qYamlFile)
+            
+    def preparePaperManager(self):
+        """
+        prepare my paper Manager
+        """
+        self.pm=PaperManager()
+        if self.pm.isCached():
+            self.pm.fromStore(cacheFile=CEURWS.CACHE_FILE)
+        else:
+            print("PaperManager not cached you might want to run ceur-ws --recreate",file=sys.stderr)
 
     def prepareVolumeManager(self):
         '''
@@ -109,6 +121,9 @@ class WikidataSync(object):
         return refreshVolumesByNumber,newVolumes
 
     def storeVolumes(self):
+        """
+        store my volumes
+        """
         self.vm.store()
 
     def getWikidataProceedingsRecord(self, volume):

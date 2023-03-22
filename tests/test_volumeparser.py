@@ -15,13 +15,13 @@ from ceurws.ceur_ws import VolumeManager
 from lodstorage.lod import LOD
 
 class TestVolumeParser(Basetest):
-    '''
+    """
     Test parsing Volume pages
-    '''
+    """
     
     def setUp(self, debug=False, profile=True):
         """
-        setup test environment
+        setUp the tests
         """
         Basetest.setUp(self, debug=debug, profile=profile)
         self.url= 'http://ceur-ws.org'
@@ -67,9 +67,9 @@ class TestVolumeParser(Basetest):
             self.assertEqual(expected_acronym,scrapedDict["acronym"])
             
     def testLocTime(self):
-        '''
+        """
         test the loctime parts and splits
-        '''
+        """
         for volnumber, volume in self.volumesByNumber.items():
             parts=[]
             if hasattr(volume,"loctime") and volume.loctime is not None:
@@ -191,7 +191,7 @@ class TestVolumeParser(Basetest):
             soup = self.volumeParser.get_volume_soup(vol_num)
             editors = self.volumeParser.parseEditors(soup)
             volume_editors[f"Vol-{vol_num}"] = editors
-        with open("editors.json", mode="w") as fp:
+        with open(log_file, mode="w") as fp:
             json.dump(volume_editors, fp, indent=4)
 
     @unittest.skipIf(True, "Analyses how often rdfa is used on the volume pages")
@@ -201,7 +201,7 @@ class TestVolumeParser(Basetest):
             if i % 200 == 0:
                 time.sleep(20)
             print(f"{i:04}/3230)", end="")
-            url = f"http://ceur-ws.org/Vol-{i}/"
+            url = f"https://ceur-ws.org/Vol-{i}/"
             resp = requests.get(url)
             if resp.status_code != 200:
                 print("error", end="")
@@ -218,20 +218,38 @@ class TestVolumeParser(Basetest):
             print("")
         print(count)
 
-    @unittest.skipIf(True, "Only for manual testing if the parsing of a volume does not work")
     def test_vol3264(self):
         """
-        tests parsing of volume 3240
+        tests parsing of volume 3264
         """
         vol_number = 3264
         record = self.volumeParser.parse_volume(vol_number)
-        print(json.dumps(record))
+        debug=self.debug
+        #debug=True
+        if debug:
+            print(json.dumps(record,indent=2))
+        expected={
+            "volume_number": "Vol-3264",
+            "urn": "urn:nbn:de:0074-3264-7",
+            "year": "2022",
+            "ceurpubdate": "2022-11-05",
+            "acronym": "HEDA 2022",
+            "voltitle": "The International Health Data Workshop HEDA 2022",
+            "title": "Proceedings of The International Health Data Workshop",
+            "loctime": "Bergen, Norway, June 26th-27th, 2022",
+            "colocated": "Petri Nets 2022",
+            "h1": "HEDA 2022 The International Health Data Workshop HEDA 2022",
+            "homepage": "",
+            "h3": "Proceedings of The International Health Data Workshop co-located with 10th International Conference on Petrinets (Petri Nets 2022)"
+        }
+        self.assertEqual(expected,record)
 
     def test_volume_caching(self):
         """
         tests caching of volumes
         """
         vol = 3000
+        VolumePageCache.delete(number=vol)
         self.assertFalse(VolumePageCache.is_cached(vol))
         self.volumeParser.get_volume_page(vol)
         self.assertTrue(VolumePageCache.is_cached(vol))
@@ -259,7 +277,6 @@ class TestVolumeParser(Basetest):
         total = 3361
         end = 0
         log_file = "log_ceurws_pdf_parsing.txt"
-        volume_editors = dict()
         for vol_num in range(total, end, -1):
             print(vol_num)
             soup = self.volumeParser.get_volume_soup(vol_num)

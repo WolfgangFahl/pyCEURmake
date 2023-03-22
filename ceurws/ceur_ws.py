@@ -15,6 +15,7 @@ from ceurws.indexparser import IndexHtmlParser
 from ceurws.volumeparser import VolumeParser
 from ceurws.utils.download import Download
 from geograpy.locator import City, Country, Location, LocationContext, Region
+from tqdm import tqdm
 
 class CEURWS:
     '''
@@ -370,6 +371,35 @@ class VolumeManager(EntityManager):
         '''
         self.fromStore(cacheFile=CEURWS.CACHE_FILE)
         
+    def recreate(self,progress:bool=False):
+        """
+        recreate me by a full parse of all volume files
+        
+        Args:
+            progress(bool): if True show progress
+        """
+        # first reload me from the main index
+        self.loadFromIndexHtml(force=True)
+        if progress:
+            t=tqdm(total=len(self.volumes))
+        else:
+            t=None
+        invalid=0
+        for volume in self.volumes:
+            volume.extractValuesFromVolumePage(withPapers=True)
+            if not volume.valid:
+                invalid+=1
+            if t is not None and volume.valid:
+                #print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
+                if volume.acronym:
+                    description=volume.acronym[:20]
+                else:
+                    description="?"
+                t.set_description(f"{description}")
+                t.update()
+        print(f"storing recreated volume table for {len(self.volumes)} volumes ({invalid} invalid)")
+        self.store()
+        
     def loadFromIndexHtml(self,force:bool=False):
         '''
         load my content from the index.html file
@@ -457,14 +487,14 @@ class Paper(JSONAble):
 
 class PaperManager(EntityManager):
     """
-    Contains multiple ceurws sessions
+    Contains multiple ceurws papers
     """
 
     def __init__(self):
         super(PaperManager, self).__init__(listName="papers",
-                                            clazz=Editor,
+                                            clazz=Paper,
                                             tableName="papers",
-                                            entityName=Session.__class__.__name__,
+                                            entityName=Paper.__class__.__name__,
                                             primaryKey="id",
                                             entityPluralName="papers",
                                             config=CEURWS.CONFIG,
@@ -608,9 +638,9 @@ class ConferenceManager(EntityManager):
 
     def __init__(self):
         super(ConferenceManager, self).__init__(listName="conferences",
-                                            clazz=Editor,
+                                            clazz=Conference,
                                             tableName="conferences",
-                                            entityName=Session.__class__.__name__,
+                                            entityName=Conference.__class__.__name__,
                                             primaryKey="id",
                                             entityPluralName="conferences",
                                             config=CEURWS.CONFIG,

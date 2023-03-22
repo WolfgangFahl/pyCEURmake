@@ -1,0 +1,515 @@
+# named queries
+'AllVolumes':
+    sparql: |
+      # Q0.1
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX wd: <http://www.wikidata.org/entity/>
+      PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+      PREFIX p: <http://www.wikidata.org/prop/>
+      PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+      SELECT DISTINCT ?proceeding ?volumeNumber ?title 
+        (SAMPLE(?_short_name) as ?short_name)
+        (SAMPLE(?_pubDate) as ?pubDate)
+        (SAMPLE(?_ceurwsUrl) as ?ceurwsUrl)
+        (SAMPLE(?_language_of_work_or_name) as ?language_of_work_or_name)
+        (SAMPLE(?_fullWorkUrl) as ?fullWorkUrl)
+        (SAMPLE(?_urn) as ?urn)
+        (SAMPLE(?_dblpPublicationId) as ?dblpPublicationId)
+        (SAMPLE(?_K10plus) as ?K10plus)
+      WHERE{
+        ?proceeding wdt:P31 wd:Q1143604.
+        ?proceeding wdt:P179 wd:Q27230297.
+        ?proceeding p:P179/pq:P478 ?volumeNumber.
+        ?proceeding wdt:P1476 ?title. Filter(lang(?title)="en")
+        OPTIONAL{?proceeding wdt:P1813 ?_short_name.}
+        OPTIONAL{?proceeding wdt:P577 ?_pubDate.}
+        OPTIONAL{?proceeding wdt:P973 ?_ceurwsUrl.}
+        OPTIONAL{?proceeding wdt:P407 ?_language_of_work_or_name.}
+        OPTIONAL{?proceeding wdt:953 ?_fullWorkUrl.}
+        OPTIONAL{?proceeding wdt:P4109 ?_urn.}
+        OPTIONAL{?proceeding wdt:P8978 ?_dblpPublicationId.}
+        OPTIONAL{?proceeding wdt:P6721 ?_K10plus.}
+      } 
+      GROUP BY ?volumeNumber ?proceeding ?title
+      ORDER BY DESC(xsd:integer(?volumeNumber))
+'AllPapers':
+    sparql: |
+      # Q0.2 List of all papers
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX wd: <http://www.wikidata.org/entity/>
+      PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+      PREFIX p: <http://www.wikidata.org/prop/>
+      PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+      SELECT DISTINCT ?paper ?title ?proceeding ?volumeNumber
+        (SAMPLE(?_url) as ?url)
+        (SAMPLE(?_event) as ?event)
+        (SAMPLE(?_language_of_work_or_name) as ?language_of_work_or_name)
+        (GROUP_CONCAT(?_author) as ?author)
+        (GROUP_CONCAT(?_authorName;SEPARATOR=",") as ?author_names)
+        (SAMPLE(?_pubDate) as ?pubDate)
+        (SAMPLE(?_dblpPublicationId) as ?dblpPublicationId)
+      WHERE{
+        ?proceeding wdt:P31 wd:Q1143604.
+        ?proceeding wdt:P179 wd:Q27230297.
+        ?proceeding p:P179/pq:P478 ?volumeNumber.
+        ?paper wdt:P1433 ?proceeding.
+        ?paper wdt:P1476 ?title. Filter(lang(?title)="en")
+        OPTIONAL{?paper wdt:P953  ?_url.}
+        
+        OPTIONAL{?paper wdt:P5072 ?_event.}
+        OPTIONAL{
+          ?paper wdt:P50 ?_author.
+          ?_author rdfs:label ?_authorName.
+          FILTER(LANG(?_authorName)="en")
+        }
+        
+        OPTIONAL{?proceeding wdt:P407 ?_language_of_work_or_name.}
+        OPTIONAL{?proceeding wdt:P8978 ?_dblpPublicationId.}
+        OPTIONAL{?proceeding wdt:P577 ?_pubDate.}
+      } GROUP BY ?paper ?title ?proceeding ?volumeNumber
+      ORDER BY DESC(?pubDate)
+'AllEvents':
+    sparql: |
+      SELECT DISTINCT ?event 
+        (SAMPLE(?_title) as ?title)  
+        (SAMPLE(?_acronym) as ?acronym) 
+        (SAMPLE(?_startTime) as ?startTime) 
+        (SAMPLE(?_endTime) as ?endTime)
+        (SAMPLE(?_country) as ?country) 
+        (SAMPLE(?_location) as ?location) 
+        (SAMPLE(?_officialWebsite) as ?officialWebsite) 
+        (SAMPLE(?_colocatedWith) as ?colocatedWith) 
+        (SAMPLE(?_dblpEventId) as ?dblpEventId) 
+        (SAMPLE(?_wikiCfpId) as ?wikiCfpId) 
+        (SAMPLE(?_series) as ?series) 
+        (SAMPLE(?_ordinal) as ?ordinal)
+      WHERE{
+        ?proceeding wdt:P31 wd:Q1143604.
+        ?proceeding wdt:P179 wd:Q27230297.
+        ?proceeding p:P179/pq:P478 ?volumeNumber.
+        ?proceeding wdt:P4745 ?event.
+        OPTIONAL{?event wdt:P1476 ?_title. Filter(lang(?_title)="en")} 
+        OPTIONAL{?event wdt:P580 ?_startTime.} 
+        OPTIONAL{?event wdt:P582 ?_endTime.} 
+        OPTIONAL{?event wdt:P17 ?_country.} 
+        OPTIONAL{?event wdt:location ?_location.} 
+        OPTIONAL{?event wdt:P856 ?_officialWebsite.} 
+        OPTIONAL{?event wdt:P31 ?_instanceOf.} 
+        OPTIONAL{?event wdt:P1813 ?_acronym.} 
+        OPTIONAL{?event wdt:P11633 ?_colocatedWith.} 
+        OPTIONAL{?event wdt:P10692 ?_dblpEventId.} 
+        OPTIONAL{?event wdt:P5124 ?_wikiCfpId.}
+        OPTIONAL{?event wdt:P179 ?_series.} 
+        OPTIONAL{?event p:P179/pq:P1545 ?_ordinal.} 
+      }
+      GROUP BY ?event
+      ORDER BY DESC(?startTime)
+'AllEventSeries':
+    sparql: |
+      # Q0.4 List all event series
+      SELECT DISTINCT ?series 
+        (SAMPLE(?_title) as ?title)  
+        (SAMPLE(?_acronym) as ?acronym) 
+        (SAMPLE(?_officialWebsite) as ?officialWebsite) 
+        (GROUP_CONCAT(?_instanceOf) as ?instanceOf) 
+        (SAMPLE(?_dblpVenueId) as ?dblpVenueId) 
+        (SAMPLE(?_wikiCfpSeriesId) as ?wikiCfpSeriesId)
+      WHERE{
+        ?proceeding wdt:P31 wd:Q1143604.
+        ?proceeding wdt:P179 wd:Q27230297.
+        ?proceeding p:P179/pq:P478 ?volumeNumber.
+        ?proceeding wdt:P4745 ?event.
+        ?event wdt:P179 ?series.
+        OPTIONAL{?series wdt:P1476 ?_title. Filter(lang(?_title)="en")} 
+        OPTIONAL{?series wdt:P856 ?_officialWebsite.} 
+        OPTIONAL{?series wdt:P31 ?_instanceOf.} 
+        OPTIONAL{?series wdt:P1813 ?_acronym.} 
+        OPTIONAL{?series wdt:P8926 ?_dblpVenueId.} 
+        OPTIONAL{?series wdt:P5127 ?_wikiCfpSeriesId.} 
+      }
+      GROUP BY ?series
+'AllScholars':
+    sparql: |
+      # Q0.5 List all scholars (authors and editors) of CEUR-Workshop proceedings
+      SELECT DISTINCT 
+        ?scholar 
+        ?label
+        #(GROUP_CONCAT(?_givenNameLabel) as ?givenName) 
+        #(GROUP_CONCAT(?_familyNameLabel) as ?familyName)
+      WHERE{
+        # Proceeding
+        ?proceeding wdt:P31 wd:Q1143604.
+        # CEUR-WS
+        ?proceeding wdt:P179 wd:Q27230297.
+        {
+          # authors
+          # published in 
+          ?paper wdt:P1433 ?proceeding.
+          # author
+          ?paper wdt:P50 ?scholar.
+        }UNION{
+          # editors
+          ?proceeding wdt:P98 ?scholar. 
+        }
+        
+        ?scholar rdfs:label ?label. 
+        FILTER(LANG(?label)="en").
+        #OPTIONAL{
+        #  ?scholar wdt:P735 ?_givenName.
+        #  ?_givenName rdfs:label ?_givenNameLabel.
+        #   FILTER(LANG(?_givenNameLabel)="en").
+        #} 
+        
+        #OPTIONAL{
+        #  ?scholar wdt:P734 ?_familyName.
+        #  ?_familyName rdfs:label ?_familyNameLabel.
+        #  FILTER(LANG(?_familyNameLabel)="en").
+        #} 
+      }
+      GROUP BY ?scholar ?label
+'AllInstitutions':
+    sparql: |
+      # Q0.6 List all institutions
+      SELECT DISTINCT ?institution ?institutionLabel
+        (SAMPLE(?_logoImage) as ?logoImage) 
+        (SAMPLE(?_shortName) as ?shortName) 
+        (SAMPLE(?_country) as ?country) 
+        (SAMPLE(?_coordinateLocation) as ?coordinateLocation) 
+        (SAMPLE(?_officialWebsite) as ?officialWebsite)
+        (SAMPLE(?_gndId) as ?gndId)  
+      WHERE{
+        ?proceeding wdt:P31 wd:Q1143604.
+        ?proceeding wdt:P179 wd:Q27230297.
+        {
+          # authors
+          ?paper wdt:P1433 ?proceeding.
+          ?paper p:P50/pq:P1416 ?institution.
+        }UNION{
+          # editors
+          ?proceeding p:P98/pq:P1416 ?institution.
+        }
+        
+        OPTIONAL{?institution rdfs:label ?institutionLabel. Filter(lang(?institutionLabel)="en")} 
+        OPTIONAL{?institution wdt:P154 ?_logoImage.} 
+        OPTIONAL{?institution wdt:P1813 ?_shortName.} 
+        OPTIONAL{?institution wdt:P17 ?_country.} 
+        OPTIONAL{?institution wdt:P625 ?_coordinateLocation.} 
+        OPTIONAL{?institution wdt:P856 ?_officialWebsite.}  
+        OPTIONAL{?institution wdt:P227 ?_gndId.} 
+      }
+      GROUP BY ?institution ?institutionLabel
+'AllAuthorsOfPapersOfProceedings':
+    sparql: |
+      # authors of papers of proceedings
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX wd: <http://www.wikidata.org/entity/>
+      PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+      PREFIX p: <http://www.wikidata.org/prop/>
+      PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+      SELECT DISTINCT 
+        ?author 
+        ?authorLabel
+        ?paper
+        ?paperLabel
+        ?proceedings
+        ?proceedingsLabel
+       
+      WHERE{
+        #VALUES ?volume_number {
+        #  "3262"
+        #}
+        # proceedings
+        ?proceedings wdt:P31 wd:Q1143604;
+                     # CEUR-WS
+                     wdt:P179 wd:Q27230297;
+                     # Volume
+                     p:P179/pq:P478 ?volume_number;
+                     rdfs:label ?proceedingsLabel;
+                     FILTER(lang(?proceedingsLabel)="en")
+        # scholarly article
+        ?paper wdt:P31 wd:Q13442814.
+        
+        # published in
+        ?paper wdt:P1433 ?proceedings.
+        
+        ?paper rdfs:label ?paperLabel. 
+        FILTER(lang(?paperLabel)="en")
+        
+        # author
+        ?paper wdt:P50 ?author.
+        ?author rdfs:label ?authorLabel. 
+        FILTER(lang(?authorLabel)="en")
+      }
+'AllEditorsOfWorkshop':
+    sparql: |
+      SELECT ?proceedings ?editor ?editorLabel ?affiliation ?affiliationLabel
+      WHERE{
+        VALUES ?volume_number {"3262"}
+        ?proceedings wdt:P31 wd:Q1143604;
+                     wdt:P179 wd:Q27230297;
+                     p:P179/pq:P478 ?volume_number;
+                     p:P98 [
+                       ps:P98 ?editor;
+                       pq:P1416 ?affiliation
+                     ].
+        
+        ?editor rdfs:label ?editorLabel. FILTER(lang(?editorLabel)="en")
+        ?affiliation rdfs:label ?affiliationLabel. FILTER(lang(?affiliationLabel)="en")           
+      }
+'NumberOfPapersInWorkshop':
+    sparql: |
+      SELECT ?proceedings (COUNT(DISTINCT ?paper) as ?number_of_papers)
+      WHERE{
+        VALUES ?volume_number {"3262"}
+        ?proceedings wdt:P31 wd:Q1143604;
+                     wdt:P179 wd:Q27230297;
+                     p:P179/pq:P478 ?volume_number.
+        
+        ?paper wdt:P31 wd:Q13442814;
+               wdt:P1433 ?proceedings.
+      }
+      GROUP BY ?proceedings
+'AllAuthorsOfWorkshop':
+    sparql: |
+      SELECT DISTINCT ?proceedings ?author ?authorLabel
+      WHERE{
+        VALUES ?volume_number {"3262"}
+        ?proceedings wdt:P31 wd:Q1143604;
+                     wdt:P179 wd:Q27230297;
+                     p:P179/pq:P478 ?volume_number.
+        
+        ?paper wdt:P31 wd:Q13442814;
+               wdt:P1433 ?proceedings;
+               wdt:P50|wdt:P2093 ?author.
+        ?author rdfs:label ?authorLabel. FILTER(lang(?authorLabel)="en")
+      }
+'AverageNoOfPagesInWorkshop':
+    sparql: |
+      SELECT DISTINCT ?proceedings (AVG(?number_of_pages) as ?avg_number_of_pages)
+      WHERE{
+        VALUES ?volume_number {"3262"}
+        ?proceedings wdt:P31 wd:Q1143604;
+                     wdt:P179 wd:Q27230297;
+                     p:P179/pq:P478 ?volume_number.
+        
+        ?paper wdt:P31 wd:Q13442814;
+               wdt:P1433 ?proceedings;
+               wdt:P1104 ?number_of_pages.
+      }
+      GROUP BY ?proceedings
+'PublicationTurnaround':
+    sparql: |
+      SELECT DISTINCT ?proceedings ?pub_date ?event ?start_date
+      WHERE{
+        ?proceedings wdt:P31 wd:Q1143604;
+                     wdt:P179 wd:Q27230297;
+                     p:P179/pq:P478 ?volume_number;
+                     wdt:P577 ?pub_date;
+                     wdt:P4745 ?event.
+        ?event wdt:P580 ?start_date.
+        FILTER(?pub_date < ?start_date)
+      }
+'AuthorsOfPaper':
+    sparql: |
+      PREFIX target: <http://www.wikidata.org/entity/Q115265833>
+      
+      # List of authors for a work
+      SELECT DISTINCT
+        # Author order
+        ?order
+      
+        ?academic_age
+      
+        # Author item and label
+        ?author ?authorUrl ?authorDescription
+      
+      WHERE {
+        {
+          target: p:P50 ?author_statement .
+          ?author_statement ps:P50 ?author_ .
+          ?author_ rdfs:label ?author .
+          FILTER (LANG(?author) = 'en')
+          BIND(CONCAT("../author/", SUBSTR(STR(?author_), 32)) AS ?authorUrl)
+          OPTIONAL {
+            ?author_statement pq:P1545 ?order_ .
+            BIND(xsd:integer(?order_) AS ?order)
+          }
+          OPTIONAL {
+            ?author_ schema:description ?authorDescription .
+            FILTER (LANG(?authorDescription) = "en")
+          }
+        }
+        UNION
+        {
+          target: p:P2093 ?authorstring_statement .
+          ?authorstring_statement ps:P2093 ?author_
+          BIND(CONCAT(?author_, " ↗") AS ?author)
+          OPTIONAL {
+            ?authorstring_statement pq:P1545 ?order_ .
+            BIND(xsd:integer(?order_) AS ?order)
+          }
+          BIND(CONCAT("https://author-disambiguator.toolforge.org/names_oauth.php?doit=Look+for+author&name=", ENCODE_FOR_URI(?author_)) AS ?authorUrl)
+        }
+        OPTIONAL {
+          SELECT ?author_ (MAX(?academic_age_) AS ?academic_age) {
+            target: wdt:P50 ?author_ ;
+                       wdt:P577 ?publication_date .
+            [] wdt:P31 / wdt:P279* wd:Q55915575 ;
+               wdt:P50 ?author_ ;
+               wdt:P577 ?other_publication_date .
+            BIND(YEAR(?publication_date) - YEAR(?other_publication_date) AS ?academic_age_)
+          }
+          GROUP BY ?author_
+        }
+      }
+      ORDER BY ?order
+'WikiCfpLinksForWorkshops':
+    sparql: |
+      SELECT DISTINCT ?event 
+        (SAMPLE(?_title) as ?title)  
+        (SAMPLE(?_acronym) as ?acronym) 
+        (SAMPLE(?_startTime) as ?startTime) 
+        (SAMPLE(?_endTime) as ?endTime)
+        (SAMPLE(?_country) as ?country) 
+        (SAMPLE(?_location) as ?location) 
+        (SAMPLE(?_officialWebsite) as ?officialWebsite) 
+        (SAMPLE(?_colocatedWith) as ?colocatedWith) 
+        (SAMPLE(?_dblpEventId) as ?dblpEventId) 
+        (SAMPLE(?_wikiCfpId) as ?wikiCfpId) 
+        (SAMPLE(?_series) as ?series) 
+        (SAMPLE(?_ordinal) as ?ordinal)
+      WHERE{
+        ?proceeding wdt:P31 wd:Q1143604.
+        ?proceeding wdt:P179 wd:Q27230297.
+        ?proceeding p:P179/pq:P478 ?volumeNumber.
+        ?proceeding wdt:P4745 ?event.
+        OPTIONAL{?event wdt:P1476 ?_title. Filter(lang(?_title)="en")} 
+        OPTIONAL{?event wdt:P580 ?_startTime.} 
+        OPTIONAL{?event wdt:P582 ?_endTime.} 
+        OPTIONAL{?event wdt:P17 ?_country.} 
+        OPTIONAL{?event wdt:location ?_location.} 
+        OPTIONAL{?event wdt:P856 ?_officialWebsite.} 
+        OPTIONAL{?event wdt:P31 ?_instanceOf.} 
+        OPTIONAL{?event wdt:P1813 ?_acronym.} 
+        OPTIONAL{?event wdt:P11633 ?_colocatedWith.} 
+        OPTIONAL{?event wdt:P10692 ?_dblpEventId.} 
+        ?event wdt:P5124 ?_wikiCfpId.
+        OPTIONAL{?event wdt:P179 ?_series.} 
+        OPTIONAL{?event p:P179/pq:P1545 ?_ordinal.} 
+      }
+      GROUP BY ?event
+      ORDER BY DESC(?startTime)
+'WorkshopWebsites':
+    sparql: |
+      SELECT DISTINCT ?event 
+        (SAMPLE(?_title) as ?title)  
+        (SAMPLE(?_acronym) as ?acronym) 
+        (SAMPLE(?_startTime) as ?startTime) 
+        (SAMPLE(?_endTime) as ?endTime)
+        (SAMPLE(?_country) as ?country) 
+        (SAMPLE(?_location) as ?location) 
+        (SAMPLE(?_officialWebsite) as ?officialWebsite) 
+        (SAMPLE(?_colocatedWith) as ?colocatedWith) 
+        (SAMPLE(?_dblpEventId) as ?dblpEventId) 
+        (SAMPLE(?_wikiCfpId) as ?wikiCfpId) 
+        (SAMPLE(?_series) as ?series) 
+        (SAMPLE(?_ordinal) as ?ordinal)
+      WHERE{
+        ?proceeding wdt:P31 wd:Q1143604.
+        ?proceeding wdt:P179 wd:Q27230297.
+        ?proceeding p:P179/pq:P478 ?volumeNumber.
+        ?proceeding wdt:P4745 ?event.
+        OPTIONAL{?event wdt:P1476 ?_title. Filter(lang(?_title)="en")} 
+        OPTIONAL{?event wdt:P580 ?_startTime.} 
+        OPTIONAL{?event wdt:P582 ?_endTime.} 
+        OPTIONAL{?event wdt:P17 ?_country.} 
+        OPTIONAL{?event wdt:location ?_location.} 
+        ?event wdt:P856 ?_officialWebsite.
+        OPTIONAL{?event wdt:P31 ?_instanceOf.} 
+        OPTIONAL{?event wdt:P1813 ?_acronym.} 
+        OPTIONAL{?event wdt:P11633 ?_colocatedWith.} 
+        OPTIONAL{?event wdt:P10692 ?_dblpEventId.} 
+        OPTIONAL{?event wdt:P5124 ?_wikiCfpId.}
+        OPTIONAL{?event wdt:P179 ?_series.} 
+        OPTIONAL{?event p:P179/pq:P1545 ?_ordinal.} 
+      }
+      GROUP BY ?event
+      ORDER BY DESC(?startTime)
+'AuthorActivityInYear':
+    sparql: |
+      #defaultView:Table
+      PREFIX target: <http://www.wikidata.org/entity/Q27942628>
+      
+      SELECT
+        (MIN(?_year) as ?year)
+        (MIN(?dates) AS ?date)
+        ?work ?workLabel
+        (GROUP_CONCAT(DISTINCT ?type_label; separator=", ") AS ?type)
+        (SAMPLE(?pages_) AS ?pages)
+        ?venue ?venueLabel
+        (GROUP_CONCAT(DISTINCT ?author_label; separator=", ") AS ?authors)
+      WHERE {
+        ?work wdt:P50 target: .
+        ?work wdt:P50 ?author .
+        OPTIONAL {
+          ?author rdfs:label ?author_label_ . FILTER (LANG(?author_label_) = 'en')
+        }
+        BIND(COALESCE(?author_label_, SUBSTR(STR(?author), 32)) AS ?author_label)
+        OPTIONAL { ?work wdt:P31 ?type_ . ?type_ rdfs:label ?type_label . FILTER (LANG(?type_label) = 'en') }
+        ?work wdt:P577 ?datetimes .
+        BIND(xsd:date(?datetimes) AS ?dates)
+        BIND(year(?dates) as ?_year)
+      
+       
+        OPTIONAL { ?work wdt:P1104 ?pages_ }
+        OPTIONAL { ?work wdt:P1433 ?venue }
+        ?work rdfs:label ?workLabel
+        FILTER(LANG(?workLabel)="en")
+      }
+      GROUP BY ?work ?workLabel ?venue ?venueLabel
+      ORDER BY DESC(?date)
+'FullSeriesOfWorkhops':
+    sparql: |
+      PREFIX target: <http://www.wikidata.org/entity/Q116982161>
+      
+      # title: List of event and proceedings for a specific event series
+      SELECT DISTINCT 
+        (SAMPLE(?years) AS ?year)
+        (SAMPLE(?ordinal) AS ?ordinal)
+        (SAMPLE(?short_names) AS ?short_name)
+        ?event ?eventLabel (CONCAT("/event/", SUBSTR(STR(?event), 32)) AS ?eventUrl)
+        ?proceedings ?proceedingsLabel (CONCAT("/venue/", SUBSTR(STR(?proceedings), 32)) AS ?proceedingsUrl)
+      WHERE {
+        {
+          ?event wdt:P179 | wdt:P31 target: .
+          ?event rdfs:label ?eventLabel.
+          FILTER(LANG(?eventLabel)="en")
+          OPTIONAL {
+            ?event wdt:P585 | wdt:P580 ?datetime .
+            BIND(YEAR(?datetime) AS ?years)
+          }
+          OPTIONAL {
+            ?event wdt:P1813 ?short_names
+          }
+          OPTIONAL {
+            ?proceedings wdt:P4745 ?event
+          }
+          OPTIONAL{
+            ?event p:P179/pq:P1545 ?ordinal
+          }
+        }
+        UNION
+        {
+          # proceedings even if the event is not there!!!
+          ?proceedings ( wdt:P179 / wdt:P4745 ) target: .
+          ?proceedings rdfs:label ?proceedingsLabel.
+          FILTER(LANG(?proceedingsLabel)="en")
+          OPTIONAL {
+            ?proceedings wdt:P577 ?datetime .
+            BIND(YEAR(?datetime) AS ?years)    
+          }
+        }
+        }
+      GROUP BY ?event ?year ?eventLabel ?proceedings ?proceedingsLabel
+      ORDER BY DESC(?year)
+

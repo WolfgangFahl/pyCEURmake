@@ -819,7 +819,7 @@ class VolumeBrowser(App):
         self.addMenuLink(text='Volumes',icon='table-large',href="/volumes")
         self.addMenuLink(text='Wikidata Sync',icon='refresh-circle',href="/wikidatasync")
         self.addMenuLink(text='Settings',icon='cog',href="/settings")
-        self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake/issues/16",target="_blank")
+        self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake",target="_blank")
         self.addMenuLink(text='Documentation',icon='file-document',href="https://ceur-ws.bitplan.com/index.php/Volume_Browser",target="_blank")
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
         self.addMenuLink(text='About',icon='information',href="/about")
@@ -834,7 +834,6 @@ class VolumeBrowser(App):
         self.wdSync=None
         
         @jp.app.get("/volumes.json")
-        @jp.app.get("/allvolumes.json")
         async def volumes():
             """
             direct fastapi return of volumes
@@ -843,6 +842,16 @@ class VolumeBrowser(App):
                 self.wdSync=WikidataSync(debug=self.debug)
             volumeList=self.wdSync.vm.getList()
             return volumeList
+        
+        @jp.app.get("/papers.json")
+        async def papers():
+            """
+            direct fastapi return of volumes
+            """
+            if self.wdSync is None:
+                self.wdSync=WikidataSync(debug=self.debug)
+            paperList=self.wdSync.pm.getList()
+            return paperList
 
     def setupPage(self,header=""):
         header="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">

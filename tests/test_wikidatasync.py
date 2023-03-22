@@ -352,7 +352,7 @@ class TestWikidataSync(Basetest):
                 ids = set(found_authors.keys())
                 self.assertSetEqual(expected_items, ids)
 
-    # @unittest.skipIf(True, "Test only for evaluation of data")
+    @unittest.skipIf(True, "Test only for evaluation of data")
     def test_uniquenessOfEditors(self):
         """
         test how many ceur-ws editors can be uniquely identified by a given set of identifiers

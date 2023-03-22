@@ -39,7 +39,10 @@ class PaperTocParser(Textparser):
         paper_records=[]
         toc=self.soup.find(attrs={"class": "CEURTOC"})
         if toc:
+            index=0
+            paper_ids=[]
             for paper_li in toc.findAll('li'):
+                index+=1
                 paper_record = self.scrape.parseWithScrapeDescription(paper_li, self.scrapeDescr)
                 paper_record["vol_number"]=self.number
                 href=paper_li.find('a', href=True)
@@ -47,6 +50,9 @@ class PaperTocParser(Textparser):
                     paper_record["pdf_name"]=href.attrs["href"]
                 if "id" in paper_li.attrs:
                     paper_id=paper_li.attrs["id"]
+                    if paper_id in paper_ids:
+                        paper_id=f"{paper_id}-duplicate-{index}"
+                    paper_ids.append(paper_id)
                     paper_record["id"]=f"Vol-{self.number}/{paper_id}"
                 paper_records.append(paper_record)
                 pass

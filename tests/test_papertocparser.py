@@ -66,7 +66,7 @@ class TestPaperTocParser(Basetest):
         """
         tests parsing of volume examples
         """
-        vol_examples = [(83,12),(1,15),(3264,10),(3343,7)]
+        vol_examples = [(2376,35),(2379,8),(1,15),(83,12),(3264,10),(3343,7)]
         counter=Counter()
         debug=self.debug
         debug=True

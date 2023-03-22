@@ -488,6 +488,8 @@ class PaperManager(EntityManager):
                                             primaryKey="id",
                                             entityPluralName="papers",
                                             config=CEURWS.CONFIG,
+                                            handleInvalidListTypes=True,
+                                            listSeparator=",",
                                             name=self.__class__.__name__)
 
 

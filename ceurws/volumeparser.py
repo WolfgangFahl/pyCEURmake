@@ -86,7 +86,7 @@ class VolumeParser(Textparser):
             VolumePageCache.cache(number, volume_page)
         return volume_page
 
-    def parse_volume(self, number: int, use_cache: bool = True) -> dict:
+    def parse_volume(self, number: int, use_cache: bool = True) -> typing.Tuple[dict,BeautifulSoup]:
         """
         parse the given volume
         caches the volume pages at ~/.ceurws/volumes
@@ -105,7 +105,7 @@ class VolumeParser(Textparser):
             return dict()
         soup = self.scrape.get_soup_from_string(html, show_html=self.showHtml)
         parsed_dict = self.parse_soup(soup)
-        return parsed_dict
+        return parsed_dict,soup
         
     def parse(self, url: str) -> dict:
         """

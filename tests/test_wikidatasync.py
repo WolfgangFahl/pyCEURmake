@@ -300,7 +300,7 @@ class TestWikidataSync(Basetest):
         self.wdSync.login()
         for wdUrl, volumeNumber in volumesWithMissingAcronym:
             qId = wdUrl[len("http://www.wikidata.org/entity/"):]
-            scrapedDict = volumeParser.parse_volume(volumeNumber)
+            scrapedDict,_soup = volumeParser.parse_volume(volumeNumber)
             acronym = scrapedDict.get("acronym")
             if acronym is not None and len(acronym) < 20:
                 print(f"{qId}:✅ Adding Acronym {acronym}")
@@ -427,7 +427,7 @@ class TestWikidataSync(Basetest):
         limit = 3200
         homepages = []
         for volnumber in range(start, limit):
-            scrapedDict = parser.parse_volume(volnumber, use_cache=True)
+            scrapedDict,_soup = parser.parse_volume(volnumber, use_cache=True)
             homepage = scrapedDict.get("homepage", None)
             if homepage is not None and homepage.startswith("http"):
                 homepages.append((volnumber, scrapedDict["homepage"].strip()))

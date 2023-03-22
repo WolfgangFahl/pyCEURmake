@@ -299,7 +299,7 @@ class Volume(JSONAble):
         if self.url is None:
             return
         volumeParser = VolumeParser(timeout=timeout)
-        parseDict = volumeParser.parse_volume(self.getVolumeNumber())
+        parseDict,_soup = volumeParser.parse_volume(self.getVolumeNumber())
         self.fromDict(parseDict)
         
         if withPapers:

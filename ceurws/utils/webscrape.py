@@ -68,7 +68,7 @@ class WebScrape(object):
                 text=link.text 
         return m,text
         
-    def fromTag(self, soup: BeautifulSoup, tag: str, attr: str = None, value: str = None):
+    def fromTag(self, soup: BeautifulSoup, tag: str, attr: str = None, value: str = None, multi:bool=False):
         '''
         get metadata from a given tag, attribute and value
         e.g. <span class="CEURVOLACRONYM">DL4KG2020</span>
@@ -80,6 +80,7 @@ class WebScrape(object):
            tag(string): the tag to search
            attr(string): the attribute to expect
            value(string): the value to expect
+           multi(bool): if True - return multiple values
         '''
         # https://stackoverflow.com/a/16248908/1497139
         # find a list of all tag elements
@@ -88,6 +89,8 @@ class WebScrape(object):
         else:
             nodes = soup.find_all(tag)    
         lines = [node.get_text() for node in nodes]
+        if multi:
+            return lines
         if len(lines)>0:
             return lines[0]
         else:
@@ -149,7 +152,7 @@ class WebScrape(object):
         """
         scrapeDict = dict()
         for scrapeItem in scrapeDescr:
-            value = self.fromTag(soup, scrapeItem.tag, scrapeItem.attribute, scrapeItem.value)
+            value = self.fromTag(soup, scrapeItem.tag, scrapeItem.attribute, scrapeItem.value, multi=scrapeItem.multi)
             scrapeDict[scrapeItem.key] = value
         self.valid = True
         return scrapeDict
@@ -224,4 +227,5 @@ class ScrapeDescription:
     tag: str  # the tag to search
     attribute: str  # the attribute to expect
     value: str  # the value to expect
+    multi: bool=False # do we expect multiple elements?
     

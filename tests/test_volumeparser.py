@@ -1,8 +1,8 @@
-'''
+"""
 Created on 2022-08-14
 
 @author: wf
-'''
+"""
 import json
 import time
 import unittest
@@ -21,7 +21,7 @@ class TestVolumeParser(Basetest):
     
     def setUp(self, debug=False, profile=True):
         """
-        
+        setup test environment
         """
         Basetest.setUp(self, debug=debug, profile=profile)
         self.url= 'http://ceur-ws.org'
@@ -180,6 +180,20 @@ class TestVolumeParser(Basetest):
               "count_affiliations:", count_affiliations,
               "count_homepages:", count_homepages)
 
+    @unittest.skip
+    def test_parseEditor(self):
+        total = 3354
+        end = 0
+        log_file = "log_ceurws_editor_parsing.txt"
+        volume_editors = dict()
+        for vol_num in range(total, end, -1):
+            print(vol_num)
+            soup = self.volumeParser.get_volume_soup(vol_num)
+            editors = self.volumeParser.parseEditors(soup)
+            volume_editors[f"Vol-{vol_num}"] = editors
+        with open("editors.json", mode="w") as fp:
+            json.dump(volume_editors, fp, indent=4)
+
     @unittest.skipIf(True, "Analyses how often rdfa is used on the volume pages")
     def test_rdfa(self):
         count = 0
@@ -240,4 +254,18 @@ class TestVolumeParser(Basetest):
         print(f"Found {len(homepages)} event homepages")
         print(f"Found {len(set(homepages))} unique event homepages")
 
-
+    @unittest.skip
+    def test_parse_all_pdfs(self):
+        total = 3361
+        end = 0
+        log_file = "log_ceurws_pdf_parsing.txt"
+        volume_editors = dict()
+        for vol_num in range(total, end, -1):
+            print(vol_num)
+            soup = self.volumeParser.get_volume_soup(vol_num)
+            if soup:
+                for link in soup.select("a[href$='.pdf']"):
+                    with open(log_file, 'a') as f:
+                        pdf_name = link.attrs.get("href",None)
+                        if pdf_name:
+                            f.write(f"""Vol-{vol_num}/{pdf_name}\n""")

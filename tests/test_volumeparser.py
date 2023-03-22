@@ -215,10 +215,10 @@ class TestVolumeParser(Basetest):
         if debug:
             print(json.dumps(record,indent=2))
         expected={
-  "volume-number": "Vol-3264",
+  "volume_number": "Vol-3264",
   "urn": "urn:nbn:de:0074-3264-7",
   "year": "2022",
-  "pubdate": "2022-11-05",
+  "ceurpubdate": "2022-11-05",
   "acronym": "HEDA 2022",
   "voltitle": "The International Health Data Workshop HEDA 2022",
   "title": "Proceedings of The International Health Data Workshop",

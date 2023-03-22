@@ -12,15 +12,17 @@ class PaperTocParser(Textparser):
     parser for paper table of contents
     """
     
-    def __init__(self,soup:BeautifulSoup,debug:bool=False):
+    def __init__(self,number:str,soup:BeautifulSoup,debug:bool=False):
         """
         constructor
         
         Args:
+            number(str): the volume number
             soup(BeautifulSoup): the parser input
             debug(bool): if True print out debug info
         """
         Textparser.__init__(self, debug=debug)
+        self.number=number
         self.soup=soup
         self.scrape = WebScrape()
         self.scrapeDescr = [
@@ -36,11 +38,18 @@ class PaperTocParser(Textparser):
         """
         paper_records=[]
         toc=self.soup.find(attrs={"class": "CEURTOC"})
-        for paper_li in toc.findAll('li'):
-            paper_record = self.scrape.parseWithScrapeDescription(paper_li, self.scrapeDescr)
-            paper_record["id"]=paper_li.attrs["id"]
-            paper_records.append(paper_record)
-            pass
+        if toc:
+            for paper_li in toc.findAll('li'):
+                paper_record = self.scrape.parseWithScrapeDescription(paper_li, self.scrapeDescr)
+                href=paper_li.find('a', href=True)
+                paper_record["pdf_name"]=href.attrs["href"]
+                if "id" in paper_li.attrs:
+                    paper_record["id"]=paper_li.attrs["id"]
+                    paper_records.append(paper_record)
+                pass
+        else:
+            if self.debug:
+                print(f"no toc for {self.number}")
         return paper_records
         
     

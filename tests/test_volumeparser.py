@@ -271,18 +271,3 @@ class TestVolumeParser(Basetest):
                 # print(volnumber, scrapedDict["homepage"])
         print(f"Found {len(homepages)} event homepages")
         print(f"Found {len(set(homepages))} unique event homepages")
-
-    @unittest.skip
-    def test_parse_all_pdfs(self):
-        total = 3361
-        end = 0
-        log_file = "log_ceurws_pdf_parsing.txt"
-        for vol_num in range(total, end, -1):
-            print(vol_num)
-            soup = self.volumeParser.get_volume_soup(vol_num)
-            if soup:
-                for link in soup.select("a[href$='.pdf']"):
-                    with open(log_file, 'a') as f:
-                        pdf_name = link.attrs.get("href",None)
-                        if pdf_name:
-                            f.write(f"""Vol-{vol_num}/{pdf_name}\n""")

@@ -13,7 +13,6 @@ from bs4 import BeautifulSoup, PageElement, NavigableString
 from ceurws.utils.webscrape import ScrapeDescription, WebScrape
 from ceurws.textparser import Textparser
 
-
 class VolumeParser(Textparser):
     """
     CEUR-WS VolumeParser

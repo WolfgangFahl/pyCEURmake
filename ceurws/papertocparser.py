@@ -6,7 +6,7 @@ Created on 2023-03-22
 from bs4 import BeautifulSoup
 from ceurws.textparser import Textparser
 from ceurws.utils.webscrape import ScrapeDescription, WebScrape
-
+import re
 class PaperTocParser(Textparser):
     """
     parser for paper table of contents
@@ -49,9 +49,20 @@ class PaperTocParser(Textparser):
                     paper_record["id"]=paper_li.attrs["id"]
                 paper_records.append(paper_record)
                 pass
-        else:
-            if self.debug:
-                print(f"no toc for {self.number}")
+        else: 
+            toc=self.soup.find('h2',text=re.compile(".*Contents.*"))
+            if toc:
+                for paper_li in self.soup.find_all('li',recursive=True):
+                    href_node=paper_li.find('a', href=True)
+                    if href_node:
+                        href=href_node.attrs["href"]
+                        if ".pdf" in href:
+                            paper_record={"vol_number":self.number}
+                            paper_record["pdf_name"]=href
+                            paper_records.append(paper_record)
+            else:
+                if self.debug:
+                    print(f"no toc for {self.number}")
         return paper_records
         
     

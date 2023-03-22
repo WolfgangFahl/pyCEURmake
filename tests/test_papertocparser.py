@@ -43,21 +43,24 @@ class TestPaperTocParser(Basetest):
                 for paper_record in paper_records:
                     for key in paper_record:
                         counter[key]+=1
+                return paper_records
             except Exception as ex:
                 counter["failure"]+=1
                 if show_failure:
                     print(f"{vol_number} paper toc parsing fails with {str(ex)})")
+                return []
         
     def test_volExamples(self):
         """
         tests parsing of volume examples
         """
-        vol_numbers = [3264,3343]
+        vol_examples = [(1,15),(3264,10),(3343,7)]
         counter=Counter()
         debug=self.debug
-        debug=True
-        for vol_number in vol_numbers:
-            self.check_paper_toc_parser(vol_number, counter, debug)
+        #debug=True
+        for vol_number,expected_papers in vol_examples:
+            paper_records=self.check_paper_toc_parser(vol_number, counter, debug)
+            self.assertEqual(expected_papers,len(paper_records),vol_number)
         if debug:
             print(counter.most_common())
                

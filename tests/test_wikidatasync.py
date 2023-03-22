@@ -342,17 +342,17 @@ class TestWikidataSync(Basetest):
             (dict(), set()),
             ({"orcid": "0000-0003-3587-0367", "dblp": "00/11426"}, {"Q58990389"}),
             ({"googleScholar": "xgXBIvQAAAAJ", "dblp": "00/11426"}, {"Q58990389", "Q20559326"}),
-            ({"googleScholar": "xgXBIvQAAAAJ", "dblp": "00/11426", "acm": "81100237147"}, {"Q58990389", "Q20559326"}),  # test empty query row error
-            ({"homepage": "http://www.stefandecker.org"}, {"Q54303353"})
+            ({"googleScholar": "xgXBIvQAAAAJ", "dblp": "00/11426", "acm": "81100237147"}, {"Q58990389", "Q20559326", "Q61248440"}),  # test empty query row error
+            ({"homepage": "http://www.stefandecker.org", "gnd": "173443443", "dblp":"d/StefanDecker"}, {"Q54303353"})
         ]
         for param in test_params:
-            with self.subTest("Test finding authors by ssets of ids", param=param):
+            with self.subTest("Test finding authors by sets of ids", param=param):
                 identifiers, expected_items = param
                 found_authors = self.wdSync.getAuthorByIds(identifiers)
                 ids = set(found_authors.keys())
                 self.assertSetEqual(expected_items, ids)
 
-    @unittest.skipIf(True, "Test only for evaluation of data")
+    # @unittest.skipIf(True, "Test only for evaluation of data")
     def test_uniquenessOfEditors(self):
         """
         test how many ceur-ws editors can be uniquely identified by a given set of identifiers
@@ -361,7 +361,7 @@ class TestWikidataSync(Basetest):
         res = []
         editors = self.wdSync.dbpEndpoint.getEditorsOfVolume(None)
         total = len(editors)
-        for i, identifiers in enumerate(editors[:5]):
+        for i, identifiers in enumerate(editors):
             editor = identifiers.get("name")
             print(f"({i+1:04}/{total})", end=" ")
             authors = self.wdSync.getAuthorByIds(identifiers)

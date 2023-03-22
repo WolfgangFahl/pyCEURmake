@@ -768,15 +768,15 @@ class WikidataSync(object):
                     id_query = DblpAuthorIdentifier.getWikidataIdQueryPart(id_name, id_value, "?person")
                 else:
                     if id_name == "homepage":
-                        id_query = f"{{OPTIONAL{{ ?person wdt:P856 <{id_value}>.}} }}"
+                        id_query = f"{{ ?person wdt:P856 <{id_value}>. }}"
                 if id_query is not None:
                     optional_clauses.append(id_query)
         id_queries = "\nUNION\n".join(optional_clauses)
-        query = f"""SELECT ?person ?personLabel
-                    WHERE 
+        query = f"""SELECT DISTINCT ?person ?personLabel
+                    WHERE
                     {{
                         {id_queries}
-                        SERVICE wikibase:label {{bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }}
+                        ?person rdfs:label ?personLabel. FILTER(lang(?personLabel)="en").
                     }}"""
         qres = self.sparql.queryAsListOfDicts(query)
         res = dict()
@@ -902,14 +902,14 @@ class DblpEndpoint:
                 {id_var}_blank datacite:usesIdentifierScheme {identifier.dblp_property};
                 litre:hasLiteralValue {id_var}Var.}}""")
             id_vars.append(id_var)
-        id_selects = "\n".join([f"(group_concat({id_var}Var;separator='|') as {id_var})" for id_var in id_vars])
+        id_selects = "\n".join([f"(group_concat(DISTINCT {id_var}Var;separator='|') as {id_var})" for id_var in id_vars])
         id_queries = "\n".join(optional_clauses)
         query = f"""PREFIX datacite: <http://purl.org/spar/datacite/>
                     PREFIX dblp: <https://dblp.org/rdf/schema#>
                     PREFIX litre: <http://purl.org/spar/literal/>
-                    SELECT DISTINCT (group_concat(?nameVar;separator='|') as ?name) 
-                                    (group_concat(?homepageVar;separator='|') as ?homepage)
-                                    (group_concat(?affiliationVar;separator='|') as ?affiliation)
+                    SELECT DISTINCT (group_concat(DISTINCT ?nameVar;separator='|') as ?name) 
+                                    (group_concat(DISTINCT ?homepageVar;separator='|') as ?homepage)
+                                    (group_concat(DISTINCT ?affiliationVar;separator='|') as ?affiliation)
                                     {id_selects}
                     WHERE{{
                         ?proceeding dblp:publishedIn "CEUR Workshop Proceedings";
@@ -1005,7 +1005,7 @@ class DblpAuthorIdentifier:
                             {var} wdt:{wd_prop} ?{id_name}.}} 
                             }}  # {id_name}"""
             else:
-                query = f"""{{OPTIONAL{{ {var} wdt:{wd_prop} "{value}".}} }}  # {id_name}"""
+                query = f"""{{ {var} wdt:{wd_prop} "{value}". }}  # {id_name}"""
         else:
             pass
         return query

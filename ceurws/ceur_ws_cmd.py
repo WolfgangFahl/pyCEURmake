@@ -12,6 +12,7 @@ import traceback
 import webbrowser
 # import after app!
 from jpcore.justpy_app import JustpyServer
+from ceurws.namedqueries import NamedQueries
   
 def getArgParser(description:str,version_msg)->ArgumentParser:
     """
@@ -26,11 +27,14 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     """
     parser = ArgumentParser(description=description, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument("-a","--about",help="show about info [default: %(default)s]",action="store_true")
+    parser.add_argument("-c","--client", action="store_true", help="start client [default: %(default)s]")
     parser.add_argument("-d", "--debug", dest="debug", action="store_true", help="show debug info [default: %(default)s]")
     parser.add_argument("--host",default=JustpyServer.getDefaultHost(),help="the host to serve / listen from [default: %(default)s]")
     parser.add_argument("-l", "--list", action="store_true", help="list all volumes [default: %(default)s]")
+    parser.add_argument("-rc","--recreate",action="store_true",help="recreated volume table")
     parser.add_argument("--port",type=int,default=9998,help="the port to serve from [default: %(default)s]")
     parser.add_argument("-s","--serve", action="store_true", help="start webserver [default: %(default)s]")
+    parser.add_argument("-nq","--namedqueries", action="store_true", help="generate named queries [default: %(default)s]")
     parser.add_argument("-V", "--version", action='version', version=version_msg)
     return parser
 
@@ -55,18 +59,26 @@ def main(argv=None): # IGNORE:C0111
             print(program_version_message)
             print(f"see {Version.doc_url}")
             webbrowser.open(Version.doc_url)
-        elif args.serve:
+        if args.serve:
             from ceurws.volumebrowser import VolumeBrowser
             volumeBrowser=VolumeBrowser(version=Version,args=args)
-            url=f"http://{args.host}:{args.port}"
-            webbrowser.open(url)
             volumeBrowser.start(host=args.host, port=args.port,debug=args.debug)
             pass
-        elif args.list:
+        if args.client:
+            url=f"http://{args.host}:{args.port}"
+            webbrowser.open(url)
+        if args.namedqueries:
+            nq=NamedQueries()
+            yaml=nq.toYaml()
+            print(yaml)
+        if args.list:
             manager=VolumeManager()       
             manager.loadFromBackup()
             for volume in manager.getList():
                 print(volume)
+        if args.recreate:
+            manager=VolumeManager()
+            manager.recreate(progress=True)
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 1

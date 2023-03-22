@@ -8,7 +8,8 @@ import re
 import time
 
 import justpy as jp
-from jpwidgets.bt5widgets import Alert, App, IconButton, Switch, ProgressBar
+from jpcore.justpy_app import JustpyApp
+from jpwidgets.bt5widgets import About, Alert, App, IconButton, Switch, ProgressBar
 from ceurws.ceur_ws import Volume
 from ceurws.querydisplay import QueryDisplay
 from ceurws.wikidatasync import DblpEndpoint, WikidataSync
@@ -355,12 +356,21 @@ class VolumeDisplay(Display):
             self.wikidataButton.disabled=wdProc is not None
             links=""
             if wdProc is not None:
+                # wikidata proceedings link
                 itemLink=self.createLink(wdProc["item"], "wikidataitem")
-                scholiaLink=self.createExternalLink(wdProc, "item", "scholia", "https://scholia.toolforge.org/venue/", emptyIfNone=True)
+                # dblp proceedings link
                 dblpLink=self.createExternalLink(wdProc,"dblpEventId","dblp",DblpEndpoint.DBLP_EVENT_PREFIX,emptyIfNone=True)
+                # k10plus proceedings link
                 k10PlusLink=self.createExternalLink(wdProc, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",emptyIfNone=True)
+                # scholia proceedings link
+                scholiaLink=self.createExternalLink(wdProc, "item", "scholia", "https://scholia.toolforge.org/venue/", emptyIfNone=True)
+                # scholia event link
+                scholiaEventLink=self.createExternalLink(wdProc, "event", "event",  "https://scholia.toolforge.org/event/", emptyIfNone=True)
+                # scholia event series link
+                scholiaEventSeriesLink=self.createExternalLink(wdProc, "eventSeries", "series",  "https://scholia.toolforge.org/event-series/", emptyIfNone=True)
+                # scholia colocated with link
                 delim=""
-                for link in [itemLink,scholiaLink,dblpLink,k10PlusLink]:
+                for link in [itemLink,dblpLink,k10PlusLink,scholiaLink,scholiaEventLink,scholiaEventSeriesLink]:
                     if link:
                         links+=delim+link
                         delim="&nbsp;"
@@ -812,13 +822,27 @@ class VolumeBrowser(App):
         self.addMenuLink(text='github',icon='github', href="https://github.com/WolfgangFahl/pyCEURmake/issues/16",target="_blank")
         self.addMenuLink(text='Documentation',icon='file-document',href="https://ceur-ws.bitplan.com/index.php/Volume_Browser",target="_blank")
         self.addMenuLink(text='Source',icon='file-code',href="https://github.com/WolfgangFahl/pyCEURmake/blob/main/ceurws/volumebrowser.py",target="_blank")
+        self.addMenuLink(text='About',icon='information',href="/about")
         
         # Routes
         jp.app.add_jproute('/settings',self.settings)
         jp.app.add_jproute('/volumes',self.volumes)
         jp.app.add_jproute('/volume/{volnumber}',self.volumePage)
         jp.app.add_jproute('/wikidatasync',self.wikidatasync)
+        jp.app.add_jproute('/about',self.about)
         self.templateEnv=TemplateEnv()
+        self.wdSync=None
+        
+        @jp.app.get("/volumes.json")
+        @jp.app.get("/allvolumes.json")
+        async def volumes():
+            """
+            direct fastapi return of volumes
+            """
+            if self.wdSync is None:
+                self.wdSync=WikidataSync(debug=self.debug)
+            volumeList=self.wdSync.vm.getList()
+            return volumeList
 
     def setupPage(self,header=""):
         header="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">
@@ -839,6 +863,7 @@ class VolumeBrowser(App):
         self.rowE=jp.Div(classes="row",a=self.contentbox)
 
         self.colA1=jp.Div(classes="col-12",a=self.rowA)
+        self.colB1=jp.Div(classes="col-12",a=self.rowB)
         self.colC1=jp.Div(classes="col-12",a=self.rowC)
         self.colD1=jp.Div(classes="col-12",a=self.rowD)
         self.colE1=jp.Div(classes="col-12",a=self.rowE)
@@ -908,6 +933,21 @@ class VolumeBrowser(App):
         self.volumeListDisplay=VolumeListDisplay(self, container=self.rowA,debug=self.debug)
         #await asyncio.sleep(0.1)
         #await self.volumeListDisplay.onSizeColumnsToFit({})
+        return self.wp
+    
+    async def about(self,request)->"jp.WebPage":
+        '''
+        show about dialog
+        
+        Returns:
+            jp.WebPage: a justpy webpage renderer
+        '''
+        self.setupRowsAndCols()
+        self.aboutDiv=About(a=self.colB1,version=self.version)
+        # get uvicorn root path
+        root_path=request.scope.get("root_path")
+        self.colC1.inner_html=f"root_path='{root_path}'"
+        # @TODO Refactor to pyJustpyWidgets
         return self.wp
 
     async def content(self):

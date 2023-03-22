@@ -64,7 +64,7 @@ class VolumeParser(Textparser):
         Returns:
             parsed webpage
         """
-        return self.scrape.getSoup(url, showHtml=self.showHtml)
+        return self.scrape.getSoup(url, showHtml=self.showHtml, debug=self.debug)
 
     def get_volume_page(self, number: int, recache: bool = False) -> typing.Union[str, None]:
         """
@@ -322,7 +322,12 @@ class VolumeParser(Textparser):
             dict: dict with the extracted content
         """
         scrapeDescr = [
+            ScrapeDescription(key='volume_number', tag='span', attribute='class', value='CEURVOLNR'),
+            ScrapeDescription(key='urn', tag='span', attribute='class', value='CEURURN'),
+            ScrapeDescription(key='year', tag='span', attribute='class', value='CEURPUBYEAR'),
+            ScrapeDescription(key='ceurpubdate', tag='span', attribute='class', value='CEURPUBDATE'),                        
             ScrapeDescription(key='acronym', tag='span', attribute='class', value='CEURVOLACRONYM'),
+            ScrapeDescription(key='voltitle', tag='span', attribute='class', value='CEURVOLTITLE'),
             ScrapeDescription(key='title', tag='span', attribute='class', value='CEURFULLTITLE'),
             ScrapeDescription(key='loctime', tag='span', attribute='class', value='CEURLOCTIME'),
             ScrapeDescription(key='colocated', tag='span', attribute='class', value='CEURCOLOCATED')

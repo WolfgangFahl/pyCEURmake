@@ -21,7 +21,7 @@ class TestVolumeParser(Basetest):
     
     def setUp(self, debug=False, profile=True):
         """
-        
+        setUp the tests
         """
         Basetest.setUp(self, debug=debug, profile=profile)
         self.url= 'http://ceur-ws.org'
@@ -204,20 +204,38 @@ class TestVolumeParser(Basetest):
             print("")
         print(count)
 
-    @unittest.skipIf(True, "Only for manual testing if the parsing of a volume does not work")
     def test_vol3264(self):
         """
-        tests parsing of volume 3240
+        tests parsing of volume 3264
         """
         vol_number = 3264
         record = self.volumeParser.parse_volume(vol_number)
-        print(json.dumps(record))
+        debug=self.debug
+        #debug=True
+        if debug:
+            print(json.dumps(record,indent=2))
+        expected={
+  "volume-number": "Vol-3264",
+  "urn": "urn:nbn:de:0074-3264-7",
+  "year": "2022",
+  "pubdate": "2022-11-05",
+  "acronym": "HEDA 2022",
+  "voltitle": "The International Health Data Workshop HEDA 2022",
+  "title": "Proceedings of The International Health Data Workshop",
+  "loctime": "Bergen, Norway, June 26th-27th, 2022",
+  "colocated": "Petri Nets 2022",
+  "h1": "HEDA 2022 The International Health Data Workshop HEDA 2022",
+  "homepage": "",
+  "h3": "Proceedings of The International Health Data Workshop co-located with 10th International Conference on Petrinets (Petri Nets 2022)"
+}
+        self.assertEqual(expected,record)
 
     def test_volume_caching(self):
         """
         tests caching of volumes
         """
         vol = 3000
+        VolumePageCache.delete(number=vol)
         self.assertFalse(VolumePageCache.is_cached(vol))
         self.volumeParser.get_volume_page(vol)
         self.assertTrue(VolumePageCache.is_cached(vol))

@@ -53,7 +53,9 @@ class PaperTocParser(Textparser):
                     if paper_id in paper_ids:
                         paper_id=f"{paper_id}-duplicate-{index}"
                     paper_ids.append(paper_id)
-                    paper_record["id"]=f"Vol-{self.number}/{paper_id}"
+                    key=f"Vol-{self.number}/{paper_id}"
+                    paper_record["key"]=key
+                    paper_record["id"]=key
                 paper_records.append(paper_record)
                 pass
         else: 
@@ -67,11 +69,14 @@ class PaperTocParser(Textparser):
                         if ".pdf" in href:
                             title=Textparser.sanitize(href_node.text)
                             index+=1
+                            key=f"Vol-{self.number}/paper-{index}"
                             paper_record={
                                 "vol_number":self.number,
                                 "title": title,
                                 "pdf_name": href,
-                                "id": f"Vol-{self.number}/paper-{index}"
+                                "id": key,
+                                # sqlite_dict compatbility
+                                "key": key
                             }
                             authors=''
                             # authors are after next br tag

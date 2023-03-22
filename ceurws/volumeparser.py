@@ -117,7 +117,7 @@ class VolumeParser(Textparser):
             dict: extracted information
         """
         soup = self.get_volume_soup(number, use_cache=use_cache)
-        parsed_dict = self.parse_soup(soup)
+        parsed_dict = self.parse_soup(number,soup)
         return parsed_dict,soup
         
     def parse(self, url: str) -> dict:
@@ -133,22 +133,29 @@ class VolumeParser(Textparser):
         parsed_dict = self.parse_soup(soup)
         return parsed_dict
 
-    def parse_soup(self, soup: BeautifulSoup) -> dict:
+    def parse_soup(self, number:str, soup: BeautifulSoup) -> dict:
         """
         parse the volume page data from the given soup
+        
         Args:
-            soup: html parser to extract the content from
+            number(str): the volume number
+            soup(BeautifulSoup): html parser to extract the content from
 
         Returns:
             dict: parsed content
         """
         if soup is None:
-            return dict()
+            return {
+                "vol_number": number,
+                "key": number
+            }
         # first try RDFa annotations
         scrapedDict = self.parseRDFa(soup)
         for key in scrapedDict:
             scrapedDict[key] = Textparser.sanitize(scrapedDict[key])
-        
+        # sqlite_dict compatiblity
+        scrapedDict["key"]=number
+       
         # second part
         for descValue in ["description", "descripton"]:
             # descripton is a typo in the Volume index files not here!

@@ -41,11 +41,13 @@ class PaperTocParser(Textparser):
         if toc:
             for paper_li in toc.findAll('li'):
                 paper_record = self.scrape.parseWithScrapeDescription(paper_li, self.scrapeDescr)
+                paper_record["vol_number"]=self.number
                 href=paper_li.find('a', href=True)
-                paper_record["pdf_name"]=href.attrs["href"]
+                if href:
+                    paper_record["pdf_name"]=href.attrs["href"]
                 if "id" in paper_li.attrs:
                     paper_record["id"]=paper_li.attrs["id"]
-                    paper_records.append(paper_record)
+                paper_records.append(paper_record)
                 pass
         else:
             if self.debug:

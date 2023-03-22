@@ -11,6 +11,7 @@ from lodstorage.lod import LOD
 from ceurws.volumeparser import VolumeParser
 import json
 from tqdm import tqdm
+from collections import Counter
 
 class TestPaperTocParser(Basetest):
     '''
@@ -29,47 +30,53 @@ class TestPaperTocParser(Basetest):
         self.volumeList=self.vm.getList()
         self.volumesByNumber, _duplicates = LOD.getLookup(self.volumeList, 'number')
         
-    def test_vol3264(self):
-        """
-        tests parsing of volume 3264
-        """
-        vol_number = 3264
+    def check_paper_toc_parser(self,vol_number:str,counter:Counter,debug:bool=False,show_failure:bool=True):
         record,soup = self.volumeParser.parse_volume(vol_number)
-        debug=self.debug
-        debug=True
         if debug:
             print(json.dumps(record,indent=2))
-        ptp=PaperTocParser(number=vol_number,soup=soup,debug=debug)
-        paper_records=ptp.parsePapers()
+        if soup:
+            try: 
+                ptp=PaperTocParser(number=vol_number,soup=soup,debug=debug)
+                paper_records=ptp.parsePapers()
+                if debug:
+                    print(json.dumps(paper_records,indent=2))
+                for paper_record in paper_records:
+                    for key in paper_record:
+                        counter[key]+=1
+            except Exception as ex:
+                counter["failure"]+=1
+                if show_failure:
+                    print(f"{vol_number} paper toc parsing fails with {str(ex)})")
+        
+    def test_volExamples(self):
+        """
+        tests parsing of volume examples
+        """
+        vol_numbers = [3264,3343]
+        counter=Counter()
+        debug=self.debug
+        debug=True
+        for vol_number in vol_numbers:
+            self.check_paper_toc_parser(vol_number, counter, debug)
         if debug:
-            print(json.dumps(paper_records,indent=2))
-           
+            print(counter.most_common())
+               
     def test_parse_all_papertocs(self):
         """
         test parsing all paper table of contents
         """
         debug=self.debug
-        debug=True
         t=None
         progress=False
+        counter=Counter()
         if progress:
             t=tqdm(total=len(self.volumeList))
-        failures=0
         for volume in self.volumeList:
-            record,soup = self.volumeParser.parse_volume(volume.number)
-            if soup:
-                try: 
-                    ptp=PaperTocParser(number=volume.number,soup=soup,debug=debug)
-                    ptp.parsePapers()
-                except Exception as ex:
-                    if debug:
-                        print(f"{volume.number} paper toc parsing fails with {str(ex)})")
-                        failures+=1
+            self.check_paper_toc_parser(volume.number, counter, debug)
             if t:
                 t.description=f"{volume.number}"
                 t.update()
-        if debug:
-            print(f"{failures} failures")
+        print(counter.most_common())
             
        
     

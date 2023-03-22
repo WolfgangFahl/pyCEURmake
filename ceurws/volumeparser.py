@@ -66,6 +66,25 @@ class VolumeParser(Textparser):
         """
         return self.scrape.getSoup(url, showHtml=self.showHtml, debug=self.debug)
 
+    def get_volume_soup(self, number: int, use_cache: bool = True) -> typing.Optional[BeautifulSoup]:
+        """
+        Get Soup of the volume page for the given volume number
+        Args:
+            number: volume number of the volume to parse
+            use_cache: If True use volume page from cache if present otherwise load from web and cache
+
+        Returns:
+            BeautifulSoup: soup of the volume page
+            None: soup can not be loaded from cache or from web
+        """
+        html = self.get_volume_page(number, recache=not use_cache)
+        if html is None:
+            if self.debug:
+                print(f"Vol-{number} could not be retrieved")
+            return None
+        soup = self.scrape.get_soup_from_string(html, show_html=self.showHtml)
+        return soup
+
     def get_volume_page(self, number: int, recache: bool = False) -> typing.Union[str, None]:
         """
         Get the html content of the given volume number.
@@ -98,12 +117,7 @@ class VolumeParser(Textparser):
         Returns:
             dict: extracted information
         """
-        html = self.get_volume_page(number, recache=not use_cache)
-        if html is None:
-            if self.debug:
-                print(f"Vol-{number} could not be retrieved")
-            return dict()
-        soup = self.scrape.get_soup_from_string(html, show_html=self.showHtml)
+        soup = self.get_volume_soup(number, use_cache=use_cache)
         parsed_dict = self.parse_soup(soup)
         return parsed_dict,soup
         
@@ -129,6 +143,8 @@ class VolumeParser(Textparser):
         Returns:
             dict: parsed content
         """
+        if soup is None:
+            return dict()
         # first try RDFa annotations
         scrapedDict = self.parseRDFa(soup)
         for key in scrapedDict:
@@ -187,6 +203,8 @@ class VolumeParser(Textparser):
         Args:
             soup: volume web page
         """
+        if soup is None:
+            return None
         possible_start_elements = soup.find_all("b")
         # find start
         start_elements = []
@@ -200,6 +218,8 @@ class VolumeParser(Textparser):
         edited_by = start_elements[0]
         editor_h3 = edited_by.find_next("h3")
         editor_records: typing.Dict[str, dict] = dict()
+        if editor_h3 is None:
+            return None
         editor_spans = editor_h3.find_all(attrs={"class": "CEURVOLEDITOR"})
         if editor_spans is not None and len(editor_spans) > 0:
 
@@ -209,19 +229,25 @@ class VolumeParser(Textparser):
                 if editor_span.parent.name == "a":
                     homepage = editor_span.parent.attrs.get("href", None)
                     editor["homepage"] = homepage
-                    affiliation_keys = editor_span.parent.next_sibling.text.strip()
+                    if editor_span.parent.next_sibling is not None:
+                        affiliation_keys = editor_span.parent.next_sibling.text.strip()
+                    else:
+                        affiliation_keys = None
                 else:
-                    affiliation_keys = editor_span.next_sibling.text.strip()
+                    if editor_span.next_sibling is not None:
+                        affiliation_keys = editor_span.next_sibling.text.strip()
+                    else:
+                        affiliation_keys = None
                 if affiliation_keys is None or affiliation_keys == "":
                     sup = editor_span.find_next("sup")
                     if sup is not None:
-                        affiliation_keys = sup.text
-                editor["affiliation_keys"] = affiliation_keys.strip()
+                        affiliation_keys = sup.text.strip()
+                editor["affiliation_keys"] = affiliation_keys
                 editor_records[editor_name] = editor
         else:
             editor_elements = []
             group_elements = []
-            if editor_h3.next_sibling.next_sibling.name == "h3":
+            if editor_h3.next_sibling and editor_h3.next_sibling.next_sibling and editor_h3.next_sibling.next_sibling.name == "h3":
                 while editor_h3.next_sibling.next_sibling.name == "h3" and editor_h3.text.strip() != "":
                     editor_elements.append(editor_h3.contents)
                     editor_h3 = editor_h3.next_sibling.next_sibling
@@ -248,12 +274,14 @@ class VolumeParser(Textparser):
                             if editor.get("affiliation_key", None) is not None}
         affiliation_map = self.parseAffiliationMap(editor_h3.next_sibling)
         for editor_record in editor_records.values():
-            keys = re.split('[, ]', editor_record.get("affiliation_keys", ""))
-            editor_affiliations = []
-            for key in keys:
-                if key in affiliation_map:
-                    editor_affiliations.append(affiliation_map.get(key.strip()))
-            editor_record["affiliation"] = editor_affiliations
+            editor_keys = editor_record.get("affiliation_keys", "")
+            if editor_keys is not None:
+                keys = re.split('[, ]', editor_keys)
+                editor_affiliations = []
+                for key in keys:
+                    if key in affiliation_map:
+                        editor_affiliations.append(affiliation_map.get(key.strip()))
+                editor_record["affiliation"] = editor_affiliations
         return editor_records
 
     def parseAffiliationMap(self, start: PageElement) -> dict:
@@ -265,6 +293,8 @@ class VolumeParser(Textparser):
         Returns:
             dict
         """
+        if start is None:
+            return dict()
         end = start.find_next("hr")
         affiliations_elements = []
         group_elements = []

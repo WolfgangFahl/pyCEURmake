@@ -54,7 +54,6 @@ class PaperTocParser(Textparser):
                         paper_id=f"{paper_id}-duplicate-{index}"
                     paper_ids.append(paper_id)
                     key=f"Vol-{self.number}/{paper_id}"
-                    paper_record["key"]=key
                     paper_record["id"]=key
                 paper_records.append(paper_record)
                 pass
@@ -75,8 +74,6 @@ class PaperTocParser(Textparser):
                                 "title": title,
                                 "pdf_name": href,
                                 "id": key,
-                                # sqlite_dict compatbility
-                                "key": key
                             }
                             authors=''
                             # authors are after next br tag

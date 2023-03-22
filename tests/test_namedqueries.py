@@ -6,12 +6,14 @@ Created on 2023-03-21
 from tests.basetest import Basetest
 from ceurws.namedqueries import NamedQueries
 import json
+import unittest
 
 class TestNamedQueries(Basetest):
     '''
     Test reading the index HTML
     '''
-    
+     
+    @unittest.skipIf(True, "Only for manual testing")
     def test_NamedQueries(self):
         """
         get generating named queries

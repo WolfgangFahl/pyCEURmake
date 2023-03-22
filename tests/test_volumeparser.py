@@ -48,7 +48,7 @@ class TestVolumeParser(Basetest):
             start = 1
             limit = len(self.volumeList)+1
         for volnumber in range(start,limit):
-            scrapedDict = self.volumeParser.parse_volume(volnumber, use_cache=True)
+            scrapedDict,_soup = self.volumeParser.parse_volume(volnumber, use_cache=True)
             if debug:
                 print(f"Vol-{volnumber}:{scrapedDict}")
                 
@@ -61,7 +61,7 @@ class TestVolumeParser(Basetest):
         testcases=[(49,"DL-2001"),(40,"Semantic Web Workshop 2001")]
         debug=True
         for volnumber,expected_acronym in testcases:
-            scrapedDict=self.volumeParser.parse_volume(volnumber, use_cache=False)
+            scrapedDict,_soup=self.volumeParser.parse_volume(volnumber, use_cache=False)
             if debug:
                 print(scrapedDict)
             self.assertEqual(expected_acronym,scrapedDict["acronym"])
@@ -81,7 +81,7 @@ class TestVolumeParser(Basetest):
         tests why the extraction of the acronym fails for some volumes
         """
         volumeWithKnownIssue = 435
-        scrapedDict=self.volumeParser.parse_volume(volumeWithKnownIssue)
+        scrapedDict,_soup=self.volumeParser.parse_volume(volumeWithKnownIssue)
         self.assertEqual("SWAT4LS 2008", scrapedDict.get("acronym"))
         self.assertEqual("http://www.swat4ls.org/", scrapedDict.get("homepage"))
         print(scrapedDict)
@@ -209,7 +209,7 @@ class TestVolumeParser(Basetest):
         tests parsing of volume 3264
         """
         vol_number = 3264
-        record = self.volumeParser.parse_volume(vol_number)
+        record,_soup = self.volumeParser.parse_volume(vol_number)
         debug=self.debug
         #debug=True
         if debug:
@@ -250,7 +250,7 @@ class TestVolumeParser(Basetest):
         limit = 3200
         homepages = []
         for volnumber in range(start, limit):
-            scrapedDict = self.volumeParser.parse_volume(volnumber, use_cache=True)
+            scrapedDict,_soup = self.volumeParser.parse_volume(volnumber, use_cache=True)
             homepage = scrapedDict.get("homepage", None)
             if homepage is not None and homepage.startswith("http"):
                 homepages.append(scrapedDict["homepage"].strip())

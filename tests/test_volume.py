@@ -3,7 +3,6 @@ from tests.basetest import Basetest
 from ceurws.ceur_ws import Conference, Editor, Session,  Paper, Volume, VolumeManager
 from ceurws.template import TemplateEnv
 
-
 class TestVolume(Basetest):
     """
     Test volume manager

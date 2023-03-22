@@ -93,18 +93,18 @@ class WebScrape(object):
         else:
             return None
         
-    def getSoup(self, url: str, showHtml: bool = False) -> BeautifulSoup:
+    def getSoup(self, url: str, showHtml: bool = False, debug:bool=False) -> BeautifulSoup:
         """
         get the beautiful Soup parser
 
         Args:
            url(str): the url to open
-           showHtml(boolean): True if the html code should be pretty printed and shown
-
+           showHtml(bool): if True  the html code should be pretty printed and shown
+           debug(bool): if True debug info should be printed
         Return:
             BeautifulSoup: the html parser
         """
-        html = self.get_html_from_url(url)
+        html = self.get_html_from_url(url,debug=debug)
         return self.get_soup_from_string(html, show_html=showHtml)
 
     def get_soup_from_string(self, html: str, show_html: bool = False) -> BeautifulSoup:
@@ -184,11 +184,12 @@ class WebScrape(object):
             self.err=terr
         return triples
 
-    def get_html_from_url(self, url: str) -> typing.Union[str, bytes, None]:
+    def get_html_from_url(self, url: str,debug:bool=False) -> typing.Union[str, bytes, None]:
         """
         Get the html response from the given url
         Args:
             url: url to the get the content from
+            debug(bool): if True show non available volumes
 
         Returns:
             str: content of the url as string
@@ -202,7 +203,8 @@ class WebScrape(object):
             response = opener.open(req, timeout=self.timeout)
         except HTTPError as herr:
             self.err = herr
-            print(f"{url.split('/')[-1]} not available")
+            if debug:
+                print(f"{url.split('/')[-1]} not available")
             return None
         html = response.read()
         try:

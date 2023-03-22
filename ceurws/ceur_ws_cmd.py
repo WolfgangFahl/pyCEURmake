@@ -31,6 +31,7 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     parser.add_argument("-d", "--debug", dest="debug", action="store_true", help="show debug info [default: %(default)s]")
     parser.add_argument("--host",default=JustpyServer.getDefaultHost(),help="the host to serve / listen from [default: %(default)s]")
     parser.add_argument("-l", "--list", action="store_true", help="list all volumes [default: %(default)s]")
+    parser.add_argument("-rc","--recreate",action="store_true",help="recreated volume table")
     parser.add_argument("--port",type=int,default=9998,help="the port to serve from [default: %(default)s]")
     parser.add_argument("-s","--serve", action="store_true", help="start webserver [default: %(default)s]")
     parser.add_argument("-nq","--namedqueries", action="store_true", help="generate named queries [default: %(default)s]")
@@ -75,6 +76,9 @@ def main(argv=None): # IGNORE:C0111
             manager.loadFromBackup()
             for volume in manager.getList():
                 print(volume)
+        if args.recreate:
+            manager=VolumeManager()
+            manager.recreate(progress=True)
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
         return 1

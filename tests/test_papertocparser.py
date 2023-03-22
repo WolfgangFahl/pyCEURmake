@@ -30,7 +30,19 @@ class TestPaperTocParser(Basetest):
         self.volumeList=self.vm.getList()
         self.volumesByNumber, _duplicates = LOD.getLookup(self.volumeList, 'number')
         
-    def check_paper_toc_parser(self,vol_number:str,counter:Counter,debug:bool=False,show_failure:bool=True):
+    def check_paper_toc_parser(self,vol_number:str,counter:Counter,debug:bool=False,show_failure:bool=True)->list:
+        """
+        check the PaperTocParser with the given parameters
+        
+        Args:
+            vol_number(str): the number of the volume to parser
+            counter(Counter): the counter to keep track of the results and failures
+            debug(bool): if True print debugging information
+            show_failure: if True show reason message for failures / exceptions
+            
+        Returns:
+            list: a list paper records
+        """
         try:
             record,soup = self.volumeParser.parse_volume(vol_number)
             if debug:
@@ -54,7 +66,7 @@ class TestPaperTocParser(Basetest):
         """
         tests parsing of volume examples
         """
-        vol_examples = [(1,15),(3264,10),(3343,7)]
+        vol_examples = [(83,12),(1,15),(3264,10),(3343,7)]
         counter=Counter()
         debug=self.debug
         debug=True
@@ -70,7 +82,7 @@ class TestPaperTocParser(Basetest):
         """
         debug=self.debug
         t=None
-        progress=False
+        progress=True
         counter=Counter()
         if progress:
             t=tqdm(total=len(self.volumeList))

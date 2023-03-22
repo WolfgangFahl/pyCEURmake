@@ -95,7 +95,7 @@ class TestIndexHtml(Basetest):
             limit=len(volumesByNumber)+1
         for number in range(1,limit):
             volume=volumesByNumber[number]
-            volume.extractValuesFromVolumePage(withPapers=False)
+            volume.extractValuesFromVolumePage()
             if debug and volume.valid:
                 print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
         if withStore:

@@ -12,10 +12,12 @@ from lodstorage.storageconfig import StorageConfig
 from urllib.request import Request, urlopen
 from pathlib import Path
 from ceurws.indexparser import IndexHtmlParser
+from ceurws.papertocparser import PaperTocParser
 from ceurws.volumeparser import VolumeParser
 from ceurws.utils.download import Download
 from geograpy.locator import City, Country, Location, LocationContext, Region
 from tqdm import tqdm
+from bs4 import BeautifulSoup
 
 class CEURWS:
     '''
@@ -290,41 +292,18 @@ class Volume(JSONAble):
         """
         return
     
-    def extractValuesFromVolumePage(self, timeout: float = 3, withPapers: bool = True):
+    def extractValuesFromVolumePage(self, timeout: float = 3)->typing.Tuple[dict,BeautifulSoup]:
         '''
         extract values from the given volume page
         '''
         self.desc="?"
         self.h1="?"
         if self.url is None:
-            return
+            return None,None
         volumeParser = VolumeParser(timeout=timeout)
-        parseDict,_soup = volumeParser.parse_volume(self.getVolumeNumber())
+        parseDict,soup = volumeParser.parse_volume(self.getVolumeNumber())
         self.fromDict(parseDict)
-        
-        if withPapers:
-            pass
-        '''
-        #EDITED_BY = '//b/following-sibling::h3[1]/a/text()'
-        #PAPER = '//ol/li'
-        #PAPER_URL = './a/@href'
-        #PAPER_TITLE = './a/text()'
-        #PAPER_AUTHOR = './i/text()'
-        #H1="//h1/text()"
-       
-            paperRecords = root.xpath(PAPER)
-            papers=[]
-            for paperRecord in paperRecords:
-                paperTitleRecord=paperRecord.xpath(PAPER_TITLE)
-                if len(paperTitleRecord)>0:
-                    paper=Paper()
-                    paper.title=paperTitleRecord[0].strip()
-                    paper.url=f"{self.url}{paperRecord.xpath(PAPER_URL)[0].strip()}"
-                    paper.authors=','.join(paperRecord.xpath(PAPER_AUTHOR))
-                    papers.append(paper)
-            if debug:
-                for p in papers:
-                    print(p)'''
+        return parseDict,soup
 
     def getSubmittingEditor(self):
         """
@@ -371,13 +350,15 @@ class VolumeManager(EntityManager):
         '''
         self.fromStore(cacheFile=CEURWS.CACHE_FILE)
         
-    def recreate(self,progress:bool=False):
+    def recreate(self,progress:bool=False,limit=None):
         """
         recreate me by a full parse of all volume files
         
         Args:
             progress(bool): if True show progress
         """
+        pm=PaperManager()
+        paper_list=pm.getList()
         # first reload me from the main index
         self.loadFromIndexHtml(force=True)
         if progress:
@@ -386,7 +367,14 @@ class VolumeManager(EntityManager):
             t=None
         invalid=0
         for volume in self.volumes:
-            volume.extractValuesFromVolumePage(withPapers=True)
+            _volume_record,soup=volume.extractValuesFromVolumePage()
+            if soup:
+                ptp=PaperTocParser(number=volume.number,soup=soup,debug=self.debug)
+                paper_records=ptp.parsePapers()
+                for paper_record in paper_records:
+                    paper=Paper()
+                    paper.fromDict(paper_record)
+                    paper_list.append(paper)
             if not volume.valid:
                 invalid+=1
             if t is not None and volume.valid:
@@ -399,6 +387,8 @@ class VolumeManager(EntityManager):
                 t.update()
         print(f"storing recreated volume table for {len(self.volumes)} volumes ({invalid} invalid)")
         self.store()
+        print(f"storing {len(paper_list)} papers")
+        pm.store()
         
     def loadFromIndexHtml(self,force:bool=False):
         '''

@@ -46,34 +46,45 @@ class PaperTocParser(Textparser):
                 if href:
                     paper_record["pdf_name"]=href.attrs["href"]
                 if "id" in paper_li.attrs:
-                    paper_record["id"]=paper_li.attrs["id"]
+                    paper_id=paper_li.attrs["id"]
+                    paper_record["id"]=f"Vol-{self.number}/{paper_id}"
                 paper_records.append(paper_record)
                 pass
         else: 
-            toc=self.soup.find('h2',text=re.compile(".*Contents.*"))
+            toc=self.soup.find('h2',string=re.compile(".*Contents.*"))
             if toc:
+                index=0
                 for paper_li in self.soup.find_all('li',recursive=True):
                     href_node=paper_li.find('a', href=True)
                     if href_node:
                         href=href_node.attrs["href"]
                         if ".pdf" in href:
                             title=Textparser.sanitize(href_node.text)
-                            author_part=(paper_li.find('br').next_sibling)
-                            authors=author_part.text
-                            authors=Textparser.sanitize(authors)
-                            author_list=authors.split(",")
-                            for i,author in enumerate(author_list):
-                                author_list[i]=author.strip()
+                            index+=1
                             paper_record={
                                 "vol_number":self.number,
                                 "title": title,
                                 "pdf_name": href,
-                                "authors": author_list
+                                "id": f"Vol-{self.number}/paper-{index}"
                             }
+                            authors=''
+                            # authors are after next br tag
+                            br=paper_li.find('br')
+                            if not br:
+                                paper_record["fail"]="authors br not found"
+                            else:
+                                author_part=(br.next_sibling)
+                                if not author_part:
+                                    paper_record["fail"]="authors br not found"
+                                else:
+                                    authors=author_part.text
+                            authors=Textparser.sanitize(authors)
+                            author_list=authors.split(",")
+                            for i,author in enumerate(author_list):
+                                author_list[i]=author.strip()
+                            paper_record["authors"]: author_list
                             paper_records.append(paper_record)
             else:
                 if self.debug:
                     print(f"no toc for {self.number}")
         return paper_records
-        
-    

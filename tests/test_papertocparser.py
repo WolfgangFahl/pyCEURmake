@@ -57,7 +57,7 @@ class TestPaperTocParser(Basetest):
         vol_examples = [(1,15),(3264,10),(3343,7)]
         counter=Counter()
         debug=self.debug
-        #debug=True
+        debug=True
         for vol_number,expected_papers in vol_examples:
             paper_records=self.check_paper_toc_parser(vol_number, counter, debug)
             self.assertEqual(expected_papers,len(paper_records),vol_number)

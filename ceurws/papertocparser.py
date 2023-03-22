@@ -57,8 +57,19 @@ class PaperTocParser(Textparser):
                     if href_node:
                         href=href_node.attrs["href"]
                         if ".pdf" in href:
-                            paper_record={"vol_number":self.number}
-                            paper_record["pdf_name"]=href
+                            title=Textparser.sanitize(href_node.text)
+                            author_part=(paper_li.find('br').next_sibling)
+                            authors=author_part.text
+                            authors=Textparser.sanitize(authors)
+                            author_list=authors.split(",")
+                            for i,author in enumerate(author_list):
+                                author_list[i]=author.strip()
+                            paper_record={
+                                "vol_number":self.number,
+                                "title": title,
+                                "pdf_name": href,
+                                "authors": author_list
+                            }
                             paper_records.append(paper_record)
             else:
                 if self.debug:

@@ -12,6 +12,7 @@ from ceurws.volumeparser import VolumeParser
 import json
 from tqdm import tqdm
 from collections import Counter
+import unittest
 
 class TestPaperTocParser(Basetest):
     '''
@@ -75,7 +76,8 @@ class TestPaperTocParser(Basetest):
             self.assertEqual(expected_papers,len(paper_records),vol_number)
         if debug:
             print(counter.most_common())
-               
+          
+    @unittest.skipIf(True, "Only for manual testing or if github cache is implemented")           
     def test_parse_all_papertocs(self):
         """
         test parsing all paper table of contents

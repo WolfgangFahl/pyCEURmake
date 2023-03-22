@@ -38,7 +38,9 @@ dependencies = [
 	# https://pypi.org/project/py-3rdparty-mediawiki/
     'py-3rdparty-mediawiki>=0.9.3',
     # https://github.com/tqdm/tqdm
-    'tqdm'
+    'tqdm',
+    # https://pypi.org/project/sqlitedict/
+    'sqlitedict'
 ]
 
 requires-python = ">=3.8"

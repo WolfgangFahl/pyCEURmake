@@ -36,6 +36,28 @@ jobs:
         pip install sphinx_rtd_theme
         scripts/install
         scripts/doc
+    - name: install
+      run: |
+        scripts/install
+
+     - name: Cache Sqlite
+      id: cache-sqlite
+      uses: actions/cache@v3
+      with:
+        path: ~/.ceur-ws
+        key: ceurws
+
+    - name: fill sqlite
+      if: steps.cache-sqlite.outputs.cache-hit != 'true'
+      run: |
+        ceur-ws --recreate
+
+    - name: save Sqlite
+      id: saveSqlite
+      uses: actions/cache/save@v3
+      with:
+        path: ~/.ceur-ws
+        key: ceurws
     - name: Run tests
       run: |
-        scripts/installAndTest
+        scripts/test

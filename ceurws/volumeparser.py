@@ -146,8 +146,7 @@ class VolumeParser(Textparser):
         """
         if soup is None:
             return {
-                "vol_number": number,
-                "key": number
+                "vol_number": number
             }
         # first try RDFa annotations
         scrapedDict = self.parseRDFa(soup)

@@ -208,6 +208,8 @@ class WikidataSync(object):
         procsByURN, duplicates = LOD.getLookup(wd_proceedings_records, 'URN_NBN')
         if withStore:
             self.sqldb.store(procsByURN.values(), entityInfo, executeMany=True, fixNone=True)
+        if self.debug:
+            print(f"stored {len(procsByURN.values())} proceedings records")
         if len(duplicates)>0:
             print(f"found {len(duplicates)} duplicates URN entries")
             if len(duplicates)<10:
@@ -216,7 +218,7 @@ class WikidataSync(object):
 
     def loadProceedingsFromCache(self):
         '''
-        load the proceedings recors from the cache
+        load the proceedings records from the cache
         '''
         sqlQuery="SELECT * from Proceedings"
         self.procRecords=self.sqldb.query(sqlQuery)

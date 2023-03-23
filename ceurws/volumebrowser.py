@@ -843,6 +843,16 @@ class VolumeBrowser(App):
             volumeList=self.wdSync.vm.getList()
             return volumeList
         
+        @jp.app.get("/proceedings.json")
+        async def proceedings():
+            """
+            direct fastapi return of proceedings
+            """
+            if self.wdSync is None:
+                self.wdSync=WikidataSync(debug=self.debug)
+            proceedingsList=self.wdSync.loadProceedingsFromCache()
+            return proceedingsList
+        
         @jp.app.get("/papers.json")
         async def papers():
             """

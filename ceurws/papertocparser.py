@@ -45,9 +45,11 @@ class PaperTocParser(Textparser):
                 index+=1
                 paper_record = self.scrape.parseWithScrapeDescription(paper_li, self.scrapeDescr)
                 paper_record["vol_number"]=self.number
-                href=paper_li.find('a', href=True)
-                if href:
-                    paper_record["pdf_name"]=href.attrs["href"]
+                href_node=paper_li.find('a', href=True)
+                if href_node:
+                    href=href_node.attrs["href"]
+                    href=Textparser.sanitize(href)
+                    paper_record["pdf_name"]=href
                 if "id" in paper_li.attrs:
                     paper_id=paper_li.attrs["id"]
                     if paper_id in paper_ids:
@@ -65,6 +67,7 @@ class PaperTocParser(Textparser):
                     href_node=paper_li.find('a', href=True)
                     if href_node:
                         href=href_node.attrs["href"]
+                        href=Textparser.sanitize(href)
                         if ".pdf" in href:
                             title=Textparser.sanitize(href_node.text)
                             index+=1

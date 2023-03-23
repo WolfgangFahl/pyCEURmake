@@ -152,8 +152,6 @@ class VolumeParser(Textparser):
         scrapedDict = self.parseRDFa(soup)
         for key in scrapedDict:
             scrapedDict[key] = Textparser.sanitize(scrapedDict[key])
-        # sqlite_dict compatiblity
-        scrapedDict["key"]=number
        
         # second part
         for descValue in ["description", "descripton"]:

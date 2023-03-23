@@ -45,7 +45,7 @@ jobs:
       id: cache-sqlite
       uses: actions/cache@v3
       with:
-        path: ~/.ceur-ws
+        path: ~/.ceurws
         key: ceurws
 
     - name: fill sqlite
@@ -57,7 +57,7 @@ jobs:
       id: saveSqlite
       uses: actions/cache/save@v3
       with:
-        path: ~/.ceur-ws
+        path: ~/.ceurws
         key: ceurws
 
     - name: Run tests

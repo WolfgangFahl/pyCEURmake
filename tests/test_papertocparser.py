@@ -67,15 +67,16 @@ class TestPaperTocParser(Basetest):
         """
         tests parsing of volume examples
         """
-        vol_examples = [(2376,35),(2379,8),(1,15),(83,12),(3264,10),(3343,7)]
+        vol_examples = [(3343,7),(2376,35),(2379,8),(1,15),(83,12),(3264,10)]
         counter=Counter()
         debug=self.debug
-        debug=True
+        #debug=True
         for vol_number,expected_papers in vol_examples:
             paper_records=self.check_paper_toc_parser(vol_number, counter, debug)
             self.assertEqual(expected_papers,len(paper_records),vol_number)
         if debug:
             print(counter.most_common())
+        self.assertTrue(counter["pages"]>=60)
           
     @unittest.skipIf(True, "Only for manual testing or if github cache is implemented")           
     def test_parse_all_papertocs(self):

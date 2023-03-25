@@ -28,6 +28,7 @@ class PaperTocParser(Textparser):
         self.scrapeDescr = [
             ScrapeDescription(key='title', tag='span', attribute='class', value='CEURTITLE'),
             ScrapeDescription(key='authors', tag='span', attribute='class', value='CEURAUTHOR', multi=True),
+            ScrapeDescription(key='pages',tag='span',attribute='class',value="CEURPAGES")
             #ScrapeDescription(key='submitted_papers', tag='span', attribute='class', value='CEURSUBMITTEDPAPERS'),
             #ScrapeDescription(key='accepted_papers', tag='span', attribute='class', value='CEURACCEPTEDPAPERS'),
         ]

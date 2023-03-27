@@ -31,3 +31,56 @@
         }
     
     }
+'CEUR-WS Paper Authors':
+  sparql: |
+    PREFIX datacite: <http://purl.org/spar/datacite/>
+    PREFIX dblp: <https://dblp.org/rdf/schema#>
+    PREFIX litre: <http://purl.org/spar/literal/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT
+       (?author as ?dblp_author_id)
+       (SAMPLE(?_label) as ?label)
+       (SAMPLE(?_wikidata_id) as ?wikidata_id)
+       (SAMPLE(?_orcid_id) as ?orcid_id ) 
+       (SAMPLE(?_gnd_id) as ?gnd_id ) 
+    WHERE{
+        ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
+        ?paper dblp:publishedAsPartOf ?proceeding.
+        ?paper dblp:title ?title .
+        ?paper dblp:authoredBy ?author.
+        OPTIONAL{ ?author rdfs:label ?_label}
+        OPTIONAL{
+            ?author datacite:hasIdentifier ?wd_blank.
+            ?wd_blank datacite:usesIdentifierScheme datacite:wikidata.
+            ?wd_blank litre:hasLiteralValue ?_wikidata_id.
+        }
+        OPTIONAL{
+            ?author datacite:hasIdentifier ?orcid_blank.
+            ?orcid_blank datacite:usesIdentifierScheme datacite:orcid.
+            ?orcid_blank litre:hasLiteralValue ?_orcid_id.
+        }
+        OPTIONAL{
+            ?author datacite:hasIdentifier ?gnd_blank.
+            ?gnd_blank datacite:usesIdentifierScheme datacite:gnd.
+            ?gnd_blank litre:hasLiteralValue ?_gnd_id.
+        }
+    }GROUP BY ?author
+'CEUR-WS all Papers':
+  sparql: |
+    PREFIX datacite: <http://purl.org/spar/datacite/>
+    PREFIX dblp: <https://dblp.org/rdf/schema#>
+    PREFIX litre: <http://purl.org/spar/literal/>
+    SELECT DISTINCT
+       ?proceeding
+       ?paper 
+       (SAMPLE(?_title) as ?title)
+       (SAMPLE(?_pdf_url) as ?pdf_url)
+       (GROUP_CONCAT(?_author; SEPARATOR=";") as ?author)
+      WHERE{
+        ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
+        ?paper dblp:publishedAsPartOf ?proceeding.
+        OPTIONAL{?paper dblp:title ?_title .}
+        OPTIONAL{?paper dblp:documentPage ?_pdf_url}
+        OPTIONAL{?paper dblp:authoredBy ?_author}
+    }
+    GROUP BY ?proceeding ?paper

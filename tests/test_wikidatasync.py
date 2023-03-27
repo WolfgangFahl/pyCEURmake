@@ -14,6 +14,7 @@ from spreadsheet.wikidata import PropertyMapping, UrlReference, WdDatatype
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator import datatypes as wbi_datatype
 
+from models.dblp import DblpAuthor
 from tests.basetest import Basetest
 from ceurws.wikidatasync import DblpAuthorIdentifier, DblpEndpoint, WikidataSync
 from ceurws.volumeparser import VolumeParser
@@ -462,7 +463,7 @@ class TestDblpEndpoint(Basetest):
 
     def setUp(self,debug=False,profile=True):
         super().setUp(debug, profile)
-        self.endpointUrl = "https://qlever.cs.uni-freiburg.de/api/dblp/query"
+        self.endpointUrl = "https://qlever.cs.uni-freiburg.de/api/dblp-plus/query"
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl)
 
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
@@ -530,6 +531,34 @@ class TestDblpEndpoint(Basetest):
                 else:
                     self.assertGreaterEqual(len(res), expectedEditors)
 
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
+    def test_get_all_ceur_authors(self):
+        """
+        tests get_all_ceur_authors
+        """
+        authors = self.dblpEndpoint.get_all_ceur_authors()
+        authorsById = {a.dblp_author_id: a for a in authors}
+        self.assertGreaterEqual(len(authorsById), 40000)
+        expected_decker = DblpAuthor(
+                dblp_author_id='https://dblp.org/pid/d/StefanDecker',
+                label='Stefan Decker',
+                wikidata_id='Q54303353',
+                orcid_id='0000-0001-6324-7164',
+                gnd_id=None
+        )
+        decker = authorsById.get("https://dblp.org/pid/d/StefanDecker")
+        self.assertEqual(expected_decker, decker)
+
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
+    def test_get_all_ceur_papers(self):
+        """
+        tests get_all_ceur_papers
+        """
+        papers = self.dblpEndpoint.get_all_ceur_papers()
+        papersById = {p.dblp_publication_id: p for p in papers}
+        self.assertGreaterEqual(len(papers), 40000)
+        paper = papersById.get("https://dblp.org/rec/conf/semweb/FahlHW0D22")
+        self.assertIn("https://dblp.org/pid/d/StefanDecker", [a.dblp_author_id for a in paper.authors])
 
 class TestDblpAuthorIdentifier(Basetest):
     """

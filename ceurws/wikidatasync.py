@@ -21,7 +21,7 @@ from lodstorage.sql import SQLDB
 from lodstorage.query import QueryManager, EndpointManager
 
 from ceurws.models.dblp import DblpAuthor, DblpPaper
-from utils.json_cache import JsonCacheManager
+from ceurws.utils.json_cache import JsonCacheManager
 
 
 class WikidataSync(object):

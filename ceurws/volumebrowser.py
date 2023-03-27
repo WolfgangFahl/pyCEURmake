@@ -6,10 +6,14 @@ Created on 2022-08-14
 import asyncio
 import re
 import time
+from typing import List
 
 import justpy as jp
-from jpcore.justpy_app import JustpyApp
+from fastapi.openapi.models import Response
+from fastapi.responses import JSONResponse, ORJSONResponse
 from jpwidgets.bt5widgets import About, Alert, App, IconButton, Switch, ProgressBar
+from orjson import orjson
+
 from ceurws.ceur_ws import Volume
 from ceurws.querydisplay import QueryDisplay
 from ceurws.wikidatasync import DblpEndpoint, WikidataSync
@@ -17,6 +21,8 @@ from ceurws.template import TemplateEnv
 import pprint
 import sys
 from ceurws.version import Version
+from models.dblp import DblpAuthor, DblpPaper
+
 
 class Display:
     """
@@ -841,7 +847,7 @@ class VolumeBrowser(App):
             if self.wdSync is None:
                 self.wdSync=WikidataSync(debug=self.debug)
             volumeList=self.wdSync.vm.getList()
-            return volumeList
+            return ORJSONResponse(volumeList)
         
         @jp.app.get("/proceedings.json")
         async def proceedings():
@@ -851,17 +857,40 @@ class VolumeBrowser(App):
             if self.wdSync is None:
                 self.wdSync=WikidataSync(debug=self.debug)
             proceedingsList=self.wdSync.loadProceedingsFromCache()
-            return proceedingsList
+            return ORJSONResponse(proceedingsList)
         
         @jp.app.get("/papers.json")
         async def papers():
             """
-            direct fastapi return of volumes
+            direct fastapi return of papers
             """
             if self.wdSync is None:
                 self.wdSync=WikidataSync(debug=self.debug)
             paperList=self.wdSync.pm.getList()
             return paperList
+        @jp.app.get("/papers_dblp.json", response_model= List[DblpPaper])
+        async def papers_dblp():
+            """
+            direct fastapi return of paper information from dblp
+            """
+            if self.wdSync is None:
+                self.wdSync=WikidataSync(debug=self.debug)
+            papers = self.wdSync.dbpEndpoint.get_all_ceur_papers()
+            return ORJSONResponse(papers)
+
+
+        @jp.app.get("/authors_dblp.json", response_model=List[DblpAuthor])
+        async def papers_dblp():
+            """
+            direct fastapi return of paper information from dblp
+            """
+            if self.wdSync is None:
+                self.wdSync = WikidataSync(debug=self.debug)
+            authors = self.wdSync.dbpEndpoint.get_all_ceur_authors()
+            return ORJSONResponse(
+                content=authors
+            )
+
 
     def setupPage(self,header=""):
         header="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">

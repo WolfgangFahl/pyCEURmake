@@ -3,6 +3,7 @@ Created on 2022-08-14
 
 @author: wf
 '''
+import dataclasses
 import datetime
 import os
 import sys
@@ -19,20 +20,26 @@ from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
 from lodstorage.query import QueryManager, EndpointManager
 
+from models.dblp import DblpAuthor, DblpPaper
+from utils.json_cache import JsonCacheManager
+
 
 class WikidataSync(object):
     '''
     synchronize with wikidata
     '''
 
-    def __init__(self, baseurl="https://www.wikidata.org", debug:bool=False):
+    def __init__(self, baseurl: str = "https://www.wikidata.org", debug:bool = False, dblp_endpoint_url: str = None):
         '''
         Constructor
         
         Args:
             baseurl(str): the baseurl of the wikidata endpoint
             debug(bool): if True switch on debugging
+            dblp_endpoint_url: sparql endpoint url of dblp
         '''
+        if dblp_endpoint_url is None:
+            dblp_endpoint_url = "https://qlever.cs.uni-freiburg.de/api/dblp/query"
         self.debug = debug
         self.prepareVolumeManager()
         self.preparePaperManager()
@@ -42,7 +49,7 @@ class WikidataSync(object):
         self.wd = Wikidata(baseurl=self.baseurl, debug=debug)
         self.sqldb = SQLDB(CEURWS.CACHE_FILE)
         self.procRecords=None
-        self.dbpEndpoint = DblpEndpoint(endpoint="https://qlever.cs.uni-freiburg.de/api/dblp/query")
+        self.dbpEndpoint = DblpEndpoint(endpoint=dblp_endpoint_url)
 
     def login(self):
         # @FIXME add username/password handling (see gsimport)
@@ -816,6 +823,65 @@ class DblpEndpoint:
 
     def __init__(self, endpoint):
         self.sparql = SPARQL(endpoint)
+        path = os.path.dirname(__file__)
+        qYamlFile = f"{path}/resources/queries/dblp.yaml"
+        if os.path.isfile(qYamlFile):
+            self.qm = QueryManager(lang="sparql", queriesPath=qYamlFile)
+
+    def get_all_ceur_authors(self) -> List[DblpAuthor]:
+        """
+        Get all authors that have published a paper in CEUR-WS from dblp
+        """
+        query = self.qm.queriesByName["CEUR-WS Paper Authors"]
+        cache_name = "dblp_authors"
+        lod = JsonCacheManager().load_lod(cache_name)
+        if lod is None:
+            lod = self.sparql.queryAsListOfDicts(query.query)
+            authors = []
+            for d in lod:
+                author = DblpAuthor(**d)
+                authors.append(author)
+            JsonCacheManager().store(cache_name, [dataclasses.asdict(author)for author in authors])
+        else:
+            authors = [DblpAuthor(**d) for d in lod]
+
+        return authors
+
+    def get_all_ceur_papers(self) -> List[DblpPaper]:
+        """
+        Get all papers published in CEUR-WS from dblp
+        """
+        query = self.qm.queriesByName["CEUR-WS all Papers"]
+        cache_name = "dblp_papers"
+        lod = JsonCacheManager().load_lod(cache_name)
+        if lod is None:
+            lod = self.sparql.queryAsListOfDicts(query.query)
+            authors = self.get_all_ceur_authors()
+            authorsById = {a.dblp_author_id: a for a in authors}
+            papers = []
+            for d in lod:
+                pdf_id = d.get("pdf_url", None)
+                if pdf_id and isinstance(pdf_id, str):
+                    pdf_id = pdf_id.replace("http://ceur-ws.org/", "")
+                    pdf_id = pdf_id.replace("https://ceur-ws.org/", "")
+                    pdf_id = pdf_id.replace(".pdf", "")
+                authors = []
+                for dblp_author_id in d.get("author","").split(">;<"):   # >;< qlever quirk
+                    author = authorsById.get(dblp_author_id, None)
+                    if author:
+                        authors.append(author)
+                paper = DblpPaper(
+                        dblp_publication_id=d.get("paper"),
+                        dblp_proceeding_id=d.get("proceeding"),
+                        pdf_id=pdf_id,
+                        authors=authors
+                )
+                papers.append(paper)
+
+            JsonCacheManager().store(cache_name, [dataclasses.asdict(paper)for paper in papers])
+        else:
+            papers = [DblpPaper(**d) for d in lod]
+        return papers
 
     def getDblpIdByVolumeNumber(self, number) -> List[str]:
         """

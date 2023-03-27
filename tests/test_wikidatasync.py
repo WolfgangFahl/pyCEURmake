@@ -14,7 +14,7 @@ from spreadsheet.wikidata import PropertyMapping, UrlReference, WdDatatype
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator import datatypes as wbi_datatype
 
-from models.dblp import DblpAuthor
+from ceurws.models.dblp import DblpAuthor
 from tests.basetest import Basetest
 from ceurws.wikidatasync import DblpAuthorIdentifier, DblpEndpoint, WikidataSync
 from ceurws.volumeparser import VolumeParser

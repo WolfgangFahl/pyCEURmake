@@ -21,7 +21,7 @@ from ceurws.template import TemplateEnv
 import pprint
 import sys
 from ceurws.version import Version
-from models.dblp import DblpAuthor, DblpPaper
+from ceurws.models.dblp import DblpAuthor, DblpPaper
 
 
 class Display:

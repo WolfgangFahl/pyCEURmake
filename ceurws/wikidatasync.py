@@ -20,7 +20,7 @@ from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
 from lodstorage.query import QueryManager, EndpointManager
 
-from models.dblp import DblpAuthor, DblpPaper
+from ceurws.models.dblp import DblpAuthor, DblpPaper
 from utils.json_cache import JsonCacheManager
 
 

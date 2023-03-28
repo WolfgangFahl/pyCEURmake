@@ -950,6 +950,8 @@ class DblpEndpoint:
         cache_name = "dblp/volumes"
         lod = JsonCacheManager().load(cache_name)
         if lod is None:
+            print("Test Query Encoding")
+            print(query.query)
             lod = self.sparql.queryAsListOfDicts(query.query)
             editors = self.get_all_ceur_editors()
             editorsById = {a.dblp_author_id: a for a in editors}

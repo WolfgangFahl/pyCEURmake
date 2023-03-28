@@ -38,7 +38,7 @@
     PREFIX litre: <http://purl.org/spar/literal/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     SELECT
-       (?author as ?dblp_author_id)
+       ?dblp_author_id
        (SAMPLE(?_label) as ?label)
        (SAMPLE(?_wikidata_id) as ?wikidata_id)
        (SAMPLE(?_orcid_id) as ?orcid_id ) 
@@ -47,24 +47,24 @@
         ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
         ?paper dblp:publishedAsPartOf ?proceeding.
         ?paper dblp:title ?title .
-        ?paper dblp:authoredBy ?author.
-        OPTIONAL{ ?author rdfs:label ?_label}
+        ?paper dblp:authoredBy ?dblp_author_id.
+        OPTIONAL{ ?dblp_author_id rdfs:label ?_label}
         OPTIONAL{
-            ?author datacite:hasIdentifier ?wd_blank.
+            ?dblp_author_id datacite:hasIdentifier ?wd_blank.
             ?wd_blank datacite:usesIdentifierScheme datacite:wikidata.
             ?wd_blank litre:hasLiteralValue ?_wikidata_id.
         }
         OPTIONAL{
-            ?author datacite:hasIdentifier ?orcid_blank.
+            ?dblp_author_id datacite:hasIdentifier ?orcid_blank.
             ?orcid_blank datacite:usesIdentifierScheme datacite:orcid.
             ?orcid_blank litre:hasLiteralValue ?_orcid_id.
         }
         OPTIONAL{
-            ?author datacite:hasIdentifier ?gnd_blank.
+            ?dblp_author_id datacite:hasIdentifier ?gnd_blank.
             ?gnd_blank datacite:usesIdentifierScheme datacite:gnd.
             ?gnd_blank litre:hasLiteralValue ?_gnd_id.
         }
-    }GROUP BY ?author
+    }GROUP BY ?dblp_author_id
 'CEUR-WS all Papers':
   sparql: |
     PREFIX datacite: <http://purl.org/spar/datacite/>
@@ -112,28 +112,28 @@
     PREFIX litre: <http://purl.org/spar/literal/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     SELECT
-       (?author as ?dblp_author_id)
+       ?dblp_author_id
        (SAMPLE(?_label) as ?label)
        (SAMPLE(?_wikidata_id) as ?wikidata_id)
        (SAMPLE(?_orcid_id) as ?orcid_id ) 
        (SAMPLE(?_gnd_id) as ?gnd_id ) 
     WHERE{
         ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
-        ?proceeding dblp:editedBy ?author.
-        OPTIONAL{ ?author rdfs:label ?_label}
+        ?proceeding dblp:editedBy ?dblp_author_id.
+        OPTIONAL{ ?dblp_author_id rdfs:label ?_label}
         OPTIONAL{
-            ?author datacite:hasIdentifier ?wd_blank.
+            ?dblp_author_id datacite:hasIdentifier ?wd_blank.
             ?wd_blank datacite:usesIdentifierScheme datacite:wikidata.
             ?wd_blank litre:hasLiteralValue ?_wikidata_id.
         }
         OPTIONAL{
-            ?author datacite:hasIdentifier ?orcid_blank.
+            ?dblp_author_id datacite:hasIdentifier ?orcid_blank.
             ?orcid_blank datacite:usesIdentifierScheme datacite:orcid.
             ?orcid_blank litre:hasLiteralValue ?_orcid_id.
         }
         OPTIONAL{
-            ?author datacite:hasIdentifier ?gnd_blank.
+            ?dblp_author_id datacite:hasIdentifier ?gnd_blank.
             ?gnd_blank datacite:usesIdentifierScheme datacite:gnd.
             ?gnd_blank litre:hasLiteralValue ?_gnd_id.
         }
-    }GROUP BY ?author
+    }GROUP BY ?dblp_author_id

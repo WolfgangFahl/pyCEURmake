@@ -33,7 +33,7 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     parser.add_argument("--host",default=JustpyServer.getDefaultHost(),help="the host to serve / listen from [default: %(default)s]")
     parser.add_argument("-l", "--list", action="store_true", help="list all volumes [default: %(default)s]")
     parser.add_argument("-rc","--recreate",action="store_true",help="recreated volume table")
-    parser.add_argument("-den","--dblp_endpoint_name",help="name of dblp endpoint to use %(default)s",default="qlever-dblpplus")       
+    parser.add_argument("-den","--dblp_endpoint_name",help="name of dblp endpoint to use %(default)s",default="qlever-dblp-plus")       
     parser.add_argument("-wen","--wikidata_endpoint_name",help="name of wikidata endpoint to use %(default)s",default="wikidata")       
     parser.add_argument("-wdu","--wikidata_update",action="store_true",help="update tables from wikidata")
     parser.add_argument("--port",type=int,default=9998,help="the port to serve from [default: %(default)s]")

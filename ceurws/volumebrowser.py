@@ -864,7 +864,9 @@ class VolumeBrowser(App):
             paperList=wdSync.pm.getList()
             return paperList
         
-        @jp.app.get("/papers_dblp.json", response_model= List[DblpPaper])
+        @jp.app.get("/papers_dblp.json", 
+                    #response_model= List[DblpPaper]
+        )
         async def papers_dblp():
             """
             direct fastapi return of paper information from dblp
@@ -873,8 +875,9 @@ class VolumeBrowser(App):
             papers = wdSync.dbpEndpoint.get_all_ceur_papers()
             return ORJSONResponse(papers)
 
-
-        @jp.app.get("/authors_dblp.json", response_model=List[DblpAuthor])
+        @jp.app.get("/authors_dblp.json", 
+                    #response_model=List[DblpAuthor]
+        )
         async def authors_papers_dblp():
             """
             direct fastapi return of paper information from dblp

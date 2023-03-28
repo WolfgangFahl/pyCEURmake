@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Union
 
 from orjson import orjson
 
@@ -25,11 +26,11 @@ class JsonCacheManager():
             str: the path to the list of dict cache
         """
         root_path = f"{Path.home()}/.ceurws"
-        os.makedirs(root_path, exist_ok=True)
         json_path = f"{root_path}/{lod_name}.json"
+        Path(json_path).parent.mkdir(parents=True, exist_ok=True)
         return json_path
 
-    def load_lod(self, lod_name: str) -> list:
+    def load(self, lod_name: str) -> Union[list, dict]:
         """
         load my list of dicts
 
@@ -54,7 +55,7 @@ class JsonCacheManager():
         return os.path.isfile(json_path) and os.path.getsize(json_path) > 1
 
 
-    def store(self, lod_name: str, lod: list):
+    def store(self, lod_name: str, lod: Union[list, dict]):
         """
         store my list of dicts
 
@@ -64,6 +65,6 @@ class JsonCacheManager():
         """
         json_path = self.json_path(lod_name)
         json_str = orjson.dumps(lod, option=orjson.OPT_INDENT_2)
-        with open(json_path, 'w') as json_file:
+        with open(json_path, 'wb') as json_file:
             json_file.write(json_str)
             pass

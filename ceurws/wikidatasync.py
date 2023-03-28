@@ -23,7 +23,6 @@ from lodstorage.query import QueryManager, EndpointManager
 from ceurws.models.dblp import DblpAuthor, DblpPaper
 from ceurws.utils.json_cache import JsonCacheManager
 
-
 class WikidataSync(object):
     '''
     synchronize with wikidata

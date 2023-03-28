@@ -14,7 +14,7 @@ from spreadsheet.wikidata import PropertyMapping, UrlReference, WdDatatype
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator import datatypes as wbi_datatype
 
-from ceurws.models.dblp import DblpAuthor
+from ceurws.models.dblp import DblpScholar
 from tests.basetest import Basetest
 from ceurws.wikidatasync import DblpAuthorIdentifier, DblpEndpoint, WikidataSync
 from ceurws.volumeparser import VolumeParser
@@ -463,7 +463,7 @@ class TestDblpEndpoint(Basetest):
 
     def setUp(self,debug=False,profile=True):
         super().setUp(debug, profile)
-        self.endpointUrl = "https://qlever.cs.uni-freiburg.de/api/dblp-plus/query"
+        self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl)
 
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
@@ -539,7 +539,7 @@ class TestDblpEndpoint(Basetest):
         authors = self.dblpEndpoint.get_all_ceur_authors()
         authorsById = {a.dblp_author_id: a for a in authors}
         self.assertGreaterEqual(len(authorsById), 40000)
-        expected_decker = DblpAuthor(
+        expected_decker = DblpScholar(
                 dblp_author_id='https://dblp.org/pid/d/StefanDecker',
                 label='Stefan Decker',
                 wikidata_id='Q54303353',
@@ -559,6 +559,16 @@ class TestDblpEndpoint(Basetest):
         self.assertGreaterEqual(len(papers), 40000)
         paper = papersById.get("https://dblp.org/rec/conf/semweb/FahlHW0D22")
         self.assertIn("https://dblp.org/pid/d/StefanDecker", [a.dblp_author_id for a in paper.authors])
+
+    @unittest.skipIf(False, "queries unreliable dblp endpoint")
+    def test_get_ceur_proceeding(self):
+        """
+        tests retrieving a proceeding from dblp endpoint
+        """
+        volume = self.dblpEndpoint.get_ceur_proceeding(3262)
+        self.assertEqual("https://dblp.org/rec/conf/semweb/2022wikidata", volume.dblp_publication_id)
+        self.assertEqual(4, len(volume.editors))
+        self.assertEqual(16, len(volume.papers))
 
 class TestDblpAuthorIdentifier(Basetest):
     """

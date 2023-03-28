@@ -9,6 +9,7 @@ import time
 from typing import List
 
 import justpy as jp
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import ORJSONResponse
 from jpwidgets.bt5widgets import About, Alert, App, IconButton, Switch, ProgressBar
 
@@ -19,7 +20,7 @@ from ceurws.template import TemplateEnv
 import pprint
 import sys
 from ceurws.version import Version
-from ceurws.models.dblp import DblpAuthor, DblpPaper
+from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 from lodstorage.query import EndpointManager
 
 class Display:
@@ -864,7 +865,7 @@ class VolumeBrowser(App):
             paperList=wdSync.pm.getList()
             return paperList
         
-        @jp.app.get("/papers_dblp.json", 
+        @jp.app.get("/papers_dblp.json", tags=["dblp complete dataset"],
                     #response_model= List[DblpPaper]
         )
         async def papers_dblp():
@@ -875,7 +876,7 @@ class VolumeBrowser(App):
             papers = wdSync.dbpEndpoint.get_all_ceur_papers()
             return ORJSONResponse(papers)
 
-        @jp.app.get("/authors_dblp.json", 
+        @jp.app.get("/authors_dblp.json", tags=["dblp complete dataset"],
                     #response_model=List[DblpAuthor]
         )
         async def authors_papers_dblp():
@@ -887,6 +888,115 @@ class VolumeBrowser(App):
             return ORJSONResponse(
                 content=authors
             )
+
+        @jp.app.get("/dblp/papers", tags=["dblp complete dataset"])
+        async def dblp_papers(limit: int = 100, offset: int = 0) -> List[DblpPaper]:
+            """
+            Get ceur-ws volumes form dblp
+            Args:
+                limit: max number of returned papers
+                offset:
+
+            Returns:
+            """
+            wdSync = self.assureWikidataSync()
+            papers = wdSync.dbpEndpoint.get_all_ceur_papers()
+            return papers[offset:limit]
+
+        @jp.app.get("/dblp/editors", tags=["dblp complete dataset"])
+        async def dblp_editors(limit: int = 100, offset: int = 0) -> List[DblpScholar]:
+            """
+            Get ceur-ws volume editors form dblp
+            Args:
+                limit: max number of returned papers
+                offset:
+
+            Returns:
+            """
+            wdSync = self.assureWikidataSync()
+            editors = wdSync.dbpEndpoint.get_all_ceur_editors()
+            return editors[offset:limit]
+
+        @jp.app.get("/dblp/volumes", tags=["dblp complete dataset"])
+        async def dblp_volumes(limit: int = 100, offset: int = 0) -> List[DblpPaper]:
+            """
+            Get ceur-ws volumes form dblp
+            Args:
+                limit: max number of returned papers
+                offset:
+
+            Returns:
+            """
+            wdSync = self.assureWikidataSync()
+            proceedings = wdSync.dbpEndpoint.get_all_ceur_proceedings()
+            return proceedings[offset:limit]
+
+        @jp.app.get("/dblp/volume/{volume_number}", tags=["dblp"])
+        async def dblp_volume(volume_number: int) -> DblpProceeding:
+            """
+            Get ceur-ws volume form dblp
+            """
+            wdSync = self.assureWikidataSync()
+            proceeding = wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+            if proceeding:
+                return proceeding
+            else:
+                raise HTTPException(status_code=404, detail="Volume not found")
+
+        @jp.app.get("/dblp/volume/{volume_number}/editor", tags=["dblp"])
+        async def dblp_volume_editors(volume_number: int) -> List[DblpScholar]:
+            """
+            Get ceur-ws volume editors form dblp
+            """
+            wdSync = self.assureWikidataSync()
+            proceeding = wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+            if proceeding:
+                return proceeding.editors
+            else:
+                raise HTTPException(status_code=404, detail="Volume not found")
+
+        @jp.app.get("/dblp/volume/{volume_number}/paper", tags=["dblp"])
+        async def dblp_volume_papers(volume_number: int) -> List[DblpPaper]:
+            """
+            Get ceur-ws volume papers form dblp
+            Args:
+                volume_number: number of the volume
+
+            Returns:
+            """
+            wdSync = self.assureWikidataSync()
+            papers = wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            return papers
+
+        @jp.app.get("/dblp/volume/{volume_number}/paper/{paper_id}", tags=["dblp"])
+        async def dblp_paper(volume_number: int, paper_id: str) -> DblpPaper:
+            """
+            Get ceur-ws volume paper form dblp
+            """
+            wdSync = self.assureWikidataSync()
+            paper = wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            if paper:
+                for paper in paper:
+                    if paper.pdf_id == f"Vol-{volume_number}/{paper_id}":
+                        return paper
+                raise HTTPException(status_code=404, detail="Paper not found")
+            else:
+                raise HTTPException(status_code=404, detail="Volume not found")
+
+        @jp.app.get("/dblp/volume/{volume_number}/paper/{paper_id}/author", tags=["dblp"])
+        async def dblp_paper_authors(volume_number: int, paper_id: str) -> List[DblpScholar]:
+            """
+            Get ceur-ws volume paper form dblp
+            """
+            wdSync = self.assureWikidataSync()
+            paper = wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            if paper:
+                for paper in paper:
+                    if paper.pdf_id == f"Vol-{volume_number}/{paper_id}":
+                        return paper.authors
+                raise HTTPException(status_code=404, detail="Paper not found")
+            else:
+                raise HTTPException(status_code=404, detail="Volume not found")
 
     def assureWikidataSync(self)->WikidataSync:
         """

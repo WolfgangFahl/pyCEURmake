@@ -9,10 +9,8 @@ import time
 from typing import List
 
 import justpy as jp
-from fastapi.openapi.models import Response
-from fastapi.responses import JSONResponse, ORJSONResponse
+from fastapi.responses import ORJSONResponse
 from jpwidgets.bt5widgets import About, Alert, App, IconButton, Switch, ProgressBar
-from orjson import orjson
 
 from ceurws.ceur_ws import Volume
 from ceurws.querydisplay import QueryDisplay
@@ -22,7 +20,7 @@ import pprint
 import sys
 from ceurws.version import Version
 from ceurws.models.dblp import DblpAuthor, DblpPaper
-
+from lodstorage.query import EndpointManager
 
 class Display:
     """
@@ -238,7 +236,7 @@ class WikidataRangeImport(Display):
         self.colA2=jp.Div(classes="col-3",a=self.rowA)
         self.colA3=jp.Div(classes="col-3",a=self.rowA)
         self.colD1=jp.Div(classes="col-12",a=self.rowD)
-        self.wdSync=WikidataSync(debug=self.app.debug)
+        self.wdSync=self.app.assureWikidataSync()
         self.fromInput=self.app.createInput(labelText="from", placeholder="from",change=self.onChangeFrom, a=self.colA1)
         self.toValue=self.app.createInput(labelText="to", placeholder="to",change=self.onChangeTo, a=self.colA2)
         self.uploadButton=IconButton(a=self.colA3,iconName="upload-multiple",click=self.onUploadButtonClick,classes="btn btn-primary btn-sm col-1")
@@ -844,9 +842,8 @@ class VolumeBrowser(App):
             """
             direct fastapi return of volumes
             """
-            if self.wdSync is None:
-                self.wdSync=WikidataSync(debug=self.debug)
-            volumeList=self.wdSync.vm.getList()
+            wdSync=self.assureWikidataSync()
+            volumeList=wdSync.vm.getList()
             return ORJSONResponse(volumeList)
         
         @jp.app.get("/proceedings.json")
@@ -854,9 +851,8 @@ class VolumeBrowser(App):
             """
             direct fastapi return of proceedings
             """
-            if self.wdSync is None:
-                self.wdSync=WikidataSync(debug=self.debug)
-            proceedingsList=self.wdSync.loadProceedingsFromCache()
+            wdSync=self.assureWikidataSync()
+            proceedingsList=wdSync.loadProceedingsFromCache()
             return ORJSONResponse(proceedingsList)
         
         @jp.app.get("/papers.json")
@@ -864,33 +860,48 @@ class VolumeBrowser(App):
             """
             direct fastapi return of papers
             """
-            if self.wdSync is None:
-                self.wdSync=WikidataSync(debug=self.debug)
-            paperList=self.wdSync.pm.getList()
+            wdSync=self.assureWikidataSync()
+            paperList=wdSync.pm.getList()
             return paperList
+        
         @jp.app.get("/papers_dblp.json", response_model= List[DblpPaper])
         async def papers_dblp():
             """
             direct fastapi return of paper information from dblp
             """
-            if self.wdSync is None:
-                self.wdSync=WikidataSync(debug=self.debug)
-            papers = self.wdSync.dbpEndpoint.get_all_ceur_papers()
+            wdSync=self.assureWikidataSync()
+            papers = wdSync.dbpEndpoint.get_all_ceur_papers()
             return ORJSONResponse(papers)
 
 
         @jp.app.get("/authors_dblp.json", response_model=List[DblpAuthor])
-        async def papers_dblp():
+        async def authors_papers_dblp():
             """
             direct fastapi return of paper information from dblp
             """
-            if self.wdSync is None:
-                self.wdSync = WikidataSync(debug=self.debug)
-            authors = self.wdSync.dbpEndpoint.get_all_ceur_authors()
+            wdSync=self.assureWikidataSync()
+            authors = wdSync.dbpEndpoint.get_all_ceur_authors()
             return ORJSONResponse(
                 content=authors
             )
 
+    def assureWikidataSync(self)->WikidataSync:
+        """
+        get the WikiDataSync according to the command line arguments
+        
+        Returns:
+            WikidataSync
+        """
+        wd_en=self.args.wikidata_endpoint_name
+        dblp_en=self.args.dblp_endpoint_name
+        endpoints=EndpointManager.getEndpoints()
+        if not wd_en in endpoints: raise Exception(f"invalid wikidata endpoint name {wd_en}\nsee sparqlquery -le ")
+        if not dblp_en in endpoints: raise Exception(f"invalid dblp endpoint name {dblp_en}\nsee sparqlquery -le ")
+        dblp_ep=endpoints[dblp_en]
+        wd_ep=endpoints[wd_en]
+        if self.wdSync is None:
+            self.wdSync=WikidataSync(baseurl=wd_ep.endpoint,dblp_endpoint_url=dblp_ep.endpoint,debug=self.debug)
+        return self.wdSync
 
     def setupPage(self,header=""):
         header="""<link rel="stylesheet" href="/static/css/md_style_indigo.css">

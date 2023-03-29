@@ -845,7 +845,7 @@ class VolumeBrowser(App):
             """
             wdSync=self.assureWikidataSync()
             volumeList=wdSync.vm.getList()
-            return ORJSONResponse(volumeList)
+            return volumeList
         
         @jp.app.get("/proceedings.json")
         async def proceedings():

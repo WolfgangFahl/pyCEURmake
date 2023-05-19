@@ -136,7 +136,15 @@ class IndexHtmlParser(Textparser):
                     tdIndex+=1
                 volume["tdtitle"]=html.unescape(title).strip()
 
-    def setSeeAlsoVolumes(self, volume:dict,firstLine:int, lastLine:int):
+    def setSeeAlsoVolumes(self, volume:dict, firstLine: int, lastLine: int):
+        """
+        Extract and set the volume numbers form the see also list
+        Example result {"seealso": ["Vol-3067"]}
+
+        Args:
+            volume: the volumeRecord to modify
+            lineIndex: where to start setting the volumeTitle
+        """
         volumes = []
         see_also = ""
         for line in range(firstLine, lastLine):
@@ -150,7 +158,7 @@ class IndexHtmlParser(Textparser):
 
     def getInfo(self,volume:dict,info:str,pattern,line:str):
         '''
-        get the info info for the given patterns trying to match the pattern on
+        get the info for the given patterns trying to match the pattern on
         the given line
         
         Args:

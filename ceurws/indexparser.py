@@ -136,6 +136,18 @@ class IndexHtmlParser(Textparser):
                     tdIndex+=1
                 volume["tdtitle"]=html.unescape(title).strip()
 
+    def setSeeAlsoVolumes(self, volume:dict,firstLine:int, lastLine:int):
+        volumes = []
+        see_also = ""
+        for line in range(firstLine, lastLine):
+            see_also += self.lines[line]
+        see_also_section = re.search(r'see also:(.*?)</font>', see_also, re.DOTALL | re.IGNORECASE)
+
+        if see_also_section:
+            # Extract the volumes using regex from the see also section
+            volumes = re.findall(r'<a href="#(Vol-\d+)">', see_also_section.group(1), re.IGNORECASE)
+        volume["seealso"] = volumes
+
     def getInfo(self,volume:dict,info:str,pattern,line:str):
         '''
         get the info info for the given patterns trying to match the pattern on
@@ -187,6 +199,7 @@ class IndexHtmlParser(Textparser):
         volume["title"]=None
         volume["loctime"]=None
         self.setVolumeTitle(volume, fromLine)
+        self.setSeeAlsoVolumes(volume, fromLine, toLine)
         
         infoPattern={}
         infoMappings = [

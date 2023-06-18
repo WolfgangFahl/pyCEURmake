@@ -9,7 +9,7 @@ import time
 from typing import List
 
 import justpy as jp
-from fastapi import APIRouter, HTTPException
+from fastapi import HTTPException
 from fastapi.responses import ORJSONResponse
 from jpwidgets.bt5widgets import About, Alert, App, IconButton, Switch, ProgressBar
 

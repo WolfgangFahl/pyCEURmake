@@ -332,6 +332,7 @@ class VolumeManager(EntityManager):
                                             primaryKey="number",
                                             entityPluralName="volumes",
                                             config=CEURWS.CONFIG,
+                                            handleInvalidListTypes=True,
                                             name=self.__class__.__name__)
 
 

@@ -1,0 +1,53 @@
+#!/bin/bash
+# WF 2023-07-15
+
+# Stop and remove any existing Neo4j container
+docker stop neo4j-instance
+docker rm neo4j-instance
+
+# Run the Neo4j container
+docker run -d --name neo4j-instance \
+  --publish=7474:7474 --publish=7687:7687 \
+  --env NEO4J_AUTH=neo4j/password \
+  --volume=$HOME/neo4j/data:/data \
+  neo4j:latest
+
+# Function to display a progress bar
+display_progress() {
+  local progress=$1
+  local max_progress=$2
+  local bar_length=40
+  local filled_length=$((progress * bar_length / max_progress))
+  local empty_length=$((bar_length - filled_length))
+
+  # Build the progress bar string
+  local bar="["
+  bar+="$(printf "%${filled_length}s" | tr ' ' '#')"
+  bar+="$(printf "%${empty_length}s" | tr ' ' '-')"
+  bar+="]"
+
+  # Print the progress bar
+  printf "\r%s %d%%" "$bar" $((progress * 100 / max_progress))
+}
+
+# Wait for Neo4j to start
+progress=0
+max_progress=20
+sleep_duration=0.5
+while [ "$(docker inspect -f '{{.State.Running}}' neo4j-instance 2>/dev/null)" != "true" ] && [ $progress -lt $max_progress ]; do
+  display_progress $progress $max_progress
+  ((progress++))
+  sleep $sleep_duration
+done
+
+# Clear the progress bar line
+printf "\r%${COLUMNS}s\r"
+
+if [ "$(docker inspect -f '{{.State.Running}}' neo4j-instance 2>/dev/null)" == "true" ]; then
+  echo "Neo4j is running."
+else
+  echo "Failed to start Neo4j."
+fi
+
+# Display the logs to check the status
+docker logs neo4j-instance

@@ -7,7 +7,36 @@ from typing import List
 from dataclasses import dataclass, field
 import requests
 from neo4j import GraphDatabase
+from neo4j.exceptions import ServiceUnavailable, AuthError, ConfigurationError
+
 from typing import Optional
+
+class Neo4j:
+    """
+    Neo4j wrapper class
+    """
+    def __init__(self,auth=("neo4j", "password")):
+        self.driver = None
+        self.error = None
+        try:
+            self.driver = GraphDatabase.driver("bolt://localhost:7687", auth=auth)
+        except (ServiceUnavailable, AuthError, ConfigurationError) as e:
+            self.error = e
+            
+    def session(self):
+        if not self.driver: 
+            raise ConnectionError("Unable to create a session as the driver is not available")
+        return self.driver.session()
+    
+    def begin_transaction(self):
+        session = self.session()
+        #print(type(session))  # Check what type of object session is
+        return session.begin_transaction()
+
+    def close(self):
+        if self.driver is not None:
+            self.driver.close()
+
 
 @dataclass
 class Volume:
@@ -47,14 +76,17 @@ class Volume:
     def create_node(self, tx) -> int:
         """
         Create a Volume node in Neo4j.
-
+    
         Args:
             tx: The Neo4j transaction.
-
+    
         Returns:
             int: The ID of the created node.
         """
-        query = "CREATE (v:Volume {acronym: $acronym, title: $title, loctime: $loctime})"
+        query = """
+        CREATE (v:Volume {acronym: $acronym, title: $title, loctime: $loctime})
+        RETURN id(v) as node_id
+        """
         parameters = {
             "acronym": self.acronym,
             "title": self.title,
@@ -63,9 +95,10 @@ class Volume:
         result = tx.run(query, parameters)
         record = result.single()
         if record is not None:
-            return record.value()
+            return record["node_id"]
         else:
             return None
+
 
     @staticmethod
     def load_json_file(source: str) -> List['Volume']:
@@ -170,18 +203,22 @@ class Editor:
                 num_results = data.get("num-found", 0)
                 self.likelihood = num_results / 10  # Arbitrary calculation, adjust as needed
 
-    def create_node(self, tx, volume_node_id: int):
+    def create_node(self, tx, volume_node_id: int) -> int:
         """
-        Create an Editor node in Neo4j.
-
+        Create an Editor node in Neo4j and establish a relationship with a Volume node.
+    
         Args:
             tx: The Neo4j transaction.
             volume_node_id (int): The ID of the volume node.
+    
+        Returns:
+            int: The ID of the created Editor node.
         """
         query = """
         MATCH (v:Volume)
         WHERE id(v) = $volume_node_id
         CREATE (v)-[:HAS_EDITOR]->(e:Editor {name: $name, orcid: $orcid, likelihood: $likelihood})
+        RETURN id(e) as node_id
         """
         parameters = {
             "volume_node_id": volume_node_id,
@@ -189,7 +226,14 @@ class Editor:
             "orcid": self.orcid,
             "likelihood": self.likelihood
         }
-        tx.run(query, parameters)
+        result = tx.run(query, parameters)
+        record = result.single()
+        if record is not None:
+            return record["node_id"]
+        else:
+            return None
+
+
 
 @dataclass
 class Location:

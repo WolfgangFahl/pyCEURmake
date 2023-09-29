@@ -1,38 +1,60 @@
-import unittest
-from neo4j import GraphDatabase
 import json
-from ceurws.volume_neo4j import Volume, Editor
+from ceurws.volume_neo4j import Neo4j,Volume, Editor
 from ceurws.location import LocationLookup
+from tests.basetest import Basetest
 
-# Set up a test Neo4j database connection
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
-
-
-class TestVolumeEditorLocation(unittest.TestCase):
+class TestVolumeEditorLocation(Basetest):
     """
     Unit tests for Volume, Editor, and Location classes.
     """
+    
+    def setUp(self, debug=False, profile=True):
+        Basetest.setUp(self, debug=debug, profile=profile)
+        self.neo4j=Neo4j()
+ 
+            
+    def create_test_volume(self, year: int=2023) -> int:
+        """
+        Creates a test Volume node for the given year.
+    
+        Args:
+            year (int): The year for which to create the Volume.
+    
+        Returns:
+            int: The ID of the created Volume node.
+        """
+        with self.neo4j.begin_transaction() as tx:
+            acronym = f"CILC {year}"
+            title = f"Proceedings of the {year-1985}th Italian Conference on Computational Logic"
+            loctime = f"Some City, Italy, June 21-23, {year}"
+            volume = Volume(acronym=acronym, title=title, loctime=loctime)
+            volume_id = volume.create_node(tx)
+        return volume_id
 
-    def test_editor_create_editor_node(self):
-        """
-        Test the create_editor_node method of the Editor class.
-        """
-        with driver.session() as session:
-            editor = Editor(name="John Doe", likelihood=0.8)
-            editor_id = editor.create_editor_node(session.write_transaction)
-            self.assertIsNotNone(editor_id)
 
     def test_volume_create_node(self):
         """
         Test the create_node method of the Volume class.
         """
-        with driver.session() as session:
-            volume = Volume(acronym="CILC 2023",
-                            title="Proceedings of the 38th Italian Conference on Computational Logic",
-                            loctime="Udine, Italy, June 21-23, 2023")
-            volume_id = volume.create_node(session.write_transaction)
-            self.assertIsNotNone(volume_id)
-
+        volume_id=self.create_test_volume()
+        self.assertIsNotNone(volume_id)
+        
+    def test_editor_create_editor_node(self):
+        """
+        Test the create_editor_node method of the Editor class.
+        """
+        volume_id_2023 = self.create_test_volume(2023)
+        volume_id_2024 = self.create_test_volume(2024)
+    
+        with self.neo4j.begin_transaction() as tx:
+            # Test creating one editor for multiple volumes
+            editor = Editor(name="John Doe", likelihood=0.8)
+            editor_id_2023 = editor.create_node(tx, volume_id_2023)
+            editor_id_2024 = editor.create_node(tx, volume_id_2024)
+    
+            self.assertIsNotNone(editor_id_2023)
+            self.assertIsNotNone(editor_id_2024)
+        
     def test_location_lookup(self):
         """
         Test the lookup method of the LocationLookup class.
@@ -40,8 +62,8 @@ class TestVolumeEditorLocation(unittest.TestCase):
         location_lookup = LocationLookup()
         location = location_lookup.lookup("Amsterdam, Netherlands")
         self.assertIsNotNone(location)
-        self.assertEqual(location.city, "Amsterdam")
-        self.assertEqual(location.country, "Netherlands")
+        self.assertEqual(location.name, "Amsterdam")
+        self.assertEqual(location.country.iso, "NL")
 
     def test_parse_args(self):
         """
@@ -60,5 +82,3 @@ class TestVolumeEditorLocation(unittest.TestCase):
         self.assertIsNotNone(json_data)
         pass
 
-if __name__ == '__main__':
-    unittest.main()

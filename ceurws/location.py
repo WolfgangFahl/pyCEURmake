@@ -4,7 +4,7 @@ Created on 2023-07-15
 @author: wf
 '''
 from geograpy.locator import LocationContext
-from corpus.nominatim import NominatimWrapper
+from geograpy.nominatim import NominatimWrapper
 import sys
 
 class LocationLookup:

@@ -18,6 +18,8 @@ class TestIndexHtml(Basetest):
     def setUp(self, debug=False, profile=True):
         Basetest.setUp(self, debug=debug, profile=profile)
         self.url= 'http://ceur-ws.org'
+        # default timeout is 3 secs - make it 12
+        self.timeout=12.0
         
     def checkVolumes(self,volumes):
         volumeCount=len(volumes)
@@ -95,7 +97,7 @@ class TestIndexHtml(Basetest):
             limit=len(volumesByNumber)+1
         for number in range(1,limit):
             volume=volumesByNumber[number]
-            volume.extractValuesFromVolumePage()
+            volume.extractValuesFromVolumePage(timeout=self.timeout)
             if debug and volume.valid:
                 print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
         if withStore:

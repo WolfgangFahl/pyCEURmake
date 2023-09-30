@@ -3,5 +3,7 @@
 # install and test
 # command to install dependencies
 scripts/install "$@"
+# start neo4j server
+scripts/neo4j
 # command to run tests
 scripts/test "$@"

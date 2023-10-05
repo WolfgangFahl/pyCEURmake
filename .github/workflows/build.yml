@@ -60,6 +60,10 @@ jobs:
         path: ~/.ceurws
         key: ceurws
 
+    - name: start neo4j 
+      run: |
+	scripts/neo4j
+
     - name: Run tests
       run: |
         scripts/test

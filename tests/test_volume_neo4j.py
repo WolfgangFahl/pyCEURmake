@@ -11,6 +11,10 @@ class TestVolumeEditorLocation(Basetest):
     def setUp(self, debug=False, profile=True):
         Basetest.setUp(self, debug=debug, profile=profile)
         self.neo4j=Neo4j()
+        
+    def tearDown(self):
+        Basetest.tearDown(self)
+        self.neo4j.close()
  
             
     def create_test_volume(self, year: int=2023) -> int:

@@ -66,4 +66,5 @@ jobs:
 
     - name: Run tests
       run: |
+        scripts/getVolumes
         scripts/test

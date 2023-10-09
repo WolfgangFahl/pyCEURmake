@@ -5,5 +5,7 @@
 scripts/install "$@"
 # start neo4j server
 scripts/neo4j
+# scripts/getVolumes
+scripts/getVolumes
 # command to run tests
 scripts/test "$@"

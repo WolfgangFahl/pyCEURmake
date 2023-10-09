@@ -1,0 +1,11 @@
+#!/bin/bash
+# get Volumes json file
+vjson=$HOME/.ceurws/volumes.json
+if [ ! -f $vjson ]
+then
+  echo "downloading $vjson"
+  cd $HOME
+  wget http://cvb.bitplan.com/volumes.json
+else
+   echo "$vjson already downloaded"
+fi

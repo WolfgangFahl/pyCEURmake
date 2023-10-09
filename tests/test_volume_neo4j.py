@@ -20,8 +20,8 @@ class TestVolumeEditorLocation(Basetest):
         """
         test the port availability
         """
-        for service,port in [("bolt",7687),("http",7474)]:
-            available=Neo4j.is_port_available("localhost", port)
+        for service,port in [("bolt",self.neo4j.bolt_port),("http",7474)]:
+            available=Neo4j.is_port_available(self.neo4j.host, port)
             self.assertTrue(available,f"{service} service at {port}")
             
     def create_test_volume(self, year: int=2023) -> int:

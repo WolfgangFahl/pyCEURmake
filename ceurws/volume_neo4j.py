@@ -27,6 +27,8 @@ class Neo4j:
         self.encrypted=encrypted
         try:
             uri=f"bolt://{host}:{bolt_port}"      
+            if not Neo4j.isport_available(host,bolt_port):
+                raise ValueError(f"port at {uri} not available")
             self.driver = GraphDatabase.driver(uri, auth=auth,encrypted=encrypted)
         except (ServiceUnavailable, AuthError, ConfigurationError) as e:
             self.error = e

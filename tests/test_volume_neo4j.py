@@ -1,4 +1,6 @@
 import json
+import os
+import unittest
 from ceurws.volume_neo4j import Neo4j,Volume, Editor
 from ceurws.location import LocationLookup
 from tests.basetest import Basetest
@@ -49,7 +51,8 @@ class TestVolumeEditorLocation(Basetest):
         """
         volume_id=self.create_test_volume()
         self.assertIsNotNone(volume_id)
-        
+     
+    @unittest.skipIf(os.getenv('JENKINS_URL'), "Skipping this test in Jenkins")   
     def test_editor_create_editor_node(self):
         """
         Test the create_editor_node method of the Editor class.

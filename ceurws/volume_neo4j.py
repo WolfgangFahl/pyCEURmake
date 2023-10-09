@@ -1,15 +1,16 @@
 import argparse
-import os
-import sys
-import re
 import json
-from typing import List
-from dataclasses import dataclass, field
+import os
+import re
 import requests
+import socket
+import sys
+
+from typing import List, Optional
+from dataclasses import dataclass, field
 from neo4j import GraphDatabase
 from neo4j.exceptions import ServiceUnavailable, AuthError, ConfigurationError
 
-from typing import Optional
 
 class Neo4j:
     """
@@ -22,6 +23,16 @@ class Neo4j:
             self.driver = GraphDatabase.driver("bolt://localhost:7687", auth=auth)
         except (ServiceUnavailable, AuthError, ConfigurationError) as e:
             self.error = e
+         
+    @classmethod   
+    def is_port_available(cls,host, port:int)->bool:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)  # 1 Second Timeout
+        try:
+            sock.connect((host, port))
+        except socket.error:
+            return False
+        return True
             
     def session(self):
         if not self.driver: 
@@ -36,7 +47,6 @@ class Neo4j:
     def close(self):
         if self.driver is not None:
             self.driver.close()
-
 
 @dataclass
 class Volume:

@@ -15,6 +15,14 @@ class TestVolumeEditorLocation(Basetest):
     def tearDown(self):
         Basetest.tearDown(self)
         self.neo4j.close()
+        
+    def test_neo4j_available(self):
+        """
+        test the port availability
+        """
+        for service,port in [("bolt",7687),("http",7474)]:
+            available=Neo4j.is_port_available("localhost", port)
+            self.assertTrue(available,f"{service} service at {port}")
             
     def create_test_volume(self, year: int=2023) -> int:
         """

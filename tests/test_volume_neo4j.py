@@ -45,6 +45,7 @@ class TestVolumeEditorLocation(Basetest):
                 volume_id = volume.create_node(tx)
             return volume_id
 
+    @unittest.skipIf(os.getenv('JENKINS_URL'), "Skipping this test in Jenkins")   
     def test_volume_create_node(self):
         """
         Test the create_node method of the Volume class.

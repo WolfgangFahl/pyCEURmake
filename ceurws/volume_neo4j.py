@@ -16,11 +16,17 @@ class Neo4j:
     """
     Neo4j wrapper class
     """
-    def __init__(self,auth=("neo4j", "password")):
+    def __init__(self,host:str="127.0.0.1",bolt_port:int=7687,auth=("neo4j", "password")):
+        """
+        constructor
+        """
         self.driver = None
         self.error = None
+        self.host=host
+        self.bolt_port=bolt_port
         try:
-            self.driver = GraphDatabase.driver("bolt://localhost:7687", auth=auth)
+            uri=f"bolt://{host}:{bolt_port}"
+            self.driver = GraphDatabase.driver(uri, auth=auth)
         except (ServiceUnavailable, AuthError, ConfigurationError) as e:
             self.error = e
          

@@ -15,7 +15,6 @@ class TestVolumeEditorLocation(Basetest):
     def tearDown(self):
         Basetest.tearDown(self)
         self.neo4j.close()
- 
             
     def create_test_volume(self, year: int=2023) -> int:
         """
@@ -34,7 +33,6 @@ class TestVolumeEditorLocation(Basetest):
             volume = Volume(acronym=acronym, title=title, loctime=loctime)
             volume_id = volume.create_node(tx)
         return volume_id
-
 
     def test_volume_create_node(self):
         """
@@ -85,4 +83,3 @@ class TestVolumeEditorLocation(Basetest):
             json_data = json.load(file)
         self.assertIsNotNone(json_data)
         pass
-

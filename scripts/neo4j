@@ -6,6 +6,7 @@ docker stop neo4j-instance
 docker rm neo4j-instance
 
 # Run the Neo4j container
+# https://neo4j.com/developer/docker-run-neo4j/
 docker run -d --name neo4j-instance \
   --publish=7474:7474 --publish=7687:7687 \
   --env NEO4J_AUTH=neo4j/password \

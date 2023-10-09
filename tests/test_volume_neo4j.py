@@ -34,13 +34,14 @@ class TestVolumeEditorLocation(Basetest):
         Returns:
             int: The ID of the created Volume node.
         """
-        with self.neo4j.begin_transaction() as tx:
-            acronym = f"CILC {year}"
-            title = f"Proceedings of the {year-1985}th Italian Conference on Computational Logic"
-            loctime = f"Some City, Italy, June 21-23, {year}"
-            volume = Volume(acronym=acronym, title=title, loctime=loctime)
-            volume_id = volume.create_node(tx)
-        return volume_id
+        with self.neo4j.driver.session() as session:
+            with session.begin_transaction() as tx:
+                acronym = f"CILC {year}"
+                title = f"Proceedings of the {year-1985}th Italian Conference on Computational Logic"
+                loctime = f"Some City, Italy, June 21-23, {year}"
+                volume = Volume(acronym=acronym, title=title, loctime=loctime)
+                volume_id = volume.create_node(tx)
+            return volume_id
 
     def test_volume_create_node(self):
         """
@@ -56,15 +57,16 @@ class TestVolumeEditorLocation(Basetest):
         volume_id_2023 = self.create_test_volume(2023)
         volume_id_2024 = self.create_test_volume(2024)
     
-        with self.neo4j.begin_transaction() as tx:
-            # Test creating one editor for multiple volumes
-            editor = Editor(name="John Doe", likelihood=0.8)
-            editor_id_2023 = editor.create_node(tx, volume_id_2023)
-            editor_id_2024 = editor.create_node(tx, volume_id_2024)
-    
-            self.assertIsNotNone(editor_id_2023)
-            self.assertIsNotNone(editor_id_2024)
+        with self.neo4j.driver.session() as session:
+            with session.begin_transaction() as tx:
+                # Test creating one editor for multiple volumes
+                editor = Editor(name="John Doe", likelihood=0.8)
+                editor_id_2023 = editor.create_node(tx, volume_id_2023)
+                editor_id_2024 = editor.create_node(tx, volume_id_2024)
         
+                self.assertIsNotNone(editor_id_2023)
+                self.assertIsNotNone(editor_id_2024)
+            
     def test_location_lookup(self):
         """
         Test the lookup method of the LocationLookup class.

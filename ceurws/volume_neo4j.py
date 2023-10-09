@@ -16,7 +16,7 @@ class Neo4j:
     """
     Neo4j wrapper class
     """
-    def __init__(self,host:str="127.0.0.1",bolt_port:int=7687,auth=("neo4j", "password"),encrypted:bool=False):
+    def __init__(self,host:str="localhost",bolt_port:int=7687,auth=("neo4j", "password"),encrypted:bool=False):
         """
         constructor
         """

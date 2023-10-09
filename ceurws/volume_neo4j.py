@@ -33,16 +33,6 @@ class Neo4j:
         except socket.error:
             return False
         return True
-            
-    def session(self):
-        if not self.driver: 
-            raise ConnectionError("Unable to create a session as the driver is not available")
-        return self.driver.session()
-    
-    def begin_transaction(self):
-        session = self.session()
-        #print(type(session))  # Check what type of object session is
-        return session.begin_transaction()
 
     def close(self):
         if self.driver is not None:

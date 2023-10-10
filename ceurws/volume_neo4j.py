@@ -16,7 +16,7 @@ class Neo4j:
     """
     Neo4j wrapper class
     """
-    def __init__(self,host:str="localhost",bolt_port:int=7687,auth=("neo4j", "password"),encrypted:bool=False):
+    def __init__(self,host:str="localhost",bolt_port:int=7687,auth=("neo4j", "password"),scheme:str="bolt",encrypted:bool=False):
         """
         constructor
         """
@@ -25,8 +25,9 @@ class Neo4j:
         self.host=host
         self.bolt_port=bolt_port
         self.encrypted=encrypted
+        self.scheme=scheme
         try:
-            uri=f"bolt://{host}:{bolt_port}"      
+            uri=f"{scheme}://{host}:{bolt_port}"      
             if not Neo4j.is_port_available(host,bolt_port):
                 raise ValueError(f"port at {uri} not available")
             self.driver = GraphDatabase.driver(uri, auth=auth,encrypted=encrypted)

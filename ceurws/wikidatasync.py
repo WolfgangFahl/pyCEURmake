@@ -830,55 +830,69 @@ class DblpEndpoint:
         qYamlFile = f"{path}/resources/queries/dblp.yaml"
         if os.path.isfile(qYamlFile):
             self.qm = QueryManager(lang="sparql", queriesPath=qYamlFile)
+        # there is one cache manager for all our json caches
         self.json_cache_manager = JsonCacheManager()
 
-    def get_all_ceur_authors(self) -> List[DblpScholar]:
+    def get_all_ceur_authors(self,force_query: bool=False) -> List[DblpScholar]:
         """
         Get all authors that have published a paper in CEUR-WS from dblp
+        
+        Args:
+            force_query(bool): if True force query
         """
         query = self.qm.queriesByName["CEUR-WS Paper Authors"]
         cache_name = "dblp/authors"
-        lod = JsonCacheManager().load(cache_name)
-        if lod is None:
+        if not force_query:
+            lod = self.json_cache_manager.load(cache_name)
+        if force_query or lod is None:
             lod = self.sparql.queryAsListOfDicts(query.query)
             authors = []
             for d in lod:
                 author = DblpScholar(**d)
                 authors.append(author)
-            JsonCacheManager().store(cache_name, [dataclasses.asdict(author)for author in authors])
+            self.json_cache_manager.store(cache_name, [dataclasses.asdict(author)for author in authors])
         else:
             authors = [DblpScholar(**d) for d in lod]
 
         return authors
 
-    def get_all_ceur_editors(self) -> List[DblpScholar]:
+    def get_all_ceur_editors(self,force_query: bool=False) -> List[DblpScholar]:
         """
         Get all authors that have published a paper in CEUR-WS from dblp
+        
+        Args:
+            force_query(bool): if True force query
+ 
         """
         query = self.qm.queriesByName["CEUR-WS all Editors"]
         cache_name = "dblp/editors"
-        lod = JsonCacheManager().load(cache_name)
-        if lod is None:
+        if not force_query:
+            lod = self.json_cache_manager.load(cache_name)
+        if force_query or lod is None:
             lod = self.sparql.queryAsListOfDicts(query.query)
             editors = []
             for d in lod:
                 editor = DblpScholar(**d)
                 editors.append(editor)
-            JsonCacheManager().store(cache_name, [dataclasses.asdict(editor)for editor in editors])
+            self.json_cache_manager.store(cache_name, [dataclasses.asdict(editor)for editor in editors])
         else:
             editors = [DblpScholar(**d) for d in lod]
         return editors
 
-    def get_all_ceur_papers(self) -> List[DblpPaper]:
+    def get_all_ceur_papers(self, force_query: bool=False) -> List[DblpPaper]:
         """
         Get all papers published in CEUR-WS from dblp
+        
+        Args:
+            force_query(bool): if True force query
         """
         query = self.qm.queriesByName["CEUR-WS all Papers"]
         cache_name = "dblp/papers"
-        lod = JsonCacheManager().load(cache_name)
-        if lod is None:
+        if not force_query:
+            lod = self.json_cache_manager.load(cache_name)
+        if force_query or lod is None:
             lod = self.sparql.queryAsListOfDicts(query.query)
-            authors = self.get_all_ceur_authors()
+            authors = self.get_all_ceur_authors(force_query)
             authorsById = {a.dblp_author_id: a for a in authors}
             papers = []
             for d in lod:
@@ -901,10 +915,10 @@ class DblpEndpoint:
                         authors=authors
                 )
                 papers.append(paper)
-            JsonCacheManager().store(cache_name, [dataclasses.asdict(paper)for paper in papers])
+            self.json_cache_manager.store(cache_name, [dataclasses.asdict(paper)for paper in papers])
             papers_by_volume = LOD.getLookup(papers, "volume_number", withDuplicates=True)
-            for volume_bumber, vol_papers in papers_by_volume.items():
-                JsonCacheManager().store(f"dblp/Vol-{volume_bumber}/papers", [dataclasses.asdict(paper) for paper in vol_papers])
+            for volume_number, vol_papers in papers_by_volume.items():
+                self.json_cache_manager.store(f"dblp/Vol-{volume_number}/papers", [dataclasses.asdict(paper) for paper in vol_papers])
         else:
             papers = [DblpPaper(**d) for d in lod]
         return papers
@@ -945,14 +959,19 @@ class DblpEndpoint:
             qIds = [record.get("proceeding")[len(self.DBLP_REC_PREFIX):] for record in qres]
         return qIds
 
-    def get_all_ceur_proceedings(self) -> List[DblpProceeding]:
+    def get_all_ceur_proceedings(self,force_query:bool=False) -> List[DblpProceeding]:
         """
         Get all proceedings published in CEUR-WS from dblp
+        
+        Args:
+            force_query(bool): if True force query
+   
         """
         query = self.qm.queriesByName["CEUR-WS all Volumes"]
         cache_name = "dblp/volumes"
-        lod = JsonCacheManager().load(cache_name)
-        if lod is None:
+        if not force_query:
+            lod = self.json_cache_manager.load(cache_name)
+        if force_query or lod is None:
             lod = self.sparql.queryAsListOfDicts(query.query)
             editors = self.get_all_ceur_editors()
             editorsById = {a.dblp_author_id: a for a in editors}
@@ -974,10 +993,10 @@ class DblpEndpoint:
                         papers=papersByProceeding.get(d.get("proceeding"))
                 )
                 volumes.append(volume)
-            JsonCacheManager().store(cache_name, [dataclasses.asdict(volume)for volume in volumes])
+            self.json_cache_manager.store(cache_name, [dataclasses.asdict(volume)for volume in volumes])
             volume_by_number, _errors = LOD.getLookup(volumes, "volume_number")
             for number, volume in volume_by_number.items():
-                JsonCacheManager().store(f"dblp/Vol-{number}/metadata", dataclasses.asdict(volume))
+                self.json_cache_manager.store(f"dblp/Vol-{number}/metadata", dataclasses.asdict(volume))
         else:
             papers = [DblpProceeding(**d) for d in lod]
         return papers

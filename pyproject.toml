@@ -18,7 +18,7 @@ license= "Apache-2.0"
 dependencies = [
 	# https://pypi.org/project/fastapi/
 	# pin fastapi as long as we use justpy
-	'fastapi==0.95.0'
+	'fastapi==0.95.0',
     # https://pypi.org/project/geograpy3/
     'geograpy3>=0.2.7',
  	#https://github.com/martinblech/xmltodict

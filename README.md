@@ -4,7 +4,7 @@ CEUR make python implementation for https://ceur-ws.org/
 
 [![Join the discussion at https://github.com/WolfgangFahl/pyCEURMake/discussions](https://img.shields.io/github/discussions/WolfgangFahl/pyCEURMake)](https://github.com/WolfgangFahl/pyCEURMake/discussions) 
 [![pypi](https://img.shields.io/pypi/pyversions/pyCEURMake)](https://pypi.org/project/pyCEURMake/)
-[![Github Actions Build](https://github.com/WolfgangFahl/pyCEURmake/workflows/Build/badge.svg?branch=main)](https://github.com/WolfgangFahl/pyCEURmake/actions?query=workflow%3ABuild+branch%3Amain)
+[![Github Actions Build](https://github.com/WolfgangFahl/pyCEURmake/actions/workflows/build.yml/badge.svg)](https://github.com/WolfgangFahl/pyCEURmake/actions/workflows/build.yml)
 [![PyPI Status](https://img.shields.io/pypi/v/pyCEURMake.svg)](https://pypi.python.org/pypi/pyCEURMake/)
 [![GitHub issues](https://img.shields.io/github/issues/WolfgangFahl/pyCEURmake.svg)](https://github.com/WolfgangFahl/pyCEURmake/issues)
 [![GitHub closed issues](https://img.shields.io/github/issues-closed/WolfgangFahl/pyCEURmake.svg)](https://github.com/WolfgangFahl/pyCEURmake/issues/?q=is%3Aissue+is%3Aclosed)

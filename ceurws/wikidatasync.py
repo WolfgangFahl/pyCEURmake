@@ -822,6 +822,9 @@ class DblpEndpoint:
     DBLP_EVENT_PREFIX = "https://dblp.org/db/"
 
     def __init__(self, endpoint):
+        """
+        constructor
+        """
         self.sparql = SPARQL(endpoint)
         path = os.path.dirname(__file__)
         qYamlFile = f"{path}/resources/queries/dblp.yaml"

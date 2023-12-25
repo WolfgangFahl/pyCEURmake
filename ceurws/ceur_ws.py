@@ -1,34 +1,37 @@
 import calendar
 import datetime
 import os
-
 import re
 import typing
+from pathlib import Path
+from urllib.request import Request, urlopen
 
 import dateutil.parser
+from bs4 import BeautifulSoup
+from geograpy.locator import City, Country, Location, LocationContext, Region
 from lodstorage.entity import EntityManager
 from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
-from urllib.request import Request, urlopen
-from pathlib import Path
+from tqdm import tqdm
+
 from ceurws.indexparser import IndexHtmlParser
 from ceurws.papertocparser import PaperTocParser
-from ceurws.volumeparser import VolumeParser
 from ceurws.utils.download import Download
-from geograpy.locator import City, Country, Location, LocationContext, Region
-from tqdm import tqdm
-from bs4 import BeautifulSoup
+from ceurws.volumeparser import VolumeParser
+
 
 class CEURWS:
-    '''
-    CEUR-WS 
-    '''
-    URL="http://ceur-ws.org"
+    """
+    CEUR-WS
+    """
+
+    URL = "http://ceur-ws.org"
     home = str(Path.home())
     CACHE_DIR = "%s/.ceurws" % home
-    CACHE_FILE=f"{CACHE_DIR}/ceurws.db"
-    CACHE_HTML=f"{CACHE_DIR}/index.html"
-    CONFIG=StorageConfig(cacheFile=CACHE_FILE)
+    CACHE_FILE = f"{CACHE_DIR}/ceurws.db"
+    CACHE_HTML = f"{CACHE_DIR}/index.html"
+    CONFIG = StorageConfig(cacheFile=CACHE_FILE)
+
 
 class Volume(JSONAble):
     """
@@ -36,7 +39,7 @@ class Volume(JSONAble):
     """
 
     def getSamples(self):
-        samples=[
+        samples = [
             {
                 "number": 2436,
                 "url": "http://ceur-ws.org/Vol-2436/",
@@ -46,20 +49,20 @@ class Volume(JSONAble):
                 "lang": "en",
                 "location": "Calgary, Alberta, Canada",
                 "country": "Canada",
-                "region":"Alberta",
+                "region": "Alberta",
                 "city": "Calgary",
                 "ordinal": 1,
-                "date":datetime.datetime(year=2019, month=5, day=4),
-                "dateFrom":"",
-                "dateTo":"",
-                "pubYear":2019,
-                "pubDate":"2019-09-08",
-                "submitDate":"2019-07-28",
+                "date": datetime.datetime(year=2019, month=5, day=4),
+                "dateFrom": "",
+                "dateTo": "",
+                "pubYear": 2019,
+                "pubDate": "2019-09-08",
+                "submitDate": "2019-07-28",
                 "valid": True,
                 "conference": Conference,
-                "editors":[Editor],
-                "sessions":[Session],
-                "virtualEvent": False
+                "editors": [Editor],
+                "sessions": [Session],
+                "virtualEvent": False,
             }
         ]
         return samples
@@ -125,7 +128,7 @@ class Volume(JSONAble):
             setattr(self, "dateTo", dateTo)
         self.extractAndSetLocation(locationStr=loctime)
 
-    def extractAndSetLocation(self, locationStr:str) -> (str, str):
+    def extractAndSetLocation(self, locationStr: str) -> (str, str):
         """
         Extracts the location from the given string and returns the found city and country
         ToDo: Once the EventReferenceParser from cc is updated to support city country combinations switch to it
@@ -170,8 +173,10 @@ class Volume(JSONAble):
             setattr(self, "country", country)
             setattr(self, "countryWikidataId", countryWikidataId)
 
-    def extractDates(self, dateStr:str, durationThreshold: int = 11) -> (datetime.date, datetime.date):
-        """"
+    def extractDates(
+        self, dateStr: str, durationThreshold: int = 11
+    ) -> (datetime.date, datetime.date):
+        """ "
         Extracts the start and end time from the given string
         optimized for the format of the loctime property
         Args:
@@ -190,7 +195,9 @@ class Volume(JSONAble):
             year = loctimeParts[-1].strip()
             rawDate = loctimeParts[-2].strip()
             if len(loctimeParts) >= 3:
-                if loctimeParts[-3].lower().strip() in [cn.lower() for cn in calendar.month_name]:
+                if loctimeParts[-3].lower().strip() in [
+                    cn.lower() for cn in calendar.month_name
+                ]:
                     rawDate = f"{loctimeParts[-3]} {rawDate}"
             dateParts: list = re.split("[-–‐&]| to | and ", rawDate)
             try:
@@ -218,7 +225,10 @@ class Volume(JSONAble):
                 if delta < datetime.timedelta():
                     print("Error this should not be possible")
                 elif delta > datetime.timedelta(days=durationThreshold):
-                    print(self.number, f"Event with a duration of more than {durationThreshold} days seems suspicious")
+                    print(
+                        self.number,
+                        f"Event with a duration of more than {durationThreshold} days seems suspicious",
+                    )
                 else:
                     return dateFrom.date(), dateTo.date()
             else:
@@ -229,7 +239,7 @@ class Volume(JSONAble):
             return None, None
 
     @staticmethod
-    def removePartsMatching(value:str, pattern:str, separator=','):
+    def removePartsMatching(value: str, pattern: str, separator=","):
         """
         Removes parts from the given value matching the pattern
         """
@@ -242,7 +252,7 @@ class Volume(JSONAble):
         return resValue
 
     @staticmethod
-    def rankLocations(locationStr:str, locations: typing.List[Location]):
+    def rankLocations(locationStr: str, locations: typing.List[Location]):
         """
         rank the given locations to find the best match to the given location string
         Args:
@@ -267,7 +277,7 @@ class Volume(JSONAble):
         return [location for score, location in rankedLocations]
 
     def __str__(self):
-        text=f"Vol-{self.number}"
+        text = f"Vol-{self.number}"
         return text
 
     @property
@@ -280,10 +290,10 @@ class Volume(JSONAble):
     @sessions.setter
     def sessions(self, session):
         # ToDo: Adjust to proper 1:n handling
-        if hasattr(self, '_sessions') and isinstance(self._sessions, list):
+        if hasattr(self, "_sessions") and isinstance(self._sessions, list):
             self._sessions.append(session)
         else:
-            setattr(self, '_sessions', session)
+            setattr(self, "_sessions", session)
 
     @property
     def papers(self):
@@ -291,30 +301,32 @@ class Volume(JSONAble):
         papers of this volume
         """
         return
-    
-    def extractValuesFromVolumePage(self, timeout: float = 3)->typing.Tuple[dict,BeautifulSoup]:
-        '''
+
+    def extractValuesFromVolumePage(
+        self, timeout: float = 3
+    ) -> typing.Tuple[dict, BeautifulSoup]:
+        """
         extract values from the given volume page
-        '''
-        self.desc="?"
-        self.h1="?"
+        """
+        self.desc = "?"
+        self.h1 = "?"
         if self.url is None:
-            return None,None
+            return None, None
         volumeParser = VolumeParser(timeout=timeout)
-        parseDict,soup = volumeParser.parse_volume(self.getVolumeNumber())
+        parseDict, soup = volumeParser.parse_volume(self.getVolumeNumber())
         self.fromDict(parseDict)
-        return parseDict,soup
+        return parseDict, soup
 
     def getSubmittingEditor(self):
         """
         Returns the Editor that submitted the volume
         """
-        submitter=None
+        submitter = None
         if hasattr(self, "editors"):
             for editor in self.editors:
                 if isinstance(editor, Editor):
                     if getattr(editor, "submitted", False):
-                        submitter=editor
+                        submitter = editor
                         break
         return submitter
 
@@ -324,106 +336,110 @@ class VolumeManager(EntityManager):
     Contains multiple ceurws volumes
     """
 
-    def __init__(self, tableName:str="volumes"):
-        super(VolumeManager, self).__init__(listName="volumes",
-                                            clazz=Volume,
-                                            tableName=tableName,
-                                            entityName=Volume.__class__.__name__,
-                                            primaryKey="number",
-                                            entityPluralName="volumes",
-                                            config=CEURWS.CONFIG,
-                                            handleInvalidListTypes=True,
-                                            name=self.__class__.__name__)
-
+    def __init__(self, tableName: str = "volumes"):
+        super(VolumeManager, self).__init__(
+            listName="volumes",
+            clazz=Volume,
+            tableName=tableName,
+            entityName=Volume.__class__.__name__,
+            primaryKey="number",
+            entityPluralName="volumes",
+            config=CEURWS.CONFIG,
+            handleInvalidListTypes=True,
+            name=self.__class__.__name__,
+        )
 
     def load(self):
-        '''
+        """
         load the volumeManager
-        '''
+        """
         if Download.needsDownload(CEURWS.CACHE_FILE):
             self.loadFromIndexHtml(force=True)
         else:
             self.loadFromBackup()
-            
+
     def loadFromBackup(self):
-        '''
+        """
         load from the SQLITE Cache file
-        '''
+        """
         self.fromStore(cacheFile=CEURWS.CACHE_FILE)
-        
-    def recreate(self,progress:bool=False,limit=None):
+
+    def recreate(self, progress: bool = False, limit=None):
         """
         recreate me by a full parse of all volume files
-        
+
         Args:
             progress(bool): if True show progress
         """
-        pm=PaperManager()
-        paper_list=pm.getList()
+        pm = PaperManager()
+        paper_list = pm.getList()
         # first reload me from the main index
         self.loadFromIndexHtml(force=True)
         if progress:
-            t=tqdm(total=len(self.volumes))
+            t = tqdm(total=len(self.volumes))
         else:
-            t=None
-        invalid=0
+            t = None
+        invalid = 0
         for volume in self.volumes:
-            _volume_record,soup=volume.extractValuesFromVolumePage()
+            _volume_record, soup = volume.extractValuesFromVolumePage()
             if soup:
-                ptp=PaperTocParser(number=volume.number,soup=soup,debug=self.debug)
-                paper_records=ptp.parsePapers()
+                ptp = PaperTocParser(number=volume.number, soup=soup, debug=self.debug)
+                paper_records = ptp.parsePapers()
                 for paper_record in paper_records:
-                    paper=Paper()
+                    paper = Paper()
                     paper.fromDict(paper_record)
                     paper_list.append(paper)
             if not volume.valid:
-                invalid+=1
+                invalid += 1
             if t is not None and volume.valid:
-                #print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
+                # print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
                 if volume.acronym:
-                    description=volume.acronym[:20]
+                    description = volume.acronym[:20]
                 else:
-                    description="?"
+                    description = "?"
                 t.set_description(f"{description}")
                 t.update()
-        print(f"storing recreated volume table for {len(self.volumes)} volumes ({invalid} invalid)")
+        print(
+            f"storing recreated volume table for {len(self.volumes)} volumes ({invalid} invalid)"
+        )
         self.store()
         print(f"storing {len(paper_list)} papers")
         pm.store()
-        
-    def loadFromIndexHtml(self,force:bool=False):
-        '''
+
+    def loadFromIndexHtml(self, force: bool = False):
+        """
         load my content from the index.html file
-        
+
         Args:
             force(bool): if TRUE fetch index.html from internet else read locally cached version
-        '''
-        htmlText=self.getIndexHtml(force=force)
-        indexParser=IndexHtmlParser(htmlText,debug=self.debug)
-        volumeRecords=indexParser.parse() 
+        """
+        htmlText = self.getIndexHtml(force=force)
+        indexParser = IndexHtmlParser(htmlText, debug=self.debug)
+        volumeRecords = indexParser.parse()
         for volumeRecord in volumeRecords.values():
-            volume=Volume()
+            volume = Volume()
             volume.fromDict(volumeRecord)
-            for attr in ["desc","h1"]:
+            for attr in ["desc", "h1"]:
                 if not hasattr(volume, attr):
                     setattr(volume, attr, "?")
             self.volumes.append(volume)
-        
-    def getIndexHtml(self,force:bool=False):
-        '''
+
+    def getIndexHtml(self, force: bool = False):
+        """
         get the index html
-        '''
-        cacheHtml=CEURWS.CACHE_HTML
+        """
+        cacheHtml = CEURWS.CACHE_HTML
         if os.path.isfile(cacheHtml) and not force:
-            with open(cacheHtml, 'r') as file:
+            with open(cacheHtml, "r") as file:
                 html_page = file.read()
         else:
-            req = Request(CEURWS.URL, headers={'User-Agent': 'pyCEURMake'})
+            req = Request(CEURWS.URL, headers={"User-Agent": "pyCEURMake"})
             html_page = urlopen(req).read().decode()
             Path(CEURWS.CACHE_DIR).mkdir(parents=True, exist_ok=True)
-            with open(cacheHtml, 'w') as htmlFile:
-                print(html_page,file=htmlFile)
+            with open(cacheHtml, "w") as htmlFile:
+                print(html_page, file=htmlFile)
         return html_page
+
 
 class Paper(JSONAble):
     """
@@ -432,26 +448,31 @@ class Paper(JSONAble):
 
     @staticmethod
     def getSamples():
-        samples=[
+        samples = [
             {
                 "id": "Vol-2436/s1/summary",  # id is constructed with volume and position → <volNumber>/s<position>/<type>_<position_relative_to_type>
-                "type":"summary",
+                "type": "summary",
                 "position": 0,
                 "title": "1st Workshop on Evaluation and Experimental Design in Data Mining and Machine Learning (EDML 2019)",
                 "pdf": "http://ceur-ws.org/Vol-2436/summary.pdf",
                 "pagesFrom": 1,
                 "pagesTo": 3,
-                "authors": ["Eirini Ntoutsi", "Erich Schubert", "Arthur Zimek", "Albrecht Zimmermann"]
+                "authors": [
+                    "Eirini Ntoutsi",
+                    "Erich Schubert",
+                    "Arthur Zimek",
+                    "Albrecht Zimmermann",
+                ],
             },
             {
                 "id": "Vol-2436/s1/invited_1",
-                "type":"invited",
+                "type": "invited",
                 "position": 1,
                 "title": "Evaluation of Unsupervised Learning Results: Making the Seemingly Impossible Possible",
                 "pdf": "http://ceur-ws.org/Vol-2436/invited_1.pdf",
                 "pagesFrom": 4,
                 "pagesTo": 4,
-                "authors": ["Ricardo J. G. B. Campello"]
+                "authors": ["Ricardo J. G. B. Campello"],
             },
             {
                 "id": "Vol-2436/s1/article_1",
@@ -461,18 +482,18 @@ class Paper(JSONAble):
                 "pdf": "http://ceur-ws.org/Vol-2436/article_2.pdf",
                 "pagesFrom": 5,
                 "pagesTo": 13,
-                "authors": ["Alexandru Mara", "Jefrey Lijffijt", "Tijl De Bie"]
-            }
+                "authors": ["Alexandru Mara", "Jefrey Lijffijt", "Tijl De Bie"],
+            },
         ]
-        
+
     def __str__(self):
         """
         return my string representation
-        
+
         Returns:
             str: my text representation
         """
-        text=self.title
+        text = self.title
         return text
 
 
@@ -482,16 +503,18 @@ class PaperManager(EntityManager):
     """
 
     def __init__(self):
-        super(PaperManager, self).__init__(listName="papers",
-                                            clazz=Paper,
-                                            tableName="papers",
-                                            entityName=Paper.__class__.__name__,
-                                            primaryKey="id",
-                                            entityPluralName="papers",
-                                            config=CEURWS.CONFIG,
-                                            handleInvalidListTypes=True,
-                                            listSeparator=",",
-                                            name=self.__class__.__name__)
+        super(PaperManager, self).__init__(
+            listName="papers",
+            clazz=Paper,
+            tableName="papers",
+            entityName=Paper.__class__.__name__,
+            primaryKey="id",
+            entityPluralName="papers",
+            config=CEURWS.CONFIG,
+            handleInvalidListTypes=True,
+            listSeparator=",",
+            name=self.__class__.__name__,
+        )
 
 
 class Session(JSONAble):
@@ -500,51 +523,49 @@ class Session(JSONAble):
     """
 
     def getSamples(self):
-        samples=[
+        samples = [
             {
-                "id":"Vol-2436/s1",  # id is constructed with volume and position → <volNumber>/s<position>
-                "volume":{"Vol-2436": Volume},  # n:1 relation / reporting chain
-                "title":"Information Technologies and Intelligent Decision Making Systems II",
+                "id": "Vol-2436/s1",  # id is constructed with volume and position → <volNumber>/s<position>
+                "volume": {"Vol-2436": Volume},  # n:1 relation / reporting chain
+                "title": "Information Technologies and Intelligent Decision Making Systems II",
                 "position": 1,
-                "papers": {   # 1:n relation / command chain
-                    "VOL-2436/s1/p1":Paper,
-                    "VOL-2436/s1/p2":Paper
-                }
+                "papers": {  # 1:n relation / command chain
+                    "VOL-2436/s1/p1": Paper,
+                    "VOL-2436/s1/p2": Paper,
+                },
             }
         ]
 
     @property
-    def volume(self)->Volume:
+    def volume(self) -> Volume:
         if self._volume is None and self._volumeKey is not None:
-                # load volume
-                lVolume="ToDo:"
-                # set volume
-                self._volume=lVolume
-                pass
+            # load volume
+            lVolume = "ToDo:"
+            # set volume
+            self._volume = lVolume
+            pass
         else:
             return self._volume
 
-
     @property
-    def papers(self, cached:bool=False): #dict: str→Paper
+    def papers(self, cached: bool = False):  # dict: str→Paper
         if cached:
             # check if cached
             pass
         else:
-            #load papers
+            # load papers
             if cached:
-                #set papers
+                # set papers
                 pass
         return self._papers
 
     @papers.setter
-    def papers(self, paper:Paper):
+    def papers(self, paper: Paper):
         # ToDo: Adjust to proper 1:n handling
-        if hasattr(self, '_papers') and isinstance(self._papers, dict):
+        if hasattr(self, "_papers") and isinstance(self._papers, dict):
             self._papers.update(paper.id, paper)
         else:
-            setattr(self,'_papers',paper)
-
+            setattr(self, "_papers", paper)
 
 
 class SessionManager(EntityManager):
@@ -553,15 +574,16 @@ class SessionManager(EntityManager):
     """
 
     def __init__(self):
-        super(SessionManager, self).__init__(listName="sessions",
-                                            clazz=Session,
-                                            tableName="sessions",
-                                            entityName=Session.__class__.__name__,
-                                            primaryKey="id",  #ToDo: check if just the title is a sufficent key or if an ID must be added
-                                            entityPluralName="sessions",
-                                            config=CEURWS.CONFIG,
-                                            name=self.__class__.__name__)
-
+        super(SessionManager, self).__init__(
+            listName="sessions",
+            clazz=Session,
+            tableName="sessions",
+            entityName=Session.__class__.__name__,
+            primaryKey="id",  # ToDo: check if just the title is a sufficent key or if an ID must be added
+            entityPluralName="sessions",
+            config=CEURWS.CONFIG,
+            name=self.__class__.__name__,
+        )
 
 
 class Editor(JSONAble):
@@ -571,14 +593,14 @@ class Editor(JSONAble):
 
     @staticmethod
     def getSamples():
-        samples=[
+        samples = [
             {
                 "id": "Vol-2436/John Doe",
                 "name": "John Doe",
                 "homepage": "http://www.example.org/john",
                 "country": "Germany",
                 "affiliation": "Leibniz University Hannover & L3S Research Center",
-                "submitted": False
+                "submitted": False,
             },
             {
                 "id": "Vol-2436/Jane Doe",
@@ -586,8 +608,8 @@ class Editor(JSONAble):
                 "homepage": "http://www.example.org/jane",
                 "country": "Germany",
                 "affiliation": "Technical University Dortmund",
-                "submitted": True
-            }
+                "submitted": True,
+            },
         ]
 
 
@@ -597,14 +619,16 @@ class EditorManager(EntityManager):
     """
 
     def __init__(self):
-        super(EditorManager, self).__init__(listName="editors",
-                                            clazz=Editor,
-                                            tableName="editors",
-                                            entityName=Session.__class__.__name__,
-                                            primaryKey="id",
-                                            entityPluralName="editors",
-                                            config=CEURWS.CONFIG,
-                                            name=self.__class__.__name__)
+        super(EditorManager, self).__init__(
+            listName="editors",
+            clazz=Editor,
+            tableName="editors",
+            entityName=Session.__class__.__name__,
+            primaryKey="id",
+            entityPluralName="editors",
+            config=CEURWS.CONFIG,
+            name=self.__class__.__name__,
+        )
 
 
 class Conference(JSONAble):
@@ -614,12 +638,12 @@ class Conference(JSONAble):
 
     @staticmethod
     def getSamples():
-        samples=[
+        samples = [
             {
                 "id": "Vol-2436",
                 "fullTitle": "SIAM International Conference on Data Mining",
                 "homepage": "https://www.siam.org/Conferences/CM/Main/sdm19",
-                "acronym": "SDM 2019"
+                "acronym": "SDM 2019",
             }
         ]
 
@@ -630,12 +654,13 @@ class ConferenceManager(EntityManager):
     """
 
     def __init__(self):
-        super(ConferenceManager, self).__init__(listName="conferences",
-                                            clazz=Conference,
-                                            tableName="conferences",
-                                            entityName=Conference.__class__.__name__,
-                                            primaryKey="id",
-                                            entityPluralName="conferences",
-                                            config=CEURWS.CONFIG,
-                                            name=self.__class__.__name__)
-
+        super(ConferenceManager, self).__init__(
+            listName="conferences",
+            clazz=Conference,
+            tableName="conferences",
+            entityName=Conference.__class__.__name__,
+            primaryKey="id",
+            entityPluralName="conferences",
+            config=CEURWS.CONFIG,
+            name=self.__class__.__name__,
+        )

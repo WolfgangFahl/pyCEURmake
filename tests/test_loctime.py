@@ -5,8 +5,10 @@ Created on 2023-12-22
 """
 import json
 import os
-from tests.basetest import Basetest
+
 from ceurws.loctime import LoctimeParser, PercentageTable
+from tests.basetest import Basetest
+
 
 class TestLoctimeParser(Basetest):
     """
@@ -21,8 +23,7 @@ class TestLoctimeParser(Basetest):
         self.ceurws_path = os.path.expanduser("~/.ceurws")
         self.volumes_path = os.path.join(self.ceurws_path, "volumes.json")
         self.volumes = self.get_volumes()
-        self.loctime_parser=LoctimeParser()
-       
+        self.loctime_parser = LoctimeParser()
 
     def get_volumes(self):
         # Path to the volumes.json file
@@ -38,15 +39,15 @@ class TestLoctimeParser(Basetest):
         """
         Test function to analyze loctime and count occurrences of parts.
         """
-        ltp=self.loctime_parser
+        ltp = self.loctime_parser
         for v in self.volumes:
             loctime = v["loctime"]
             if loctime:
                 ltp.parse(loctime)
-                
+
         ltp.update_lookup_counts()
         ltp.save()
-       
+
         # Generate and print the percentage table
         percentage_table = PercentageTable(
             column_title="Parts", total=ltp.total_loctimes, digits=2
@@ -56,25 +57,29 @@ class TestLoctimeParser(Basetest):
                 percentage_table.add_value(row_title=f"{key}: {part}", value=count)
 
         print(percentage_table.generate_table())
-        
+
         for reverse_pos in range(1, 8):
             counter = ltp.counters[str(reverse_pos)]
             print(f"== {reverse_pos} ({len(counter)}) ==")
             # Sorting the counter items by count in descending order
-            for part, count in sorted(counter.items(), key=lambda item: item[1], reverse=True):
+            for part, count in sorted(
+                counter.items(), key=lambda item: item[1], reverse=True
+            ):
                 print(f"  {part}: {count}")
-            
-        pareto_dict=ltp.create_pareto_analysis(level=2)
+
+        pareto_dict = ltp.create_pareto_analysis(level=2)
         if self.debug:
-            print(json.dumps(pareto_dict,indent=2))
-        for category,pareto_range in pareto_dict.items():
+            print(json.dumps(pareto_dict, indent=2))
+        for category, pareto_range in pareto_dict.items():
             # Get the total count for this specific category
             counter = ltp.counters[category]
             total_category_count = sum(counter.values())
-        
-            # Create a percentage table for the current category
-            percentage_table = PercentageTable(column_title=f"{category} pareto", total=total_category_count, digits=2)
 
-            for threshold,count in pareto_range.items():
+            # Create a percentage table for the current category
+            percentage_table = PercentageTable(
+                column_title=f"{category} pareto", total=total_category_count, digits=2
+            )
+
+            for threshold, count in pareto_range.items():
                 percentage_table.add_value(f"{threshold:.1f}%", count)
             print(percentage_table.generate_table())

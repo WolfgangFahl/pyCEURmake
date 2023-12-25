@@ -13,7 +13,7 @@ from tabulate import tabulate
 
 class LoctimeParser:
     """
-    A parser class for handling loctime lookups. This class provides methods to 
+    A parser class for handling loctime lookups. This class provides methods to
     load, parse, and update loctime data using a dictionary of dictionaries structure.
 
     Attributes:
@@ -28,14 +28,14 @@ class LoctimeParser:
 
     def __init__(self, filepath: str = None):
         """
-        Initializes the LoctimeParser object, setting up paths, loading lookups, 
+        Initializes the LoctimeParser object, setting up paths, loading lookups,
         and initializing counters and patterns.
 
         Args:
-            filepath (str, optional): The path to the loctime YAML file. 
+            filepath (str, optional): The path to the loctime YAML file.
                                       Defaults to a predefined path if None is provided.
         Raises:
-            FileNotFoundError: Raises an error if the specified YAML file does not exist.                        
+            FileNotFoundError: Raises an error if the specified YAML file does not exist.
         """
         if filepath is None:
             self.ceurws_path = os.path.expanduser("~/.ceurws")
@@ -58,7 +58,7 @@ class LoctimeParser:
         """
         Prepares the parser by initializing multi-word handling and creating
         a modified version of the lookup dictionaries with keys as concatenated words.
-        This method sets up the 'multi_word' and 'multi_word_lookups' dictionaries 
+        This method sets up the 'multi_word' and 'multi_word_lookups' dictionaries
         to facilitate the parsing process, especially for multi-word keys.
         """
         self.multi_word = {}
@@ -79,14 +79,14 @@ class LoctimeParser:
     ) -> dict:
         """
         Loads the lookup data from the YAML file specified by the filepath attribute.
-    
+
         This method attempts to open and read the YAML file, converting its contents
         into a dictionary. If the file is empty or does not exist, it returns an empty dictionary.
-    
+
         Returns:
-            dict: A dictionary representing the loaded data from the YAML file. If the file 
+            dict: A dictionary representing the loaded data from the YAML file. If the file
                   is empty or non-existent, an empty dictionary is returned.
-    
+
         Raises:
             FileNotFoundError: If the specified file does not exist.
             yaml.YAMLError: If there is an error parsing the YAML file.
@@ -108,7 +108,7 @@ class LoctimeParser:
             yaml.dump(
                 self.lookups, yaml_file, default_flow_style=False, allow_unicode=True
             )
-            
+
     def get_parts(self, loctime):
         """
         Splits the loctime string into parts and subparts, considering multi-word entries.
@@ -135,10 +135,10 @@ class LoctimeParser:
     def parse(self, loctime: str):
         """
         Alternative parse of CEUR-WS loctimes using lookups
-        
+
         Args:
             loctime (str): The loctime string to parse.
-            
+
         """
         self.total_loctimes += 1
         lt_parts = self.get_parts(loctime)
@@ -170,7 +170,7 @@ class LoctimeParser:
 
     def update_lookup_counts(self):
         """
-        to be called  ffter processing all loctimes 
+        to be called  ffter processing all loctimes
         and updating counters update lookup dicts with new counts
         """
         for category, counter in self.counters.items():
@@ -189,12 +189,12 @@ class LoctimeParser:
         """
         Creates a Pareto analysis for each category in the lookups and returns
         the percentage table for the distribution across the specified levels.
-        
+
         Args:
             level (int): The number of segments to divide the data into within the top "outof" parts.
-            outof (int): 1 out of n value e.g. on level 1 we have 1:5 which leads to 
+            outof (int): 1 out of n value e.g. on level 1 we have 1:5 which leads to
             the original pareto 80:20 percent rule, on level 2 we have 80:(20=16:4) percent which is equivalent to 80/96 tresholds
-            percent 
+            percent
             on level 3 we have 80:(20=16:4=(3.2:0.8) percent which leads to 80%,96%,99.2% thresholds
         """
         pareto_dict = {}
@@ -202,41 +202,45 @@ class LoctimeParser:
             # Sort items by count in descending order
             sorted_items = counter.most_common()
             total = sum(counter.values())
-    
+
             # Calculate segment thresholds based on the diminishing series
-            thresholds=[]
+            thresholds = []
             threshold = 0
-            for _ in range(1, level+1):
+            for _ in range(1, level + 1):
                 # current range to calculate out of for
-                trange=100-threshold # 100/80/96/99.2 ...
+                trange = 100 - threshold  # 100/80/96/99.2 ...
                 # right side of range
-                right_range=trange / outof # 20/4/0.8 ...
+                right_range = trange / outof  # 20/4/0.8 ...
                 # left threshold is new threshold
                 threshold = 100 - right_range
                 thresholds.append(threshold)
             thresholds.append(100)
- 
-            segment_counts = {threshold: 0 for threshold in thresholds}  # Initialize count dict for each segment
-            segment_cutoff = {threshold: 0 for threshold in thresholds}  # Initialize count dict for each segment
-            tindex=0
-            current_threshold=thresholds[tindex]
-            total_pc=0
+
+            segment_counts = {
+                threshold: 0 for threshold in thresholds
+            }  # Initialize count dict for each segment
+            segment_cutoff = {
+                threshold: 0 for threshold in thresholds
+            }  # Initialize count dict for each segment
+            tindex = 0
+            current_threshold = thresholds[tindex]
+            total_pc = 0
             # Calculate cumulative counts for each segment
             for _, count in sorted_items:
-                item_percentage = (count / total * 100)
-                if total_pc + item_percentage >current_threshold+0.000000000001:
-                    segment_cutoff[current_threshold]=count
-                    tindex+=1
+                item_percentage = count / total * 100
+                if total_pc + item_percentage > current_threshold + 0.000000000001:
+                    segment_cutoff[current_threshold] = count
+                    tindex += 1
                     if tindex >= len(thresholds):
                         break
-                    current_threshold=thresholds[tindex]
-                total_pc+=item_percentage
-                segment_counts[current_threshold]+=count
-                
-         
+                    current_threshold = thresholds[tindex]
+                total_pc += item_percentage
+                segment_counts[current_threshold] += count
+
             pareto_dict[category] = segment_cutoff
         return pareto_dict
-    
+
+
 class PercentageTable:
     """
     A class for creating a table that displays values and their corresponding percentages of a total.

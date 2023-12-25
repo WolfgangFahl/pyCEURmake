@@ -1,23 +1,26 @@
-'''
+"""
 Created on 2023-07-15
 
 @author: wf
-'''
-from geograpy.locator import LocationContext
-from geograpy.nominatim import NominatimWrapper
+"""
 import sys
 
+from geograpy.locator import LocationContext
+from geograpy.nominatim import NominatimWrapper
+
+
 class LocationLookup:
-    '''
+    """
     Class for location lookup.
-    '''
+    """
+
     predefinedLocations = {}
 
     @classmethod
     def initPredefinedLocations(cls):
-        '''
+        """
         Initialize predefined locations.
-        '''
+        """
         locMap = {
             "Not Known": None,
             "Online": None,
@@ -35,9 +38,9 @@ class LocationLookup:
         cls.predefinedLocations = locMap
 
     def __init__(self):
-        '''
+        """
         Constructor for LocationLookup.
-        '''
+        """
         LocationLookup.initPredefinedLocations()
         self.locationContext = LocationContext.fromCache()
         cacheRootDir = LocationContext.getDefaultConfig().cacheRootDir
@@ -45,7 +48,7 @@ class LocationLookup:
         self.nominatimWrapper = NominatimWrapper(cacheDir=cacheDir)
 
     def getCityByWikiDataId(self, wikidataID: str):
-        '''
+        """
         Get the city for the given wikidataID.
 
         Args:
@@ -53,8 +56,10 @@ class LocationLookup:
 
         Returns:
             City: The city with the given wikidataID.
-        '''
-        citiesGen = self.locationContext.cityManager.getLocationsByWikidataId(wikidataID)
+        """
+        citiesGen = self.locationContext.cityManager.getLocationsByWikidataId(
+            wikidataID
+        )
         if citiesGen is not None:
             cities = list(citiesGen)
             if len(cities) > 0:
@@ -63,7 +68,7 @@ class LocationLookup:
             return None
 
     def lookupNominatim(self, locationText: str):
-        '''
+        """
         Lookup the location for the given locationText (if any).
 
         Args:
@@ -71,7 +76,7 @@ class LocationLookup:
 
         Returns:
             City: The location found by Nominatim.
-        '''
+        """
         location = None
         wikidataId = self.nominatimWrapper.lookupWikiDataId(locationText)
         if wikidataId is not None:
@@ -79,7 +84,7 @@ class LocationLookup:
         return location
 
     def lookup(self, locationText: str, logFile=sys.stdout):
-        '''
+        """
         Lookup a location based on the given locationText.
 
         Args:
@@ -88,7 +93,7 @@ class LocationLookup:
 
         Returns:
             City: The located city based on the locationText.
-        '''
+        """
         if locationText in LocationLookup.predefinedLocations:
             locationId = LocationLookup.predefinedLocations[locationText]
             if locationId is None:
@@ -96,7 +101,10 @@ class LocationLookup:
             else:
                 location = self.getCityByWikiDataId(locationId)
                 if location is None:
-                    print(f"❌❌-predefinedLocation {locationText}→{locationId} wikidataId not resolved", file=logFile)
+                    print(
+                        f"❌❌-predefinedLocation {locationText}→{locationId} wikidataId not resolved",
+                        file=logFile,
+                    )
                 return location
         lg = self.lookupGeograpy(locationText)
         ln = self.lookupNominatim(locationText)
@@ -106,7 +114,7 @@ class LocationLookup:
         return lg
 
     def lookupGeograpy(self, locationText: str):
-        '''
+        """
         Lookup the given location by the given locationText.
 
         Args:
@@ -114,7 +122,7 @@ class LocationLookup:
 
         Returns:
             City: The located city based on the locationText.
-        '''
+        """
         locations = self.locationContext.locateLocation(locationText)
         if len(locations) > 0:
             return locations[0]

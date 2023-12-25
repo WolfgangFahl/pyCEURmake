@@ -2,40 +2,48 @@ import argparse
 import json
 import os
 import re
-import requests
 import socket
 import sys
-
-from typing import List, Optional
 from dataclasses import dataclass, field
+from typing import List, Optional
+
+import requests
 from neo4j import GraphDatabase
-from neo4j.exceptions import ServiceUnavailable, AuthError, ConfigurationError
+from neo4j.exceptions import AuthError, ConfigurationError, ServiceUnavailable
 
 
 class Neo4j:
     """
     Neo4j wrapper class
     """
-    def __init__(self,host:str="localhost",bolt_port:int=7687,auth=("neo4j", "password"),scheme:str="bolt",encrypted:bool=False):
+
+    def __init__(
+        self,
+        host: str = "localhost",
+        bolt_port: int = 7687,
+        auth=("neo4j", "password"),
+        scheme: str = "bolt",
+        encrypted: bool = False,
+    ):
         """
         constructor
         """
         self.driver = None
         self.error = None
-        self.host=host
-        self.bolt_port=bolt_port
-        self.encrypted=encrypted
-        self.scheme=scheme
+        self.host = host
+        self.bolt_port = bolt_port
+        self.encrypted = encrypted
+        self.scheme = scheme
         try:
-            uri=f"{scheme}://{host}:{bolt_port}"      
-            if not Neo4j.is_port_available(host,bolt_port):
+            uri = f"{scheme}://{host}:{bolt_port}"
+            if not Neo4j.is_port_available(host, bolt_port):
                 raise ValueError(f"port at {uri} not available")
-            self.driver = GraphDatabase.driver(uri, auth=auth,encrypted=encrypted)
+            self.driver = GraphDatabase.driver(uri, auth=auth, encrypted=encrypted)
         except (ServiceUnavailable, AuthError, ConfigurationError) as e:
             self.error = e
-         
-    @classmethod   
-    def is_port_available(cls,host, port:int)->bool:
+
+    @classmethod
+    def is_port_available(cls, host, port: int) -> bool:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1)  # 1 Second Timeout
         try:
@@ -48,6 +56,7 @@ class Neo4j:
         if self.driver is not None:
             self.driver.close()
 
+
 @dataclass
 class Volume:
     """
@@ -57,7 +66,7 @@ class Volume:
     acronym: str
     title: str
     loctime: str
-    editors: List['Editor'] = field(default_factory=list)
+    editors: List["Editor"] = field(default_factory=list)
 
     @classmethod
     def from_json(cls, json_data):
@@ -70,26 +79,26 @@ class Volume:
         Returns:
             Volume: The Volume instance created from the JSON data.
         """
-        editor_names = json_data.get('editors')
+        editor_names = json_data.get("editors")
         if editor_names:
             editor_names = editor_names.split(",")
         else:
             editor_names = []
         editors = [Editor(name=name.strip()) for name in editor_names]
         return cls(
-            acronym=json_data.get('acronym'),
-            title=json_data.get('title'),
-            loctime=json_data.get('loctime'),
-            editors=editors
+            acronym=json_data.get("acronym"),
+            title=json_data.get("title"),
+            loctime=json_data.get("loctime"),
+            editors=editors,
         )
 
     def create_node(self, tx) -> int:
         """
         Create a Volume node in Neo4j.
-    
+
         Args:
             tx: The Neo4j transaction.
-    
+
         Returns:
             int: The ID of the created node.
         """
@@ -100,7 +109,7 @@ class Volume:
         parameters = {
             "acronym": self.acronym,
             "title": self.title,
-            "loctime": self.loctime
+            "loctime": self.loctime,
         }
         result = tx.run(query, parameters)
         record = result.single()
@@ -109,9 +118,8 @@ class Volume:
         else:
             return None
 
-
     @staticmethod
-    def load_json_file(source: str) -> List['Volume']:
+    def load_json_file(source: str) -> List["Volume"]:
         """
         Load volumes from the source JSON file.
 
@@ -121,49 +129,57 @@ class Volume:
         Returns:
             List[Volume]: The list of loaded volumes.
         """
-        with open(source, 'r') as file:
+        with open(source, "r") as file:
             json_data = json.load(file)
 
         volumes = [Volume.from_json(volume_data) for volume_data in json_data]
         return volumes
-    
+
     @classmethod
-    def default_source(cls)->str:
+    def default_source(cls) -> str:
         """
         get the default source
         """
-        default_source = os.path.expanduser('~/.ceurws/volumes.json')
+        default_source = os.path.expanduser("~/.ceurws/volumes.json")
         return default_source
-    
+
     @classmethod
-    def parse_args(cls,argv:list=None):
+    def parse_args(cls, argv: list = None):
         """
         Parse command line arguments.
-        
+
         Args:
             argv(list): command line arguments
 
         Returns:
             argparse.Namespace: The parsed command line arguments.
         """
-        
+
         default_source = cls.default_source()
-        parser = argparse.ArgumentParser(description="Volume/Editor/Location Information")
-        parser.add_argument('--source', default=default_source, help="Source JSON file path")
+        parser = argparse.ArgumentParser(
+            description="Volume/Editor/Location Information"
+        )
+        parser.add_argument(
+            "--source", default=default_source, help="Source JSON file path"
+        )
         # Add progress option
-        parser.add_argument('--progress', action='store_true', help="Display progress information")
-  
+        parser.add_argument(
+            "--progress", action="store_true", help="Display progress information"
+        )
+
         return parser.parse_args(argv)
 
     @staticmethod
     def main(argv=None):
         if argv is None:
-            argv=sys.argv[1:]
+            argv = sys.argv[1:]
         args = Volume.parse_args(argv)
         volumes = Volume.load_json_file(args.source)
 
         # Connect to Neo4j
-        driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+        driver = GraphDatabase.driver(
+            "bolt://localhost:7687", auth=("neo4j", "password")
+        )
         with driver.session() as session:
             for volume in volumes:
                 volume_node_id = volume.create_node(session)
@@ -193,10 +209,7 @@ class Editor:
         Returns:
             Editor: The Editor instance created from the JSON data.
         """
-        return cls(
-            name=json_data.get('name'),
-            orcid=json_data.get('orcid')
-        )
+        return cls(name=json_data.get("name"), orcid=json_data.get("orcid"))
 
     def search_by_name(self):
         """
@@ -204,23 +217,23 @@ class Editor:
         """
         if self.name:
             url = f"https://pub.orcid.org/v3.0/search/?q={self.name}"
-            headers = {
-                "Accept": "application/json"
-            }
+            headers = {"Accept": "application/json"}
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 num_results = data.get("num-found", 0)
-                self.likelihood = num_results / 10  # Arbitrary calculation, adjust as needed
+                self.likelihood = (
+                    num_results / 10
+                )  # Arbitrary calculation, adjust as needed
 
     def create_node(self, tx, volume_node_id: int) -> int:
         """
         Create an Editor node in Neo4j and establish a relationship with a Volume node.
-    
+
         Args:
             tx: The Neo4j transaction.
             volume_node_id (int): The ID of the volume node.
-    
+
         Returns:
             int: The ID of the created Editor node.
         """
@@ -234,7 +247,7 @@ class Editor:
             "volume_node_id": volume_node_id,
             "name": self.name,
             "orcid": self.orcid,
-            "likelihood": self.likelihood
+            "likelihood": self.likelihood,
         }
         result = tx.run(query, parameters)
         record = result.single()
@@ -244,7 +257,6 @@ class Editor:
             return None
 
 
-
 @dataclass
 class Location:
     city: str
@@ -252,7 +264,7 @@ class Location:
     date: str
 
     @staticmethod
-    def parse(location_str: str) -> Optional['Location']:
+    def parse(location_str: str) -> Optional["Location"]:
         """
         Parse a location string of the format "City, Country, Date"
 
@@ -262,12 +274,13 @@ class Location:
         Returns:
             A Location object or None if the string could not be parsed.
         """
-        match = re.match(r'^(.*), (.*), (.*)$', location_str)
+        match = re.match(r"^(.*), (.*), (.*)$", location_str)
         if match:
             city, country, date = match.groups()
             return Location(city, country, date)
         else:
             return None
+
 
 if __name__ == "__main__":
     Volume.main()

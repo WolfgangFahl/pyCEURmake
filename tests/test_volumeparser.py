@@ -40,11 +40,11 @@ class TestVolumeParser(Basetest):
         # title >=559
         # acronym > = 901
         dolimit = self.inPublicCI()
-        # dolimit = True
+        dolimit = True
         debug = True
         if dolimit:
-            start = 745
-            limit = 746
+            start = 3249
+            limit = 3250
         else:
             start = 1
             limit = len(self.volumeList) + 1
@@ -89,7 +89,8 @@ class TestVolumeParser(Basetest):
         scrapedDict, _soup = self.volumeParser.parse_volume(volumeWithKnownIssue)
         self.assertEqual("SWAT4LS 2008", scrapedDict.get("acronym"))
         self.assertEqual("http://www.swat4ls.org/", scrapedDict.get("homepage"))
-        print(scrapedDict)
+        if self.debug:
+            print(scrapedDict)
 
     def test_parseEditors(self):
         """

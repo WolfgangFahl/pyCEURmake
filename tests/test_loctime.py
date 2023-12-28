@@ -15,7 +15,7 @@ class TestLoctimeParser(Basetest):
     Test parsing loctime entries pages
     """
 
-    def setUp(self, debug=True, profile=True):
+    def setUp(self, debug=False, profile=True):
         """
         setUp the test case
         """

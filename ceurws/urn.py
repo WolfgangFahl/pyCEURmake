@@ -19,10 +19,11 @@ class URN:
 
     @classmethod
     def check_urn_checksum(cls, urn: str, debug: bool = False) -> bool:
-        expected_check_digit = int(urn[-1])
+        urn_check_digit_str=urn[-1]
         urn_prefix = urn[:-1]
         check_digit = cls.calc_urn_checksum(urn_prefix, debug)
-        return check_digit == expected_check_digit
+        urn_ok = str(check_digit) == urn_check_digit_str
+        return urn_ok
 
     @classmethod
     def calc_urn_checksum(cls, test_urn: str, debug: bool = False) -> int:

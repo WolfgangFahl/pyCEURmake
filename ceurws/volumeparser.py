@@ -134,11 +134,12 @@ class VolumeParser(Textparser):
         """
         if "urn" in parsed_dict:
             urn=parsed_dict["urn"]
-            urn_prefix = urn[:-1]
-            check_digit=URN.calc_urn_checksum(urn_prefix)
-            parsed_dict["urn_check_digit"]=check_digit
-            urn_ok=URN.check_urn_checksum(urn)
-            parsed_dict["urn_ok"]=urn_ok
+            if urn:
+                urn_prefix = urn[:-1]
+                check_digit=URN.calc_urn_checksum(urn_prefix)
+                parsed_dict["urn_check_digit"]=check_digit
+                urn_ok=URN.check_urn_checksum(urn)
+                parsed_dict["urn_ok"]=urn_ok
         
     def parse(self, url: str) -> dict:
         """

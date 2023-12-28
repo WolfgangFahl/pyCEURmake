@@ -53,7 +53,8 @@ class TestVolumeParser(Basetest):
                 volnumber, use_cache=True
             )
             if debug:
-                print(f"Vol-{volnumber}:{scrapedDict}")
+                scraped_str=json.dumps(scrapedDict,indent=2)
+                print(f"Vol-{volnumber}:{scraped_str}")
 
     def testIssue41(self):
         """

@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup, NavigableString, PageElement
 
 from ceurws.textparser import Textparser
 from ceurws.utils.webscrape import ScrapeDescription, WebScrape
-
+from ceurws.urn import URN
 
 class VolumeParser(Textparser):
     """
@@ -125,8 +125,21 @@ class VolumeParser(Textparser):
         """
         soup = self.get_volume_soup(number, use_cache=use_cache)
         parsed_dict = self.parse_soup(number, soup)
+        self.check_parsed_dict(parsed_dict)
         return parsed_dict, soup
-
+    
+    def check_parsed_dict(self,parsed_dict:dict):
+        """
+        check parsed_dict content e.g. urn check digit
+        """
+        if "urn" in parsed_dict:
+            urn=parsed_dict["urn"]
+            urn_prefix = urn[:-1]
+            check_digit=URN.calc_urn_checksum(urn_prefix)
+            parsed_dict["urn_check_digit"]=check_digit
+            urn_ok=URN.check_urn_checksum(urn)
+            parsed_dict["urn_ok"]=urn_ok
+        
     def parse(self, url: str) -> dict:
         """
         parse the given url

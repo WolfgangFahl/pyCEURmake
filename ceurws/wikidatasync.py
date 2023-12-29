@@ -1223,9 +1223,15 @@ class DblpEndpoint:
                     pdf_id = pdf_id.replace("https://ceur-ws.org/", "")
                     pdf_id = pdf_id.replace(".pdf", "")
                 authors = []
-                for dblp_author_id in d.get("author", "").split(
-                    ">;<"
-                ):  # >;< qlever quirk
+                authors=d.get("author", "")
+                # >;<  qlever quirk until 2023-12
+                if ">;<" in authors:
+                    delim=">;<"
+                else:
+                    delim=";"
+                for dblp_author_id in authors.split(
+                    delim
+                ):  # 
                     author = authorsById.get(dblp_author_id, None)
                     if author:
                         authors.append(author)

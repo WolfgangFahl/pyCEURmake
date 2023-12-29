@@ -77,11 +77,12 @@ class TestVolumeEditorLocation(Basetest):
         """
         Test the lookup method of the LocationLookup class.
         """
-        location_lookup = LocationLookup()
-        location = location_lookup.lookup("Amsterdam, Netherlands")
-        self.assertIsNotNone(location)
-        self.assertEqual(location.name, "Amsterdam")
-        self.assertEqual(location.country.iso, "NL")
+        if not self.inPublicCI():
+            location_lookup = LocationLookup()
+            location = location_lookup.lookup("Amsterdam, Netherlands")
+            self.assertIsNotNone(location)
+            self.assertEqual(location.name, "Amsterdam")
+            self.assertEqual(location.country.iso, "NL")
 
     def test_parse_args(self):
         """

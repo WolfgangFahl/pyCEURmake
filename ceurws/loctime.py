@@ -132,7 +132,7 @@ class LoctimeParser:
 
         return all_parts
 
-    def parse(self, loctime: str):
+    def parse(self, loctime: str)->dict:
         """
         Alternative parse of CEUR-WS loctimes using lookups
 
@@ -140,6 +140,7 @@ class LoctimeParser:
             loctime (str): The loctime string to parse.
 
         """
+        result={}
         self.total_loctimes += 1
         lt_parts = self.get_parts(loctime)
 
@@ -157,6 +158,8 @@ class LoctimeParser:
                 if part in lookup_dict:
                     self.counters[lookup_key][part] += 1  # Increment the lookup counter
                     found_in_lookup = True
+                    # set result dict
+                    result[lookup_key]=part
                     break  # Break if found, assuming part can't be in multiple lookups
             if not found_in_lookup:
                 # Update counter for each part's position from end
@@ -167,6 +170,7 @@ class LoctimeParser:
             # Special handling for 4-digit years
             if index == len(lt_parts) - 1 and self.year_pattern.match(part):
                 self.counters["4digit-year"][part] += 1
+        return result
 
     def update_lookup_counts(self):
         """

@@ -18,7 +18,7 @@ from ceurws.indexparser import IndexHtmlParser
 from ceurws.papertocparser import PaperTocParser
 from ceurws.utils.download import Download
 from ceurws.volumeparser import VolumeParser
-
+from ceurws.loctime import LoctimeParser
 
 class CEURWS:
     """
@@ -106,11 +106,8 @@ class Volume(JSONAble):
         Example: 'Vienna, Austria, July 25th, 2022'
         """
         pass
-
-    def resolveLoctime(self):
-        """
-        Resolve the loctime property by breaking it down to city, region, country, dateFrom, and dateTo
-        """
+    
+    def get_loctime(self)->str:
         loctime = getattr(self, "loctime", None)
         if loctime is None:
             td_title = getattr(self, "tdtitle", None)
@@ -119,6 +116,13 @@ class Volume(JSONAble):
             loctime = ",".join(title_parts)
             loctime = loctime.strip(".")
             setattr(self, "loctime", loctime)
+        return loctime
+
+    def resolveLoctime(self):
+        """
+        Resolve the loctime property by breaking it down to city, region, country, dateFrom, and dateTo
+        """
+        loctime=self.get_loctime()
         if loctime is None:
             return None
         dateFrom, dateTo = self.extractDates(loctime)
@@ -371,6 +375,7 @@ class VolumeManager(EntityManager):
         Args:
             progress(bool): if True show progress
         """
+        loctime_parser=LoctimeParser()
         pm = PaperManager()
         paper_list = pm.getList()
         # first reload me from the main index
@@ -391,6 +396,14 @@ class VolumeManager(EntityManager):
                     paper_list.append(paper)
             if not volume.valid:
                 invalid += 1
+            else:
+                loctime=volume.get_loctime()
+                loc_time_dict=loctime_parser.parse(loctime)
+                for key,value in loc_time_dict.items():
+                    attr=f"loc_{key}"
+                    setattr(volume,attr,value)
+                volume.resolveLoctime()
+            # update progress bar
             if t is not None and volume.valid:
                 # print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
                 if volume.acronym:

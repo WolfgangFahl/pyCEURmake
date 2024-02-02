@@ -44,7 +44,7 @@ class WikidataSync(object):
             dblp_endpoint_url: sparql endpoint url of dblp
         """
         if dblp_endpoint_url is None:
-            dblp_endpoint_url = "https://qlever.cs.uni-freiburg.de/api/dblp/query"
+            dblp_endpoint_url = "https://sparql.dblp.org/sparql"
         self.debug = debug
         self.prepareVolumeManager()
         self.preparePaperManager()
@@ -1209,8 +1209,10 @@ class DblpEndpoint:
         """
         query = self.qm.queriesByName["CEUR-WS all Papers"]
         cache_name = "dblp/papers"
+        papers = []
         if not force_query:
             lod = self.json_cache_manager.load(cache_name)
+            papers = [DblpPaper(**d) for d in lod]
         if force_query or lod is None:
             lod = self.sparql.queryAsListOfDicts(query.query)
             authors = self.get_all_ceur_authors(force_query)
@@ -1256,8 +1258,6 @@ class DblpEndpoint:
                     f"dblp/Vol-{volume_number}/papers",
                     [dataclasses.asdict(paper) for paper in vol_papers],
                 )
-        else:
-            papers = [DblpPaper(**d) for d in lod]
         return papers
 
     def get_ceur_volume_papers(self, volume_number: int) -> List[DblpPaper]:
@@ -1267,9 +1267,12 @@ class DblpEndpoint:
         cache_name = f"dblp/Vol-{volume_number}/papers"
         lod = self.json_cache_manager.load(cache_name)
         if lod is None:
-            self.get_all_ceur_papers()
-            lod = self.json_cache_manager.load(cache_name)
-        papers = [DblpPaper(**d) for d in lod]
+            all_papers = self.get_all_ceur_papers()
+            papers = [paper for paper in all_papers if paper.volume_number == volume_number]
+            self.json_cache_manager.store(f"dblp/Vol-{volume_number}/papers",
+                    [dataclasses.asdict(paper) for paper in papers], )
+        else:
+            papers = [DblpPaper(**d) for d in lod]
         return papers
 
     def getDblpIdByVolumeNumber(self, number) -> List[str]:
@@ -1309,13 +1312,15 @@ class DblpEndpoint:
         """
         query = self.qm.queriesByName["CEUR-WS all Volumes"]
         cache_name = "dblp/volumes"
+        volumes = []
         if not force_query:
             lod = self.json_cache_manager.load(cache_name)
+            volumes = [DblpProceeding(**d) for d in lod]
         if force_query or lod is None:
             lod = self.sparql.queryAsListOfDicts(query.query)
-            editors = self.get_all_ceur_editors()
+            editors = self.get_all_ceur_editors(force_query=force_query)
             editorsById = {a.dblp_author_id: a for a in editors}
-            papers = self.get_all_ceur_papers()
+            papers = self.get_all_ceur_papers(force_query=force_query)
             papersByProceeding = {
                 key: list(group)
                 for key, group in groupby(
@@ -1324,10 +1329,16 @@ class DblpEndpoint:
             }
             volumes = []
             for d in lod:
+                if int(d.get("volume_number")) == 3000:
+                    pass
                 vol_editors = []
-                for dblp_author_id in d.get("editor", "").split(
-                    ">;<"
-                ):  # >;< qlever quirk
+                editor_str = d.get("editor", "")
+                # >;<  qlever quirk until 2023-12
+                if ">;<" in editor_str:
+                    delim = ">;<"
+                else:
+                    delim = ";"
+                for dblp_author_id in editor_str.split(delim):
                     editor = editorsById.get(dblp_author_id, None)
                     if editor:
                         vol_editors.append(editor)
@@ -1348,9 +1359,7 @@ class DblpEndpoint:
                 self.json_cache_manager.store(
                     f"dblp/Vol-{number}/metadata", dataclasses.asdict(volume)
                 )
-        else:
-            papers = [DblpProceeding(**d) for d in lod]
-        return papers
+        return volumes
 
     def get_ceur_proceeding(self, volume_number: int) -> DblpProceeding:
         """
@@ -1361,9 +1370,15 @@ class DblpEndpoint:
         cache_name = f"dblp/Vol-{volume_number}/metadata"
         record = self.json_cache_manager.load(cache_name)
         if record is None:
-            self.get_all_ceur_proceedings()
-            record = self.json_cache_manager.load(cache_name)
-        proceeding = DblpProceeding(**record)
+            all_volumes = self.get_all_ceur_proceedings()
+            vols_by_no = {v.volume_number: v for v in all_volumes}
+            proceeding = vols_by_no.get(volume_number, None)
+            if proceeding:
+                self.json_cache_manager.store(f"dblp/Vol-{proceeding.volume_number}/metadata", dataclasses.asdict(proceeding))
+        else:
+            proceeding = DblpProceeding(**record)
+        if proceeding is None:
+            raise VolumeNotFound(f"Volume {volume_number} not found in dblp")
         return proceeding
 
     def getDblpUrlByDblpId(self, entityId) -> Union[str, None]:
@@ -1480,6 +1495,16 @@ class DblpEndpoint:
                         '"|"'
                     )  # issue in qlever see https://github.com/ad-freiburg/qlever/discussions/806
         return qres
+
+class VolumeNotFound(Exception):
+    """
+    Volume not found
+    """
+
+    def __init__(self, msg: str):
+        if msg is None:
+            msg = "Volume not found"
+        self.msg = msg
 
 
 @dataclass

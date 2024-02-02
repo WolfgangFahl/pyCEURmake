@@ -751,7 +751,7 @@ class TestDblpEndpoint(Basetest):
             [a.dblp_author_id for a in paper.authors],
         )
 
-    @unittest.skipIf(False, "queries unreliable dblp endpoint")
+    @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_get_ceur_proceeding(self):
         """
         tests retrieving a proceeding from dblp endpoint

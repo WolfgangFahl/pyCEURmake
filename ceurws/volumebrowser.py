@@ -21,7 +21,7 @@ from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 from ceurws.querydisplay import QueryDisplay
 from ceurws.template import TemplateEnv
 from ceurws.version import Version
-from ceurws.wikidatasync import DblpEndpoint, WikidataSync
+from ceurws.wikidatasync import DblpEndpoint, VolumeNotFound, WikidataSync
 
 
 class Display:
@@ -1117,7 +1117,10 @@ class VolumeBrowser(App):
             Get ceur-ws volume form dblp
             """
             wdSync = self.assureWikidataSync()
-            proceeding = wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+            try:
+                proceeding = wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+            except VolumeNotFound as e:
+                raise HTTPException(status_code=404, detail=e.msg)
             if proceeding:
                 return proceeding
             else:
@@ -1129,7 +1132,10 @@ class VolumeBrowser(App):
             Get ceur-ws volume editors form dblp
             """
             wdSync = self.assureWikidataSync()
-            proceeding = wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+            try:
+                proceeding = wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+            except VolumeNotFound as e:
+                raise HTTPException(status_code=404, detail=e.msg)
             if proceeding:
                 return proceeding.editors
             else:

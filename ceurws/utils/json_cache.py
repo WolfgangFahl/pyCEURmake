@@ -70,7 +70,8 @@ class JsonCacheManager():
         """
         Returns true if given path exists and is not null
         """
-        stored= os.path.isfile(json_path) and os.path.getsize(json_path) > 1
+        path = Path(json_path)
+        stored = path.is_file() and path.stat().st_size > 1
         return stored
 
     def store(self, lod_name: str, lod: Union[list, dict]):

@@ -404,11 +404,12 @@ class VolumeManager(EntityManager):
                 invalid += 1
             else:
                 loctime=volume.get_loctime()
-                loc_time_dict=loctime_parser.parse(loctime)
-                for key,value in loc_time_dict.items():
-                    attr=f"loc_{key}"
-                    setattr(volume,attr,value)
-                volume.resolveLoctime()
+                if loctime:
+                    loc_time_dict=loctime_parser.parse(loctime)
+                    for key,value in loc_time_dict.items():
+                        attr=f"loc_{key}"
+                        setattr(volume,attr,value)
+                    volume.resolveLoctime()
             # update progress bar
             if t is not None and volume.valid:
                 # print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")

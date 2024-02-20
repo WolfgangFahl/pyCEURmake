@@ -92,7 +92,7 @@ class IndexHtmlParser(Textparser):
                     if trCount == expectedTr:
                         trEndLine = self.find(lineNo + 1, self.trEndPattern)
                         if volCount % progress == 0:
-                            print(f"Volume {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}")
+                            print(f"volume count {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}")
                         return trStartLine, trEndLine
         return None, None
 

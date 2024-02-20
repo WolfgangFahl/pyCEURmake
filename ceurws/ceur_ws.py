@@ -108,14 +108,20 @@ class Volume(JSONAble):
         pass
     
     def get_loctime(self)->str:
+        """
+        get the loctime
+        """
         loctime = getattr(self, "loctime", None)
         if loctime is None:
             td_title = getattr(self, "tdtitle", None)
-            title_parts = td_title.split(",")
-            del title_parts[0]
-            loctime = ",".join(title_parts)
-            loctime = loctime.strip(".")
-            setattr(self, "loctime", loctime)
+            if td_title:
+                title_parts = td_title.split(",")
+                del title_parts[0]
+                loctime = ",".join(title_parts)
+                loctime = loctime.strip(".")
+                setattr(self, "loctime", loctime)
+            else:
+                pass
         return loctime
 
     def resolveLoctime(self):

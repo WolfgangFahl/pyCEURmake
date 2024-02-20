@@ -36,52 +36,63 @@ class IndexHtmlParser(Textparser):
             r""".*<a\s+href=[\'"]http://ceur-ws.org/Vol-([0-9]+)[/]?[\'"]>([^<]*)</a>.*""",
             re.I | re.DOTALL,
         )
+        # Pre-compile patterns used in find and findVolume
+        self.thColspanPattern = re.compile(r"^.*<th\s*colspan", re.I)
+        self.trStartPattern = re.compile(r"^\s*<tr>", re.I)
+        self.trEndPattern = re.compile(r"^\s*</tr>", re.I)
+        # Pre-compile patterns used in setVolumeTitle
+        self.editedByPattern = re.compile("Edited by:")
+        self.tdBgColorPattern = re.compile("<td bgcolor", re.I)
 
-    def find(self, startLine: int, needleRegex: str, step: int = 1) -> int:
+
+    def find(self, startLine: int, compiledPattern, step: int = 1) -> int:
         """
-        find the next line with the given regular expression
+        find the next line with the given compiled regular expression pattern
 
         Args:
             startLine(int): index of the line to start search
-            needleRegex(str): the regular expression to search for
+            compiledPattern(re.Pattern): the compiled regular expression pattern to search for
             step(int): the steps to take e.g. +1 for forward -1 for backwards
 
         Return:
             int: the line number of the line or None if nothing was found
         """
-        pattern = re.compile(needleRegex, re.I)
         lineNo = startLine
-        while lineNo >= 1 and lineNo < len(self.lines) + 1:
+        while 0 < lineNo < len(self.lines) + 1:
             line = self.lines[lineNo - 1]
-            if pattern.match(line):
+            if compiledPattern.match(line):
                 return lineNo
             lineNo += step
         return None
 
-    def findVolume(self, startLine: int, expectedTr: int = 3) -> int:
+    def findVolume(self, volCount: int, startLine: int, expectedTr: int = 3, progress: int = 10) -> int:
         """
         find Volume lines from the given startLine
 
         Args:
+            volCount(int): the volumeCount before the startLine
             startLine(int): index of the line to search
+            expectedTr(int): number of <tr> tags expected
+            progress(int): how often to show the progress
 
         Returns:
             endLine of the volume html or None
         """
-        trStartLine = self.find(startLine, r".*<th\s*colspan")
+        trStartLine = self.find(startLine, self.thColspanPattern)
         if trStartLine is not None:
             lineNo = trStartLine + 1
             trCount = 1
             while lineNo < len(self.lines):
-                trLine = self.find(lineNo, r"\s*<tr>")
+                trLine = self.find(lineNo, self.trStartPattern)
                 if trLine is None:
                     break
                 else:
                     lineNo = trLine + 1
                     trCount += 1
                     if trCount == expectedTr:
-                        trEndLine = self.find(lineNo + 1, "\s*</tr>")
-                        print(f"Parsing lines {trStartLine:6}-{trEndLine:6}")
+                        trEndLine = self.find(lineNo + 1, self.trEndPattern)
+                        if volCount % progress == 0:
+                            print(f"Volume {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}")
                         return trStartLine, trEndLine
         return None, None
 
@@ -123,9 +134,9 @@ class IndexHtmlParser(Textparser):
             volume(dict): the volumeRecord to modify
             lineIndex: where to start setting the volumeTitle
         """
-        editedByLine = self.find(lineIndex, "Edited by:")
+        editedByLine = self.find(lineIndex, self.editedByPattern)
         if editedByLine is not None:
-            tdLine = self.find(editedByLine, "<td bgcolor", step=-1)
+            tdLine = self.find(editedByLine, self.tdBgColorPattern, step=-1)
             if tdLine is not None:
                 tdIndex = tdLine - 1
                 title = ""
@@ -252,12 +263,14 @@ class IndexHtmlParser(Textparser):
         """
         parse my html code for Volume info
         """
-        lineNo = self.find(1, r'\s*<TABLE id="MAINTABLE"')
+        # Compile the regex pattern right before its usage
+        mainTablePattern = re.compile(r'\s*<TABLE id="MAINTABLE"', re.I)
+        lineNo = self.find(1, mainTablePattern)
         volCount = 0
         volumes = {}
         while lineNo < len(self.lines):
             expectedTr = 3
-            volStartLine, volEndLine = self.findVolume(lineNo, expectedTr=expectedTr)
+            volStartLine, volEndLine = self.findVolume(volCount,lineNo, expectedTr=expectedTr)
             if volStartLine is None or volCount >= limit:
                 break
             else:

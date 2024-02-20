@@ -68,19 +68,20 @@ class IndexHtmlParser(Textparser):
         Returns:
             endLine of the volume html or None
         """
-        trStartLine = self.find(startLine, "\s*<tr><th")
+        trStartLine = self.find(startLine, r".*<th\s*colspan")
         if trStartLine is not None:
             lineNo = trStartLine + 1
             trCount = 1
             while lineNo < len(self.lines):
-                trLine = self.find(lineNo, "\s*<tr>")
+                trLine = self.find(lineNo, r"\s*<tr>")
                 if trLine is None:
                     break
                 else:
                     lineNo = trLine + 1
                     trCount += 1
                     if trCount == expectedTr:
-                        trEndLine = self.find(lineNo + 1, "</tr>")
+                        trEndLine = self.find(lineNo + 1, "\s*</tr>")
+                        print(f"Parsing lines {trStartLine:6}-{trEndLine:6}")
                         return trStartLine, trEndLine
         return None, None
 

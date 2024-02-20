@@ -251,7 +251,7 @@ class IndexHtmlParser(Textparser):
         """
         parse my html code for Volume info
         """
-        lineNo = self.find(1, '<TABLE id="MAINTABLE"')
+        lineNo = self.find(1, r'\s*<TABLE id="MAINTABLE"')
         volCount = 0
         volumes = {}
         while lineNo < len(self.lines):

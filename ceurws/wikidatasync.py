@@ -1226,15 +1226,13 @@ class DblpEndpoint:
                     pdf_id = pdf_id.replace(".pdf", "")
                 authors = []
                 # get the authors string
-                authors_str=d.get("author", "")
+                authors_str = d.get("author", "")
                 # >;<  qlever quirk until 2023-12
                 if ">;<" in authors_str:
-                    delim=">;<"
+                    delim = ">;<"
                 else:
-                    delim=";"
-                for dblp_author_id in authors_str.split(
-                    delim
-                ):  # 
+                    delim = ";"
+                for dblp_author_id in authors_str.split(delim):  #
                     author = authorsById.get(dblp_author_id, None)
                     if author:
                         authors.append(author)
@@ -1268,9 +1266,13 @@ class DblpEndpoint:
         lod = self.json_cache_manager.load(cache_name)
         if lod is None:
             all_papers = self.get_all_ceur_papers()
-            papers = [paper for paper in all_papers if paper.volume_number == volume_number]
-            self.json_cache_manager.store(f"dblp/Vol-{volume_number}/papers",
-                    [dataclasses.asdict(paper) for paper in papers], )
+            papers = [
+                paper for paper in all_papers if paper.volume_number == volume_number
+            ]
+            self.json_cache_manager.store(
+                f"dblp/Vol-{volume_number}/papers",
+                [dataclasses.asdict(paper) for paper in papers],
+            )
         else:
             papers = [DblpPaper(**d) for d in lod]
         return papers
@@ -1374,7 +1376,10 @@ class DblpEndpoint:
             vols_by_no = {v.volume_number: v for v in all_volumes}
             proceeding = vols_by_no.get(volume_number, None)
             if proceeding:
-                self.json_cache_manager.store(f"dblp/Vol-{proceeding.volume_number}/metadata", dataclasses.asdict(proceeding))
+                self.json_cache_manager.store(
+                    f"dblp/Vol-{proceeding.volume_number}/metadata",
+                    dataclasses.asdict(proceeding),
+                )
         else:
             proceeding = DblpProceeding(**record)
         if proceeding is None:
@@ -1495,6 +1500,7 @@ class DblpEndpoint:
                         '"|"'
                     )  # issue in qlever see https://github.com/ad-freiburg/qlever/discussions/806
         return qres
+
 
 class VolumeNotFound(Exception):
     """

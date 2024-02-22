@@ -8,11 +8,11 @@ import traceback
 import webbrowser
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from dataclasses import asdict
-from tabulate import tabulate
-from tqdm import tqdm
 
 # import after app!
 from jpcore.justpy_app import JustpyServer
+from tabulate import tabulate
+from tqdm import tqdm
 
 from ceurws.ceur_ws import VolumeManager
 from ceurws.namedqueries import NamedQueries
@@ -168,18 +168,18 @@ def main(argv=None):  # IGNORE:C0111
             wdsync.update(withStore=True)
         if args.dblp_update:
             wdsync = WikidataSync.from_args(args)
-            endpoint=wdsync.dbpEndpoint
+            endpoint = wdsync.dbpEndpoint
             print(f"updating dblp cache from SPARQL endpoint {endpoint.sparql.url}")
             # Instantiate the progress bar
             pbar = tqdm(total=len(wdsync.dbpEndpoint.cache_functions))
             for _step, (cache_name, cache_function) in enumerate(
-                    endpoint.cache_functions.items(), start=1
-                ):
+                endpoint.cache_functions.items(), start=1
+            ):
                 # Call the corresponding function to refresh cache data
                 cache_function(force_query=args.force)
                 # Update the progress bar description with the cache name and increment
                 pbar.set_description(f"{cache_name} updated ...")
-   
+
                 # Update the progress bar manually
                 pbar.update(1)  # Increment the progress bar by 1 for each iteration
 
@@ -187,12 +187,12 @@ def main(argv=None):  # IGNORE:C0111
             pbar.close()
             table_data = []
             for _step, (cache_name, cache_function) in enumerate(
-                    endpoint.cache_functions.items(), start=1
-                ):
+                endpoint.cache_functions.items(), start=1
+            ):
                 info = endpoint.json_cache_manager.get_cache_info(cache_name)
                 table_data.append(asdict(info))
             table = tabulate(table_data, headers="keys", tablefmt="grid")
-            print (table)
+            print(table)
             pass
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###

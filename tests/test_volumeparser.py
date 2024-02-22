@@ -53,7 +53,7 @@ class TestVolumeParser(Basetest):
                 volnumber, use_cache=True
             )
             if debug:
-                scraped_str=json.dumps(scrapedDict,indent=2)
+                scraped_str = json.dumps(scrapedDict, indent=2)
                 print(f"Vol-{volnumber}:{scraped_str}")
 
     def testIssue41(self):
@@ -275,25 +275,25 @@ class TestVolumeParser(Basetest):
         vol_number = 3264
         record, _soup = self.volumeParser.parse_volume(vol_number)
         debug = self.debug
-        #debug=True
+        # debug=True
         if debug:
             print(json.dumps(record, indent=2))
         expected = {
-  "volume_number": "Vol-3264",
-  "urn": "urn:nbn:de:0074-3264-7",
-  "year": "2022",
-  "ceurpubdate": "2022-11-05",
-  "acronym": "HEDA 2022",
-  "voltitle": "The International Health Data Workshop HEDA 2022",
-  "title": "Proceedings of The International Health Data Workshop",
-  "loctime": "Bergen, Norway, June 26th-27th, 2022",
-  "colocated": "Petri Nets 2022",
-  "h1": "HEDA 2022 The International Health Data Workshop HEDA 2022",
-  "homepage": "",
-  "h3": "Proceedings of The International Health Data Workshop co-located with 10th International Conference on Petrinets (Petri Nets 2022)",
-  "urn_check_digit": 7,
-  "urn_ok": True
-}
+            "volume_number": "Vol-3264",
+            "urn": "urn:nbn:de:0074-3264-7",
+            "year": "2022",
+            "ceurpubdate": "2022-11-05",
+            "acronym": "HEDA 2022",
+            "voltitle": "The International Health Data Workshop HEDA 2022",
+            "title": "Proceedings of The International Health Data Workshop",
+            "loctime": "Bergen, Norway, June 26th-27th, 2022",
+            "colocated": "Petri Nets 2022",
+            "h1": "HEDA 2022 The International Health Data Workshop HEDA 2022",
+            "homepage": "",
+            "h3": "Proceedings of The International Health Data Workshop co-located with 10th International Conference on Petrinets (Petri Nets 2022)",
+            "urn_check_digit": 7,
+            "urn_ok": True,
+        }
         self.assertEqual(expected, record)
 
     def test_volume_caching(self):

@@ -4,8 +4,9 @@ Created on 2022-09-11
 @author: wf
 """
 import ceurws
+from dataclasses import dataclass
 
-
+@dataclass
 class Version(object):
     """
     Version handling for VolumeBrowser
@@ -14,8 +15,8 @@ class Version(object):
     name = "CEUR-WS Volume Browser"
     version = ceurws.__version__
     date = "2022-08-14"
-    updated = "2024-02-20"
-    description = ("CEUR-WS Volume browser",)
+    updated = "2024-02-22"
+    description = "CEUR-WS Volume browser"
 
     authors = "Tim Holzheim, Wolfgang Fahl"
 

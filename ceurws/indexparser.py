@@ -44,7 +44,6 @@ class IndexHtmlParser(Textparser):
         self.editedByPattern = re.compile("Edited by:")
         self.tdBgColorPattern = re.compile("<td bgcolor", re.I)
 
-
     def find(self, startLine: int, compiledPattern, step: int = 1) -> int:
         """
         find the next line with the given compiled regular expression pattern
@@ -65,7 +64,9 @@ class IndexHtmlParser(Textparser):
             lineNo += step
         return None
 
-    def findVolume(self, volCount: int, startLine: int, expectedTr: int = 3, progress: int = 10) -> int:
+    def findVolume(
+        self, volCount: int, startLine: int, expectedTr: int = 3, progress: int = 10
+    ) -> int:
         """
         find Volume lines from the given startLine
 
@@ -92,7 +93,9 @@ class IndexHtmlParser(Textparser):
                     if trCount == expectedTr:
                         trEndLine = self.find(lineNo + 1, self.trEndPattern)
                         if volCount % progress == 0:
-                            print(f"volume count {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}")
+                            print(
+                                f"volume count {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}"
+                            )
                         return trStartLine, trEndLine
         return None, None
 
@@ -270,7 +273,9 @@ class IndexHtmlParser(Textparser):
         volumes = {}
         while lineNo < len(self.lines):
             expectedTr = 3
-            volStartLine, volEndLine = self.findVolume(volCount,lineNo, expectedTr=expectedTr)
+            volStartLine, volEndLine = self.findVolume(
+                volCount, lineNo, expectedTr=expectedTr
+            )
             if volStartLine is None or volCount >= limit:
                 break
             else:

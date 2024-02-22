@@ -732,7 +732,7 @@ class TestDblpEndpoint(Basetest):
             label="Stefan Decker",
             wikidata_id="Q54303353",
             orcid_id="0000-0001-6324-7164",
-            gnd_id='173443443',
+            gnd_id="173443443",
         )
         decker = authorsById.get("https://dblp.org/pid/d/StefanDecker")
         self.assertEqual(expected_decker, decker)

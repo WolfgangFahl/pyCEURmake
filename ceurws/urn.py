@@ -9,6 +9,7 @@ It's adapted from PHP and JavaScript sources, following the guidelines and metho
 
 """
 
+
 class URN:
     """
     URN check digit calculator for DNB URN service:
@@ -23,7 +24,7 @@ class URN:
 
     @classmethod
     def check_urn_checksum(cls, urn: str, debug: bool = False) -> bool:
-        urn_check_digit_str=urn[-1]
+        urn_check_digit_str = urn[-1]
         urn_prefix = urn[:-1]
         check_digit = cls.calc_urn_checksum(urn_prefix, debug)
         urn_ok = str(check_digit) == urn_check_digit_str

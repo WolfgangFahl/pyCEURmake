@@ -64,7 +64,7 @@ class TestIndexHtml(Basetest):
         test reading the HTML file
         """
         debug = self.debug
-        #debug=True
+        # debug=True
         if debug:
             logging.basicConfig(level=logging.DEBUG)
         vm = VolumeManager()
@@ -86,7 +86,7 @@ class TestIndexHtml(Basetest):
         vm = VolumeManager()
         vm.load()
         volumes = vm.getList()
-        self.volumesAsCsv(volumes, 3248,3249)
+        self.volumesAsCsv(volumes, 3248, 3249)
 
     def testReadVolumePages(self):
         """

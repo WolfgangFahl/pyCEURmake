@@ -5,13 +5,14 @@ Created on 2024-02-23
 """
 from ngwidgets.widgets import Link
 
+
 class View:
     """
     generic View
     """
 
     noneValue = "-"
-    
+
     def getValue(self, obj, attr):
         value = getattr(obj, attr, View.noneValue)
         if value is None:
@@ -25,7 +26,7 @@ class View:
         if value is None:
             value = View.noneValue
         return value
-    
+
     def createLink(self, url: str, text: str):
         """
         create a link from the given url and text
@@ -36,7 +37,6 @@ class View:
         """
         link = Link.create(url, text, target="_blank")
         return link
-
 
     def createExternalLink(
         self,
@@ -60,14 +60,14 @@ class View:
             str - html link for external id
         """
         value = self.getRowValue(row, key)
-        wdPrefix = "http://www.wikidata.org/entity/"
-        if value.startswith(wdPrefix):
-            value = value.replace(wdPrefix, "")
-        if value == View.noneValue:
+        if not value:
             if emptyIfNone:
                 return ""
             else:
                 return View.noneValue
+        wdPrefix = "http://www.wikidata.org/entity/"
+        if value.startswith(wdPrefix):
+            value = value.replace(wdPrefix, "")
         url = formatterUrl + value
         link = self.createLink(url, text)
         return link

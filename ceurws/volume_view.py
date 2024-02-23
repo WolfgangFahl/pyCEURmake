@@ -3,18 +3,20 @@ Created on 2024-02-23
 
 @author: wf
 """
+from ngwidgets.widgets import Link
 from nicegui import ui
+
+from ceurws.ceur_ws import Volume
 from ceurws.view import View
 from ceurws.wikidatasync import DblpEndpoint
-from ceurws.ceur_ws import Volume
-from ngwidgets.widgets import Link
+
 
 class VolumeView(View):
     """
     displays a single volume
     """
 
-    def __init__(self, solution,parent):
+    def __init__(self, solution, parent):
         """
         constructor
 
@@ -23,29 +25,37 @@ class VolumeView(View):
             parent: the parent UI container
 
         """
-        self.solution=solution
-        self.parent=parent
-        self.volumeToolBar=None
-        self.wdSync=self.solution.wdSync
-        self.wdSpan=None
-        
+        self.solution = solution
+        self.parent = parent
+        self.volumeToolBar = None
+        self.wdSync = self.solution.wdSync
+        self.wdSpan = None
+
     def setup_ui(self):
         """
         setup my User Interface elements
         """
         with self.parent:
             with ui.row() as self.volumeToolBar:
-                self.volumeRefreshButton = ui.button(
-                    icon="refresh",                
-                    on_click=self.onRefreshButtonClick,
-                ).classes("btn btn-primary btn-sm col-1").tooltip("Refresh from CEUR-WS Volume page")
-                self.wikidataButton = ui.button(
-                    icon="web",
-                    on_click=self.onWikidataButtonClick,
-                ).classes("btn btn-primary btn-sm col-1").tooltip("Export to Wikidata")
-            self.header_view=ui.html()
-            self.iframe_view=ui.html().classes("w-full").style('height: 80vh;')
-    
+                self.volumeRefreshButton = (
+                    ui.button(
+                        icon="refresh",
+                        on_click=self.onRefreshButtonClick,
+                    )
+                    .classes("btn btn-primary btn-sm col-1")
+                    .tooltip("Refresh from CEUR-WS Volume page")
+                )
+                self.wikidataButton = (
+                    ui.button(
+                        icon="web",
+                        on_click=self.onWikidataButtonClick,
+                    )
+                    .classes("btn btn-primary btn-sm col-1")
+                    .tooltip("Export to Wikidata")
+                )
+            self.header_view = ui.html()
+            self.iframe_view = ui.html().classes("w-full").style("height: 80vh;")
+
     def updateWikidataSpan(self, qId: str, volume: Volume):
         """
         create a Wikidata Export span
@@ -57,12 +67,13 @@ class VolumeView(View):
         """
         if self.wdSpan is None:
             self.wdSpan = ui.html()
-        volume_link=Link.create(url=self.volume.url, text=f"{volume}:{volume.acronym}")
+        volume_link = Link.create(
+            url=self.volume.url, text=f"{volume}:{volume.acronym}"
+        )
         wd_url = self.wdSync.itemUrl(qId)
-        wd_link=Link.create(url=wd_url,text=f"{qId} ")
-        self.wdSpan.content=f"{volume_link}{wd_link}"
-        
-        
+        wd_link = Link.create(url=wd_url, text=f"{qId} ")
+        self.wdSpan.content = f"{volume_link}{wd_link}"
+
     def showVolume(self, volume):
         """
         show the given volume
@@ -74,7 +85,7 @@ class VolumeView(View):
             self.volume = volume
             if self.volumeToolBar is None:
                 self.setup_ui()
-                
+
             wdProc = self.wdSync.getProceedingsForVolume(volume.number)
             self.wikidataButton.disabled = wdProc is not None
             links = ""
@@ -154,10 +165,10 @@ class VolumeView(View):
     async def onRefreshButtonClick(self, _args):
         try:
             self.volume.extractValuesFromVolumePage()
-            msg=f"updated from {self.volume.url}"
+            msg = f"updated from {self.volume.url}"
             ui.notify(msg)
             self.showVolume(self.volume)
-            #self.wdSync.storeVolumes()
+            # self.wdSync.storeVolumes()
         except Exception as ex:
             self.solution.handle_exception(ex)
 
@@ -171,11 +182,13 @@ class VolumeView(View):
                 wdRecord, write=True, ignoreErrors=False
             )
             if qId is not None:
-                msg=f"wikidata export of {self.volume.volumeNumber} to {qId} done"
+                msg = f"wikidata export of {self.volume.volumeNumber} to {qId} done"
                 ui.notify(msg)
-                self.updateWikidataSpan(wdSync=self.app.wdSync, qId=qId, volume=self.volume)
+                self.updateWikidataSpan(
+                    wdSync=self.app.wdSync, qId=qId, volume=self.volume
+                )
             else:
-                err_msg=f"error:{err}"
+                err_msg = f"error:{err}"
                 self.solution.log_view.push(err_msg)
         except Exception as ex:
             self.solution.handle_exception(ex)

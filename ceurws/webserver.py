@@ -16,9 +16,9 @@ from nicegui.events import ValueChangeEventArguments
 
 from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 from ceurws.version import Version
-from ceurws.volume_view import VolumeView
+from ceurws.volume_view import VolumeView, VolumeListView
 from ceurws.wikidatasync import VolumeNotFound, WikidataSync
-
+from ceurws.wikidata_view import WikidataView
 
 class CeurWsWebServer(InputWebserver):
     """
@@ -45,6 +45,25 @@ class CeurWsWebServer(InputWebserver):
         """
         InputWebserver.__init__(self, config=CeurWsWebServer.get_config())
 
+        @ui.page("/volumes")
+        async def show_volumes(client: Client):
+            return await self.page(
+                client,CeurWsSolution.volumes
+            )
+            
+        @ui.page("/volume/{volnumber}")
+        async def show_volume_page(client: Client,vol_number):
+            return await self.page(
+                client,CeurWsSolution.volumePage,vol_number
+            )
+            
+        @ui.page("/wikidatasync")
+        async def wikidatasync(client: Client):
+            return await self.page(
+                client,CeurWsSolution.wikidatasync
+            )
+     
+     
         @app.get("/volumes.json")
         async def volumes():
             """
@@ -227,25 +246,15 @@ class CeurWsSolution(InputWebSolution):
         """
         super().__init__(webserver, client)  # Call to the superclass constructor
         self.wdSync = self.webserver.wdSync
-        self.get_volume_options()
-
-    def get_volume_options(self):
-        """
-        get the volume options
-        """
-        # Initialize an empty dictionary to store volume number as key and title as value
-        self.volume_options = {}
-        self.volumes_by_number = {}
-
-        # Populate the dictionary with volume numbers and titles
-        for volume in self.wdSync.vm.getList():
-            self.volumes_by_number[volume.number] = volume
-
-        reverse_keys = sorted(self.volumes_by_number.keys(), reverse=True)
-        for volume_number in reverse_keys:
-            volume = self.volumes_by_number[volume_number]
-            self.volume_options[volume.number] = f"Vol-{volume.number}:{volume.title}"
-        pass
+        
+    def configure_menu(self):
+        InputWebSolution.configure_menu(self)
+        self.link_button(
+            name="volumes", icon_name="table", target="/volumes"
+        )
+        self.link_button(
+            name="wikidata",icon_name="cloud_sync",target="/wikidatasync"
+        )
 
     def prepare_ui(self):
         """
@@ -270,6 +279,26 @@ class CeurWsSolution(InputWebSolution):
                     ui.add_head_html(
                         f'<link rel="stylesheet" type="text/css" href="/css/{css_file}">'
                     )
+                    
+    async def wikidatasync(self):
+        """
+        show the wikidata sync table
+        """
+        def show():
+            self.wikidata_view =WikidataView(
+                self, self.container
+            )
+        await self.setup_content_div(show)
+        
+    async def volumes(self):
+        """
+        show the volumes table
+        """
+        def show():
+            self.volume_list_view = VolumeListView(
+                self, self.container
+            )
+        await self.setup_content_div(show)
 
     async def home(self):
         """
@@ -282,7 +311,7 @@ class CeurWsSolution(InputWebSolution):
                     with ui.row() as self.select_container:
                         self.volume_select = self.add_select(
                             "Volume",
-                            selection=self.volume_options,
+                            selection=self.wdSync.volumeOptions,
                             with_input=True,
                             on_change=self.volume_selected,
                         )
@@ -297,6 +326,6 @@ class CeurWsSolution(InputWebSolution):
         when a volume is selected show the details in the Volume View
         """
         vol_number = args.value
-        volume = self.volumes_by_number[vol_number]
+        volume = self.wdSync.volumesByNumber[vol_number]
         self.volume_view.showVolume(volume)
         pass

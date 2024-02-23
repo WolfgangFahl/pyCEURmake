@@ -143,6 +143,12 @@ class WikidataSync(object):
         self.volumesByNumber, _duplicates = LOD.getLookup(self.vm.getList(), "number")
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
+        self.volumeOptions = {}
+        reverse_keys = sorted(self.volumesByNumber.keys(), reverse=True)
+        for volume_number in reverse_keys:
+            volume = self.volumesByNumber[volume_number]
+            self.volumeOptions[volume.number] = f"Vol-{volume.number}:{volume.title}"
+  
 
     def addVolume(self, volume: Volume):
         """

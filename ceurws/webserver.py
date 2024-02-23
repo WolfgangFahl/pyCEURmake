@@ -26,6 +26,7 @@ class CeurWsWebServer(InputWebserver):
             copy_right=copy_right,
             version=Version(),
             default_port=9998,
+            timeout=10.0,
             short_name="spf",
         )
         server_config = WebserverConfig.get(config)

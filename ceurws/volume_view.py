@@ -3,6 +3,7 @@ Created on 2024-02-23
 
 @author: wf
 """
+from ngwidgets.lod_grid import GridConfig,ListOfDictsGrid
 from ngwidgets.widgets import Link
 from nicegui import ui
 
@@ -148,7 +149,7 @@ class VolumeView(View):
 
             # template=self.templateEnv.getTemplate('volume_index_body.html')
             # html=template.render(volume=volume)
-            headerHtml = f"""{links}<h3>{volume.h1}</h3>
+            headerHtml = f"""{links}<h3 style='font-size: 24px; font-weight: normal; margin-top: 20px; margin-bottom: 10px;'>{volume.h1}</h3>
     <a href='{volume.url}'>{volume.acronym}<a>
     {volume.title}<br>
     {volume.desc}
@@ -192,3 +193,89 @@ class VolumeView(View):
                 self.solution.log_view.push(err_msg)
         except Exception as ex:
             self.solution.handle_exception(ex)
+            
+class VolumeListView(View):
+    """
+    show a list of volumes a table
+    """
+    
+    def __init__(self, solution, parent):
+        """
+        constructor
+
+        Args:
+            solution: the solution
+            parent: the parent UI container
+
+        """
+        self.solution = solution
+        self.parent = parent
+        self.wdSync=self.solution.wdSync
+        self.get_volume_lod()
+        self.setup_ui()
+        
+    def setup_ui(self):
+        """
+        show my volumes as a list
+        """
+        try:
+            with ui.row() as self.button_row:
+                self.wikidataButton = (
+                    ui.button(
+                        icon="web",
+                        on_click=self.onWikidataButtonClick,
+                    )
+                    .classes("btn btn-primary btn-sm col-1")
+                    .tooltip("Export to Wikidata")
+                )
+                pass
+            with ui.row() as self.grid_row:    
+                grid_config = GridConfig(
+                    key_col="Vol",
+                    multiselect=True)
+                self.lod_grid=ListOfDictsGrid(lod=self.lod,config=grid_config)
+                # Modify the columnDefs for the "Title" column after grid initialization
+                for col_def in self.lod_grid.ag_grid.options["columnDefs"]:
+                    if col_def["field"] == "Title":  # Identify the "Title" column
+                        col_def["maxWidth"] = 400  # width in pixels
+                self.lod_grid.sizeColumnsToFit()
+        except Exception as ex:
+            self.handle_exception(ex)
+            
+    async def onWikidataButtonClick(self, _args):
+        """
+        handle wikidata sync request
+        """
+        try:
+            selected_rows = await self.lod_grid.get_selected_rows()
+            for row in selected_rows:
+                vol_number=row["#"]
+                volume = self.wdSync.volumesByNumber[vol_number]
+                ui.notify(f"exporting {vol_number}")
+            pass
+        except Exception as ex:
+            self.handle_exception(ex)
+        
+    def get_volume_lod(self):
+        """
+        get the list of dict of all volumes
+        """
+        self.lod = []
+        volumeList = self.wdSync.vm.getList()
+        reverseVolumeList = sorted(
+            volumeList, key=lambda volume: volume.number, reverse=True
+        )
+        for volume in reverseVolumeList:
+            validMark = "✅" if volume.valid else "❌"
+            self.lod.append(
+                {
+                    "#": volume.number,
+                    "Vol": self.createLink(volume.url, f"Vol-{volume.number:04}"),
+                    "Acronym": self.getValue(volume, "acronym"),
+                    "Title": self.getValue(volume, "title"),
+                    "Loctime": self.getValue(volume, "loctime"),
+                    "Published": self.getValue(volume, "published"),
+                    "SubmittedBy": self.getValue(volume, "submittedBy"),
+                    "valid": validMark,
+                }
+            )

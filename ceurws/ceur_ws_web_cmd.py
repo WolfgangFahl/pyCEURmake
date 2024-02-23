@@ -4,15 +4,16 @@ Created on 2024-02-22
 @author: wf
 """
 import sys
-from ngwidgets.cmd import WebserverCmd
-from ceurws.webserver import CeurWsWebServer
 from argparse import ArgumentParser
+from dataclasses import asdict
+
+from ngwidgets.cmd import WebserverCmd
 from tabulate import tabulate
 from tqdm import tqdm
-from dataclasses import asdict
 
 from ceurws.ceur_ws import VolumeManager
 from ceurws.namedqueries import NamedQueries
+from ceurws.webserver import CeurWsWebServer
 from ceurws.wikidatasync import WikidataSync
 
 
@@ -28,7 +29,7 @@ class CeurWsCmd(WebserverCmd):
         config = CeurWsWebServer.get_config()
         WebserverCmd.__init__(self, config, CeurWsWebServer, DEBUG)
         pass
-    
+
     def getArgParser(self, description: str, version_msg) -> ArgumentParser:
         """
         override the default argparser call
@@ -79,12 +80,12 @@ class CeurWsCmd(WebserverCmd):
             help="generate named queries [default: %(default)s]",
         )
         return parser
-    
-    def handle_args(self)->bool:
+
+    def handle_args(self) -> bool:
         """
         handle the command line arguments
         """
-        args=self.args
+        args = self.args
         if args.namedqueries:
             nq = NamedQueries()
             yaml = nq.toYaml()
@@ -128,8 +129,8 @@ class CeurWsCmd(WebserverCmd):
             table = tabulate(table_data, headers="keys", tablefmt="grid")
             print(table)
             pass
-        handled=super().handle_args()
-        return handled 
+        handled = super().handle_args()
+        return handled
 
 
 def main(argv: list = None):

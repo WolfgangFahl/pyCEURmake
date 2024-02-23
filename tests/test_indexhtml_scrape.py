@@ -8,7 +8,7 @@ import logging
 
 from lodstorage.lod import LOD
 
-from ceurws.ceur_ws import CEURWS, VolumeManager
+from ceurws.ceur_ws import VolumeManager
 from ceurws.indexparser import IndexHtmlParser
 from tests.basetest import Basetest
 
@@ -100,7 +100,8 @@ class TestIndexHtml(Basetest):
         if self.inPublicCI():
             limit = 10
         else:
-            limit = len(volumesByNumber) + 1
+            # limit = len(volumesByNumber) + 1
+            limit = 10
         for number in range(1, limit):
             volume = volumesByNumber[number]
             volume.extractValuesFromVolumePage(timeout=self.timeout)

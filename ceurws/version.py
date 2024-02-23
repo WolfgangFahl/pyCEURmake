@@ -3,8 +3,10 @@ Created on 2022-09-11
 
 @author: wf
 """
-import ceurws
 from dataclasses import dataclass
+
+import ceurws
+
 
 @dataclass
 class Version(object):

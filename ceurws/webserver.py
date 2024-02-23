@@ -3,16 +3,22 @@ Created on 2024-02-22
 
 @author: wf
 """
-from ngwidgets.input_webserver import InputWebserver, InputWebSolution
-from ngwidgets.webserver import WebserverConfig
-from nicegui import Client, ui, app
-from nicegui.events import ValueChangeEventArguments
-
-from ceurws.volume_view import VolumeView
-from ceurws.version import Version
-from ceurws.wikidatasync import WikidataSync
 import os
 from pathlib import Path
+from typing import List
+
+from fastapi import HTTPException
+from fastapi.responses import ORJSONResponse
+from ngwidgets.input_webserver import InputWebserver, InputWebSolution
+from ngwidgets.webserver import WebserverConfig
+from nicegui import Client, app, ui
+from nicegui.events import ValueChangeEventArguments
+
+from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
+from ceurws.version import Version
+from ceurws.volume_view import VolumeView
+from ceurws.wikidatasync import VolumeNotFound, WikidataSync
+
 
 class CeurWsWebServer(InputWebserver):
     """
@@ -38,7 +44,7 @@ class CeurWsWebServer(InputWebserver):
         constructor
         """
         InputWebserver.__init__(self, config=CeurWsWebServer.get_config())
-        
+
         @app.get("/volumes.json")
         async def volumes():
             """
@@ -47,13 +53,162 @@ class CeurWsWebServer(InputWebserver):
             volumeList = self.wdSync.vm.getList()
             return volumeList
 
+        @app.get("/proceedings.json")
+        async def proceedings():
+            """
+            direct fastapi return of proceedings
+            """
+            proceedingsList = self.wdSync.loadProceedingsFromCache()
+            return ORJSONResponse(proceedingsList)
+
+        @app.get("/papers.json")
+        async def papers():
+            """
+            direct fastapi return of papers
+            """
+            paperList = self.wdSync.pm.getList()
+            return paperList
+
+        @app.get(
+            "/papers_dblp.json",
+            tags=["dblp complete dataset"],
+            # response_model= List[DblpPaper]
+        )
+        async def papers_dblp():
+            """
+            direct fastapi return of paper information from dblp
+            """
+            papers = self.wdSync.dbpEndpoint.get_all_ceur_papers()
+            return ORJSONResponse(papers)
+
+        @app.get(
+            "/authors_dblp.json",
+            tags=["dblp complete dataset"],
+            # response_model=List[DblpAuthor]
+        )
+        async def authors_papers_dblp():
+            """
+            direct fastapi return of paper information from dblp
+            """
+            authors = self.wdSync.dbpEndpoint.get_all_ceur_authors()
+            return ORJSONResponse(content=authors)
+
+        @app.get("/dblp/papers", tags=["dblp complete dataset"])
+        async def dblp_papers(limit: int = 100, offset: int = 0) -> List[DblpPaper]:
+            """
+            Get ceur-ws volumes form dblp
+            Args:
+                limit: max number of returned papers
+                offset:
+
+            Returns:
+            """
+            papers = self.wdSync.dbpEndpoint.get_all_ceur_papers()
+            return papers[offset:limit]
+
+        @app.get("/dblp/editors", tags=["dblp complete dataset"])
+        async def dblp_editors(limit: int = 100, offset: int = 0) -> List[DblpScholar]:
+            """
+            Get ceur-ws volume editors form dblp
+            Args:
+                limit: max number of returned papers
+                offset:
+
+            Returns:
+            """
+            editors = self.wdSync.dbpEndpoint.get_all_ceur_editors()
+            return editors[offset:limit]
+
+        @app.get("/dblp/volumes", tags=["dblp complete dataset"])
+        async def dblp_volumes(limit: int = 100, offset: int = 0) -> List[DblpPaper]:
+            """
+            Get ceur-ws volumes form dblp
+            Args:
+                limit: max number of returned papers
+                offset:
+
+            Returns:
+            """
+            proceedings = self.wdSync.dbpEndpoint.get_all_ceur_proceedings()
+            return proceedings[offset:limit]
+
+        @app.get("/dblp/volume/{volume_number}", tags=["dblp"])
+        async def dblp_volume(volume_number: int) -> DblpProceeding:
+            """
+            Get ceur-ws volume form dblp
+            """
+            try:
+                proceeding = self.wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+            except VolumeNotFound as e:
+                raise HTTPException(status_code=404, detail=e.msg)
+            if proceeding:
+                return proceeding
+            else:
+                raise HTTPException(status_code=404, detail="Volume not found")
+
+        @app.get("/dblp/volume/{volume_number}/editor", tags=["dblp"])
+        async def dblp_volume_editors(volume_number: int) -> List[DblpScholar]:
+            """
+            Get ceur-ws volume editors form dblp
+            """
+            try:
+                proceeding = self.wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+            except VolumeNotFound as e:
+                raise HTTPException(status_code=404, detail=e.msg)
+            if proceeding:
+                return proceeding.editors
+            else:
+                raise HTTPException(status_code=404, detail="Volume not found")
+
+        @app.get("/dblp/volume/{volume_number}/paper", tags=["dblp"])
+        async def dblp_volume_papers(volume_number: int) -> List[DblpPaper]:
+            """
+            Get ceur-ws volume papers form dblp
+            Args:
+                volume_number: number of the volume
+
+            Returns:
+            """
+            papers = self.wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            return papers
+
+        @app.get("/dblp/volume/{volume_number}/paper/{paper_id}", tags=["dblp"])
+        async def dblp_paper(volume_number: int, paper_id: str) -> DblpPaper:
+            """
+            Get ceur-ws volume paper form dblp
+            """
+            paper = self.wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            if paper:
+                for paper in paper:
+                    if paper.pdf_id == f"Vol-{volume_number}/{paper_id}":
+                        return paper
+                raise HTTPException(status_code=404, detail="Paper not found")
+            else:
+                raise HTTPException(status_code=404, detail="Volume not found")
+
+        @app.get("/dblp/volume/{volume_number}/paper/{paper_id}/author", tags=["dblp"])
+        async def dblp_paper_authors(
+            volume_number: int, paper_id: str
+        ) -> List[DblpScholar]:
+            """
+            Get ceur-ws volume paper form dblp
+            """
+            paper = self.wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            if paper:
+                for paper in paper:
+                    if paper.pdf_id == f"Vol-{volume_number}/{paper_id}":
+                        return paper.authors
+                raise HTTPException(status_code=404, detail="Paper not found")
+            else:
+                raise HTTPException(status_code=404, detail="Volume not found")
+
     def configure_run(self):
         """
         configure command line specific details
         """
         InputWebserver.configure_run(self)
         self.wdSync = WikidataSync.from_args(self.args)
-    
+
 
 class CeurWsSolution(InputWebSolution):
     """
@@ -71,7 +226,7 @@ class CeurWsSolution(InputWebSolution):
             client (Client): The client instance this context is associated with.
         """
         super().__init__(webserver, client)  # Call to the superclass constructor
-        self.wdSync=self.webserver.wdSync
+        self.wdSync = self.webserver.wdSync
         self.get_volume_options()
 
     def get_volume_options(self):
@@ -91,29 +246,30 @@ class CeurWsSolution(InputWebSolution):
             volume = self.volumes_by_number[volume_number]
             self.volume_options[volume.number] = f"Vol-{volume.number}:{volume.title}"
         pass
-    
+
     def prepare_ui(self):
         """
         prepare the user interface
         """
         InputWebSolution.prepare_ui(self)
         # does not work as expected ...
-        #self.add_css()
-        
+        # self.add_css()
+
     def add_css(self):
         # Get the correct path to the 'css' directory
         css_directory_path = Path(__file__).parent.parent / "css"
         # Check if the directory exists before trying to serve it
         if css_directory_path.is_dir():
             # Serve files from the 'css' directory at the '/css' route
-            app.add_static_files('/css', str(css_directory_path))
-        
+            app.add_static_files("/css", str(css_directory_path))
+
             # Iterate over all .css files in the directory
             for css_file in os.listdir(css_directory_path):
                 if css_file.endswith(".css"):
                     # Add the link tag for the css file to the head of the HTML document
-                    ui.add_head_html(f'<link rel="stylesheet" type="text/css" href="/css/{css_file}">')
-
+                    ui.add_head_html(
+                        f'<link rel="stylesheet" type="text/css" href="/css/{css_file}">'
+                    )
 
     async def home(self):
         """
@@ -130,7 +286,7 @@ class CeurWsSolution(InputWebSolution):
                             with_input=True,
                             on_change=self.volume_selected,
                         )
-                    self.volume_view=VolumeView(self,self.container)   
+                    self.volume_view = VolumeView(self, self.container)
             except Exception as ex:
                 self.handle_exception(ex)
 

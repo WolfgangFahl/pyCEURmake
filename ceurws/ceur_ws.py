@@ -14,7 +14,7 @@ from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
 from tqdm import tqdm
 
-from ceurws.indexparser import IndexHtmlParser
+from ceurws.indexparser import IndexHtmlParser, ParserConfig
 from ceurws.loctime import LoctimeParser
 from ceurws.papertocparser import PaperTocParser
 from ceurws.utils.download import Download
@@ -374,23 +374,33 @@ class VolumeManager(EntityManager):
         load from the SQLITE Cache file
         """
         self.fromStore(cacheFile=CEURWS.CACHE_FILE)
-
-    def recreate(self, progress: bool = False, limit=None):
+        
+    def update(self,parser_config:ParserConfig):
+        """
+        update me by a checking for recently added volumes
+        """
+        self.update_or_recreate(parser_config)
+        
+    def recreate(self,parser_config:ParserConfig):
         """
         recreate me by a full parse of all volume files
+        """
+        self.update_or_recreate(parser_config)
+
+    def update_or_recreate(self,parser_config:ParserConfig):
+        """
+        recreate or update me by parsing the index.html file
 
         Args:
             progress(bool): if True show progress
+            down_to_volume(int): the volume number to parse down to
         """
+        progress_bar=parser_config.progress_bar
         loctime_parser = LoctimeParser()
         pm = PaperManager()
         paper_list = pm.getList()
         # first reload me from the main index
         self.loadFromIndexHtml(force=True)
-        if progress:
-            t = tqdm(total=len(self.volumes))
-        else:
-            t = None
         invalid = 0
         for volume in self.volumes:
             _volume_record, soup = volume.extractValuesFromVolumePage()
@@ -412,14 +422,15 @@ class VolumeManager(EntityManager):
                         setattr(volume, attr, value)
                     volume.resolveLoctime()
             # update progress bar
-            if t is not None and volume.valid:
-                # print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
-                if volume.acronym:
-                    description = volume.acronym[:20]
-                else:
-                    description = "?"
-                t.set_description(f"{description}")
-                t.update()
+            if progress_bar:
+                if volume.valid:
+                    # print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
+                    if volume.acronym:
+                        description = volume.acronym[:20]
+                    else:
+                        description = "?"
+                    progress_bar.set_description(f"{description}")
+                progress_bar.update()
         print(
             f"storing recreated volume table for {len(self.volumes)} volumes ({invalid} invalid)"
         )
@@ -432,7 +443,9 @@ class VolumeManager(EntityManager):
         load my content from the index.html file
 
         Args:
-            force(bool): if TRUE fetch index.html from internet else read locally cached version
+            force(bool): if TRUE fetch index.html 
+            from ceur-ws.org internet homepage
+            else read locally cached version
         """
         htmlText = self.getIndexHtml(force=force)
         indexParser = IndexHtmlParser(htmlText, debug=self.debug)

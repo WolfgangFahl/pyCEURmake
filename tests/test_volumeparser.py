@@ -14,7 +14,6 @@ from ceurws.ceur_ws import VolumeManager
 from ceurws.volumeparser import VolumePageCache, VolumeParser
 from tests.basetest import Basetest
 
-
 class TestVolumeParser(Basetest):
     """
     Test parsing Volume pages
@@ -41,7 +40,7 @@ class TestVolumeParser(Basetest):
         # acronym > = 901
         dolimit = self.inPublicCI()
         dolimit = True
-        debug = True
+        #debug = True
         if dolimit:
             start = 3249
             limit = 3250

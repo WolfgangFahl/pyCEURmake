@@ -8,22 +8,51 @@ import html
 import re
 
 from ceurws.textparser import Textparser
+from ngwidgets.progress import Progressbar
 
+class ParserConfig:
+    """
+    parser configuration
+    """
+    def __init__(self,
+        progress_bar:Progressbar=None,
+        down_to_volume:int=1,
+        force_download:bool=False,
+        verbose: bool = False,
+        debug:bool=False):
+        """
+        Initializes the ParserConfig with a progress bar, volume threshold, and debug mode setting.
+
+        Args:
+            progress_bar (Progressbar): An instance of a Progressbar class to be used for showing progress during parsing.
+            down_to_volume (int, optional): The volume threshold for parsing. Only volumes equal to or less than this value will be considered. Defaults to 1.
+            force_download(bool): if True download the file to parse
+            verbose(bool): if True give verbose feedback
+            debug (bool, optional): Indicates whether debugging mode is enabled. If True, additional debug information will be provided during parsing. Defaults to False.
+        """
+        self.progress_bar=progress_bar
+        self.down_to_volume=down_to_volume
+        self.force_download=force_download
+        self.verbose=verbose
+        self.debug=debug
+    
 
 class IndexHtmlParser(Textparser):
     """
     CEUR-WS Index.html parser
     """
 
-    def __init__(self, htmlText, debug: bool):
+    def __init__(self, htmlText, config:ParserConfig=None):
         """
         Constructor
 
         Args:
             htmlText(str): the HTML text of the index page
-            debug(bool): if TRUE switch debugging on
         """
-        Textparser.__init__(self, debug=debug)
+        if config is None:
+            config=ParserConfig()
+        self.config=config
+        Textparser.__init__(self, debug=config.debug)
         self.htmlText = htmlText
         # soup (in memory is slow)
         # soup = BeautifulSoup(html_page, 'html.parser'
@@ -93,9 +122,10 @@ class IndexHtmlParser(Textparser):
                     if trCount == expectedTr:
                         trEndLine = self.find(lineNo + 1, self.trEndPattern)
                         if volCount % progress == 0:
-                            print(
-                                f"volume count {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}"
-                            )
+                            if self.config.verbose:
+                                print(
+                                    f"volume count {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}"
+                                )
                         return trStartLine, trEndLine
         return None, None
 
@@ -262,7 +292,7 @@ class IndexHtmlParser(Textparser):
         self.log(f"{volumeNumber:4}-{volCount:4}:{fromLine}+{lineCount} {acronym}")
         return volume
 
-    def parse(self, limit: int = 1000000, verbose: bool = False):
+    def parse(self):
         """
         parse my html code for Volume info
         """
@@ -276,12 +306,12 @@ class IndexHtmlParser(Textparser):
             volStartLine, volEndLine = self.findVolume(
                 volCount, lineNo, expectedTr=expectedTr
             )
-            if volStartLine is None or volCount >= limit:
+            if volStartLine is None:
                 break
             else:
                 volCount += 1
                 volume = self.parseVolume(
-                    volCount, volStartLine, volEndLine, verbose=verbose
+                    volCount, volStartLine, volEndLine, verbose=self.config.verbose
                 )
                 # synchronize on <tr><th and not on end since trailing TR might be missing
                 lineNo = volStartLine + 1

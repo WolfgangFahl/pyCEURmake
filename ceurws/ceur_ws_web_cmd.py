@@ -36,6 +36,21 @@ class CeurWsCmd(WebserverCmd):
         """
         parser = super().getArgParser(description, version_msg)
         parser.add_argument(
+            "-dbu", "--dblp_update", action="store_true", help="update dblp cache"
+        )
+        parser.add_argument(
+            "-nq",
+            "--namedqueries",
+            action="store_true",
+            help="generate named queries [default: %(default)s]",
+        )
+        parser.add_argument(
+            "-den",
+            "--dblp_endpoint_name",
+            help="name of dblp endpoint to use %(default)s",
+            default="qlever-dblp",
+        )
+        parser.add_argument(
             "-f",
             "--force",
             action="store_true",
@@ -53,10 +68,10 @@ class CeurWsCmd(WebserverCmd):
             help="recreate caches e.g. volume table",
         )
         parser.add_argument(
-            "-den",
-            "--dblp_endpoint_name",
-            help="name of dblp endpoint to use %(default)s",
-            default="qlever-dblp",
+            "-uv",
+            "--update",
+            action="store_true",
+            help="update volumes by parsing index.html adding recently published volumes",
         )
         parser.add_argument(
             "-wen",
@@ -69,15 +84,6 @@ class CeurWsCmd(WebserverCmd):
             "--wikidata_update",
             action="store_true",
             help="update tables from wikidata",
-        )
-        parser.add_argument(
-            "-dbu", "--dblp_update", action="store_true", help="update dblp cache"
-        )
-        parser.add_argument(
-            "-nq",
-            "--namedqueries",
-            action="store_true",
-            help="generate named queries [default: %(default)s]",
         )
         return parser
 
@@ -95,9 +101,13 @@ class CeurWsCmd(WebserverCmd):
             manager.loadFromBackup()
             for volume in manager.getList():
                 print(volume)
-        if args.recreate:
+        if args.recreate or args.update:
             manager = VolumeManager()
-            manager.recreate(progress=True)
+            progress_bar=tqdm(total=len(manager.volumes))
+            if args.recreate:
+                manager.recreate(progress_bar=progress_bar)
+            else:
+                manager.update(progress_bar=progress_bar)
         if args.wikidata_update:
             wdsync = WikidataSync.from_args(args)
             wdsync.update(withStore=True)

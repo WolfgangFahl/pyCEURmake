@@ -163,7 +163,7 @@ class WikidataSync(object):
 
     def getRecentlyAddedVolumeList(self) -> list:
         """
-        get the list of volume that have recently been added
+        get the list of volumes that have recently been added
         we do not expect deletions
 
         Returns:

@@ -12,6 +12,7 @@ class View:
     """
 
     noneValue = "-"
+    wdPrefix = "http://www.wikidata.org/entity/"
 
     def getValue(self, obj, attr):
         value = getattr(obj, attr, View.noneValue)
@@ -65,9 +66,9 @@ class View:
                 return ""
             else:
                 return View.noneValue
-        wdPrefix = "http://www.wikidata.org/entity/"
-        if value.startswith(wdPrefix):
-            value = value.replace(wdPrefix, "")
+        
+        if value.startswith(View.wdPrefix):
+            value = value.replace(View.wdPrefix, "")
         url = formatterUrl + value
         link = self.createLink(url, text)
         return link

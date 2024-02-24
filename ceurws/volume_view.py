@@ -6,10 +6,11 @@ Created on 2024-02-23
 from ngwidgets.lod_grid import GridConfig,ListOfDictsGrid
 from ngwidgets.widgets import Link
 from nicegui import ui
-
+import time
 from ceurws.ceur_ws import Volume
 from ceurws.view import View
 from ceurws.wikidatasync import DblpEndpoint
+from ngwidgets.progress import NiceguiProgressbar
 
 
 class VolumeView(View):
@@ -211,6 +212,7 @@ class VolumeListView(View):
         self.solution = solution
         self.parent = parent
         self.wdSync=self.solution.wdSync
+        self.dry_run=True
         self.get_volume_lod()
         self.setup_ui()
         
@@ -220,6 +222,13 @@ class VolumeListView(View):
         """
         try:
             with ui.row() as self.button_row:
+                self.check_recently_added_volumes_button=(
+                    ui.button(
+                        icon="cloud_download",
+                        on_click=self.on_check_recently_update_volumes_button_click
+                    ).classes("btn btn-primary btn-sm col-1")
+                    .tooltip("check for recently added volumes")
+                )
                 self.wikidataButton = (
                     ui.button(
                         icon="web",
@@ -228,7 +237,11 @@ class VolumeListView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("Export to Wikidata")
                 )
+                self.dry_run_switch = ui.switch("dry run").bind_value(self,"dry_run")
                 pass
+            self.progress_bar=NiceguiProgressbar(total=100,desc="added",unit="volume")
+            with ui.row() as self.log_row:
+                self.log_view=ui.html()
             with ui.row() as self.grid_row:    
                 grid_config = GridConfig(
                     key_col="Vol",
@@ -240,7 +253,7 @@ class VolumeListView(View):
                         col_def["maxWidth"] = 400  # width in pixels
                 self.lod_grid.sizeColumnsToFit()
         except Exception as ex:
-            self.handle_exception(ex)
+            self.solution.handle_exception(ex)
             
     async def onWikidataButtonClick(self, _args):
         """
@@ -251,10 +264,55 @@ class VolumeListView(View):
             for row in selected_rows:
                 vol_number=row["#"]
                 volume = self.wdSync.volumesByNumber[vol_number]
-                ui.notify(f"exporting {vol_number}")
+                self.log_view.content=f"{len(selected_rows)} Volumes selected<br>"
+                await self.add_or_update_volume_in_wikidata(volume)
             pass
         except Exception as ex:
-            self.handle_exception(ex)
+            self.solution.handle_exception(ex)
+            
+    async def on_check_recently_update_volumes_button_click(self,args):
+        """
+        handle clicking of the refresh button to get recently added volumes
+        """
+        try:
+            text="checking CEUR-WS index.html for recently added volumes ..."
+            self.log_view.content=text     
+            (
+                volumesByNumber,
+                addedVolumeNumberList,
+            ) = self.wdSync.getRecentlyAddedVolumeList()
+            self.log_view.content+= f"<br>found {len(addedVolumeNumberList)} new volumes"
+            total = len(addedVolumeNumberList)
+            for i, volumeNumber in enumerate(addedVolumeNumberList):
+                if i % 100 == 0 and i != 0:
+                    self.wdSync.storeVolumes()
+                    time.sleep(60)
+                volume = volumesByNumber[volumeNumber]
+                self.updateRecentlyAddedVolume(volume, self.log_view, i + 1, total)
+                url=f"/volume/{volume.number}"
+                text=f"{volume}:{volume.acronym}"
+                link=self.createLink(url,text)
+                self.log_view.content+=f"{link}&nbsp;"   
+            pass
+            self.wdSync.storeVolumes()
+            self.progress_bar.reset()
+        except Exception as ex:
+            self.solution.handle_exception(ex)
+            
+    def updateRecentlyAddedVolume(self, volume, feedback, index, total):
+        """
+        update a recently added Volume
+
+        Args:
+            volume(Volume): the volume to update
+            feedback: the div where to but the feedback message
+            index(int): the relative index of the volume currently being added
+            total(int): the total number of volumes currently being added
+        """
+        feedback.content+= f"reading {index}/{total} from {volume.url}"
+        volume.extractValuesFromVolumePage()
+        self.wdSync.addVolume(volume)
+        self.progressBar.updateProgress(index / total * 100)
         
     def get_volume_lod(self):
         """
@@ -279,3 +337,56 @@ class VolumeListView(View):
                     "valid": validMark,
                 }
             )
+            
+    async def add_or_update_volume_in_wikidata(self,volume:Volume):
+        try:
+            msg=f"trying to add Volume {volume.number} to wikidata"
+            ui.notify(msg)
+            proceedingsWikidataId = await self.createProceedingsItemFromVolume(
+                volume
+            )
+            if proceedingsWikidataId is not None:
+                await self.createEventItemAndLinkProceedings(
+                    volume, proceedingsWikidataId
+                )       
+            else:
+                msg=f"Volume {volume.vol_number} proceedings creation in wikidata failed"
+                ui.notify(msg)
+        except Exception as ex:
+            self.solution.handle_exception(ex)
+            
+    async def createProceedingsItemFromVolume(self, volume: Volume):
+        """
+        Create wikidata item for proceedings of given volume
+        """
+        try:
+            write = not self.dry_run
+            if write:
+                self.wdSync.login()
+            # check if already in wikidata → use URN
+            urn = getattr(volume, "urn")
+            wdItems = self.wdSync.getProceedingWdItemsByUrn(urn)
+            if len(wdItems) > 0:
+                html=f"{volume} already in Wikidata see "
+                delim=""
+                for wdItem in wdItems:
+                    qId = wdItem.split("/")[-1]
+                    link=self.createLink(wdItem,qId)
+                    html+=f"{link}{delim}"
+                    delim=","
+                self.log_view.content+=html+"<br>"
+        except Exception as ex:
+            self.solution.handle_exception(ex)
+             
+    async def createEventItemAndLinkProceedings(
+        self, volume: Volume, proceedingsWikidataId: str = None
+    ):
+        """
+        Create event  wikidata item for given volume and link
+        the proceedings with the event
+
+        Args:
+            volume(Volume): the volume for which to create the event item
+            proceedingsWikidataId: wikidata id of the proceedings
+        """
+        pass

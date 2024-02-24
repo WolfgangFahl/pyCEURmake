@@ -314,7 +314,7 @@ class CeurWsSolution(InputWebSolution):
                             selection=self.wdSync.volumeOptions,
                             with_input=True,
                             on_change=self.volume_selected,
-                        )
+                        ).props("size=120")
                     self.volume_view = VolumeView(self, self.container)
             except Exception as ex:
                 self.handle_exception(ex)

@@ -10,7 +10,7 @@ from dataclasses import asdict
 from ngwidgets.cmd import WebserverCmd
 from tabulate import tabulate
 from tqdm import tqdm
-
+from ceurws.indexparser import ParserConfig
 from ceurws.ceur_ws import VolumeManager
 from ceurws.namedqueries import NamedQueries
 from ceurws.webserver import CeurWsWebServer
@@ -103,11 +103,15 @@ class CeurWsCmd(WebserverCmd):
                 print(volume)
         if args.recreate or args.update:
             manager = VolumeManager()
+            manager.load()
             progress_bar=tqdm(total=len(manager.volumes))
+            parser_config=ParserConfig(progress_bar,
+            debug=args.debug)
+            
             if args.recreate:
-                manager.recreate(progress_bar=progress_bar)
+                manager.recreate(parser_config)
             else:
-                manager.update(progress_bar=progress_bar)
+                manager.update(parser_config)
         if args.wikidata_update:
             wdsync = WikidataSync.from_args(args)
             wdsync.update(withStore=True)

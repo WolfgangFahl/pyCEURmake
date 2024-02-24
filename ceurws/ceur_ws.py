@@ -378,9 +378,12 @@ class VolumeManager(EntityManager):
         """
         update me by a checking for recently added volumes
         """
+        self.set_down_to_volume(parser_config)
+        self.update_or_recreate(parser_config)
+        
+    def set_down_to_volume(self,parser_config):
         max_vol=self.volumes[len(self.volumes)-1]
         parser_config.down_to_volume=max_vol.number+1
-        self.update_or_recreate(parser_config)
         
     def recreate(self,parser_config:ParserConfig):
         """

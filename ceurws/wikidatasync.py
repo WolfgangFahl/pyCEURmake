@@ -22,7 +22,7 @@ from ceurws.ceur_ws import CEURWS, PaperManager, Volume, VolumeManager
 from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 from ceurws.utils.download import Download
 from ceurws.utils.json_cache import JsonCacheManager
-
+from ceurws.indexparser import ParserConfig
 
 class WikidataSync(object):
     """
@@ -172,7 +172,9 @@ class WikidataSync(object):
         """
         self.prepareVolumeManager()
         refreshVm = VolumeManager()
-        refreshVm.loadFromIndexHtml(force=True)
+        parser_config=ParserConfig()
+        refreshVm.set_down_to_volume(parser_config)
+        refreshVm.loadFromIndexHtml()
         refreshVolumesByNumber, _duplicates = LOD.getLookup(
             refreshVm.getList(), "number"
         )

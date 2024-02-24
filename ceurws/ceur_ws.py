@@ -382,8 +382,12 @@ class VolumeManager(EntityManager):
         self.update_or_recreate(parser_config)
         
     def set_down_to_volume(self,parser_config):
-        max_vol=self.volumes[len(self.volumes)-1]
-        parser_config.down_to_volume=max_vol.number+1
+        volumeCount=len(self.volumes)
+        if volumeCount>0:
+            max_vol=self.volumes[-1]
+            parser_config.down_to_volume=max_vol.number+1
+        else:
+            pass
         
     def recreate(self,parser_config:ParserConfig):
         """

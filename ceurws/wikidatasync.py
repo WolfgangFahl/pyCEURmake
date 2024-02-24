@@ -173,8 +173,8 @@ class WikidataSync(object):
         self.prepareVolumeManager()
         refreshVm = VolumeManager()
         parser_config=ParserConfig()
-        refreshVm.set_down_to_volume(parser_config)
-        refreshVm.loadFromIndexHtml()
+        self.vm.set_down_to_volume(parser_config)
+        refreshVm.loadFromIndexHtml(parser_config=parser_config)
         refreshVolumesByNumber, _duplicates = LOD.getLookup(
             refreshVm.getList(), "number"
         )

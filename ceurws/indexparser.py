@@ -316,7 +316,10 @@ class IndexHtmlParser(Textparser):
                 # synchronize on <tr><th and not on end since trailing TR might be missing
                 lineNo = volStartLine + 1
                 if "number" in volume:
-                    volumes[volume["number"]] = volume
+                    volume_number=volume["number"]
+                    if volume_number<self.config.down_to_volume:
+                        break
+                    volumes[volume_number] = volume
                 else:
                     self.log(f"volume not found for volume at {volStartLine}")
         return volumes

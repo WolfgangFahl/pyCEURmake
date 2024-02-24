@@ -12,7 +12,6 @@ from geograpy.locator import City, Country, Location, LocationContext, Region
 from lodstorage.entity import EntityManager
 from lodstorage.jsonable import JSONAble
 from lodstorage.storageconfig import StorageConfig
-from tqdm import tqdm
 
 from ceurws.indexparser import IndexHtmlParser, ParserConfig
 from ceurws.loctime import LoctimeParser
@@ -365,7 +364,7 @@ class VolumeManager(EntityManager):
         load the volumeManager
         """
         if Download.needsDownload(CEURWS.CACHE_FILE):
-            self.loadFromIndexHtml(force=True)
+            self.loadFromIndexHtml()
         else:
             self.loadFromBackup()
 
@@ -379,12 +378,15 @@ class VolumeManager(EntityManager):
         """
         update me by a checking for recently added volumes
         """
+        max_vol=self.volumes[len(self.volumes)-1]
+        parser_config.down_to_volume=max_vol.number+1
         self.update_or_recreate(parser_config)
         
     def recreate(self,parser_config:ParserConfig):
         """
         recreate me by a full parse of all volume files
         """
+       
         self.update_or_recreate(parser_config)
 
     def update_or_recreate(self,parser_config:ParserConfig):
@@ -398,11 +400,16 @@ class VolumeManager(EntityManager):
         progress_bar=parser_config.progress_bar
         loctime_parser = LoctimeParser()
         pm = PaperManager()
+        if parser_config.down_to_volume!=1:
+            pm.fromStore(cacheFile=CEURWS.CACHE_FILE)
         paper_list = pm.getList()
+        
         # first reload me from the main index
-        self.loadFromIndexHtml(force=True)
+        self.loadFromIndexHtml(parser_config)
         invalid = 0
         for volume in self.volumes:
+            if volume.number < parser_config.down_to_volume:
+                break
             _volume_record, soup = volume.extractValuesFromVolumePage()
             if soup:
                 ptp = PaperTocParser(number=volume.number, soup=soup, debug=self.debug)
@@ -438,17 +445,16 @@ class VolumeManager(EntityManager):
         print(f"storing {len(paper_list)} papers")
         pm.store()
 
-    def loadFromIndexHtml(self, force: bool = False):
+    def loadFromIndexHtml(self, parser_config:ParserConfig=None):
         """
         load my content from the index.html file
 
         Args:
-            force(bool): if TRUE fetch index.html 
-            from ceur-ws.org internet homepage
-            else read locally cached version
+            parser_config(ParserConfig): the parser Configuration to use
         """
-        htmlText = self.getIndexHtml(force=force)
-        indexParser = IndexHtmlParser(htmlText, debug=self.debug)
+        force=parser_config.force_download if parser_config else True
+        htmlText = self.getIndexHtml(force)
+        indexParser = IndexHtmlParser(htmlText,parser_config)
         volumeRecords = indexParser.parse()
         for volumeRecord in volumeRecords.values():
             volume = Volume()

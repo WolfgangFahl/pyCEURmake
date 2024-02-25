@@ -9,7 +9,7 @@ import logging
 from lodstorage.lod import LOD
 
 from ceurws.ceur_ws import VolumeManager
-from ceurws.indexparser import IndexHtmlParser
+from ceurws.indexparser import IndexHtmlParser, ParserConfig
 from tests.basetest import Basetest
 
 
@@ -117,8 +117,13 @@ class TestIndexHtml(Basetest):
         tests extraction of series link over seeAlso
         """
         vm = VolumeManager()
-        htmlText = vm.getIndexHtml(force=False)
-        indexParser = IndexHtmlParser(htmlText, debug=self.debug)
+        parser_config=ParserConfig()
+        debug=self.debug
+        #debug=True
+        parser_config.debug=debug
+        parser_config.verbose=debug
+        htmlText = vm.getIndexHtml(parser_config)
+        indexParser = IndexHtmlParser(htmlText,parser_config)
         volumes = indexParser.parse()
         expected_see_also = {  # volume: expected see also list
             3333: [3067],

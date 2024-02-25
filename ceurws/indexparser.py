@@ -320,6 +320,8 @@ class IndexHtmlParser(Textparser):
                     if volume_number<self.config.down_to_volume:
                         break
                     volumes[volume_number] = volume
+                    if self.config.progress_bar:
+                        self.config.progress_bar.update()
                 else:
                     self.log(f"volume not found for volume at {volStartLine}")
         return volumes

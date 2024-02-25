@@ -365,6 +365,7 @@ class VolumeManager(EntityManager):
         """
         if Download.needsDownload(CEURWS.CACHE_FILE):
             self.loadFromIndexHtml()
+            self.store()
         else:
             self.loadFromBackup()
 

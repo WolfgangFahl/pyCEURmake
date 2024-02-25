@@ -46,8 +46,11 @@ class TestIndexHtml(Basetest):
                 )
 
     def testVolumeManagerFromHtml(self):
+        """
+        test loading the volume manager from HTML
+        """
         vm = VolumeManager()
-        vm.loadFromIndexHtml(force=True)
+        vm.loadFromIndexHtml()
         withStore = False
         if withStore:
             vm.store()

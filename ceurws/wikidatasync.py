@@ -135,11 +135,7 @@ class WikidataSync(object):
         prepare my volume manager
         """
         self.vm = VolumeManager()
-        if Download.needsDownload(CEURWS.CACHE_FILE):
-            self.vm.loadFromIndexHtml(force=True)
-            self.vm.store()
-        else:
-            self.vm.loadFromBackup()
+        self.vm.load()
         self.volumesByNumber, _duplicates = LOD.getLookup(self.vm.getList(), "number")
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
@@ -148,7 +144,6 @@ class WikidataSync(object):
         for volume_number in reverse_keys:
             volume = self.volumesByNumber[volume_number]
             self.volumeOptions[volume.number] = f"Vol-{volume.number}:{volume.title}"
-  
 
     def addVolume(self, volume: Volume):
         """

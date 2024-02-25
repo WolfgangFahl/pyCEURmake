@@ -54,14 +54,7 @@ class TestIndexHtml(Basetest):
         withStore = False
         if withStore:
             vm.store()
-
-    def testDates(self):
-        dateFormat = "%d-%b-%Y"
-        now = datetime.datetime.now()
-        nows = now.strftime(dateFormat)
-        print(f"testing {nows} with {dateFormat}")
-        _pdate = datetime.datetime.strptime(nows, dateFormat)
-
+            
     def testReadingHtml(self):
         """
         test reading the HTML file
@@ -71,8 +64,8 @@ class TestIndexHtml(Basetest):
         if debug:
             logging.basicConfig(level=logging.DEBUG)
         vm = VolumeManager()
-        htmlText = vm.getIndexHtml(force=False)
-        indexParser = IndexHtmlParser(htmlText, debug=debug)
+        htmlText = vm.getIndexHtml()
+        indexParser = IndexHtmlParser(htmlText)
         lineCount = len(indexParser.lines)
         self.assertTrue(lineCount > 99000)
         if debug or self.inPublicCI():
@@ -81,6 +74,13 @@ class TestIndexHtml(Basetest):
         # volumes=indexParser.parse(limit=10,verbose=True)
         volumes = indexParser.parse()
         self.checkVolumes(volumes)
+
+    def testDates(self):
+        dateFormat = "%d-%b-%Y"
+        now = datetime.datetime.now()
+        nows = now.strftime(dateFormat)
+        print(f"testing {nows} with {dateFormat}")
+        _pdate = datetime.datetime.strptime(nows, dateFormat)
 
     def testVolumesAsCsv(self):
         """
@@ -97,7 +97,7 @@ class TestIndexHtml(Basetest):
         """
         withStore = False
         vm = VolumeManager()
-        vm.loadFromIndexHtml(force=withStore)
+        vm.loadFromIndexHtml()
         volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), "number")
         debug = self.debug or withStore
         if self.inPublicCI():

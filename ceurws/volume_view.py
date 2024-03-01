@@ -283,6 +283,7 @@ class VolumeListView(View):
             ) = self.wdSync.getRecentlyAddedVolumeList()
             self.log_view.content+= f"<br>found {len(addedVolumeNumberList)} new volumes"
             total = len(addedVolumeNumberList)
+            self.progress_bar.total=total
             for i, volumeNumber in enumerate(addedVolumeNumberList):
                 if i % 100 == 0 and i != 0:
                     self.wdSync.storeVolumes()
@@ -296,6 +297,7 @@ class VolumeListView(View):
             pass
             self.wdSync.storeVolumes()
             self.progress_bar.reset()
+            self.lod_grid.update()
         except Exception as ex:
             self.solution.handle_exception(ex)
             
@@ -312,7 +314,7 @@ class VolumeListView(View):
         feedback.content+= f"reading {index}/{total} from {volume.url}"
         volume.extractValuesFromVolumePage()
         self.wdSync.addVolume(volume)
-        self.progressBar.updateProgress(index / total * 100)
+        self.progress_bar.update_value(index)
         
     def get_volume_lod(self):
         """

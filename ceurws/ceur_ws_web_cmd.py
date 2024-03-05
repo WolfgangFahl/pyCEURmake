@@ -16,7 +16,6 @@ from ceurws.namedqueries import NamedQueries
 from ceurws.webserver import CeurWsWebServer
 from ceurws.wikidatasync import WikidataSync
 
-
 class CeurWsCmd(WebserverCmd):
     """
     command line handling for CEUR-WS Volume browser

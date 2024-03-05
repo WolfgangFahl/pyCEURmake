@@ -4,6 +4,13 @@ from typing import List, Optional
 
 @dataclass
 class DblpScholar:
+    """
+    a dblp scholar
+    
+    example: Tim Berners-Lee
+    https://dblp.org/pid/b/TimBernersLee.html
+    
+    """
     dblp_author_id: str
     label: Optional[str] = None
     wikidata_id: Optional[str] = None
@@ -27,6 +34,9 @@ class DblpPaper:
 
 @dataclass
 class DblpProceeding:
+    """
+    
+    """
     dblp_publication_id: str
     volume_number: int
     title: str

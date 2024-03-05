@@ -4,7 +4,7 @@ Created on 2024-02-23
 @author: wf
 """
 from ngwidgets.widgets import Link
-
+from tabulate import tabulate
 
 class View:
     """
@@ -38,7 +38,20 @@ class View:
         """
         link = Link.create(url, text, target="_blank")
         return link
-
+    
+    def createWdLink(self,qid:str,text:str):
+        wd_url=f"{View.wdPrefix}/{qid}"
+        link=self.createLink(wd_url, text)
+        return link
+    
+    def get_dict_as_html_table(self,data_dict)->str:
+        # Convert the dictionary to a list of lists for tabulate
+        data_list = [[key, value] for key, value in data_dict.items()]
+        
+        # Generate the HTML table
+        html_table = tabulate(data_list, tablefmt="html", headers=["Key", "Value"])
+        return html_table
+        
     def createExternalLink(
         self,
         row: dict,

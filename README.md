@@ -13,7 +13,4 @@ CEUR make python implementation for https://ceur-ws.org/
 ## Docs and Tutorials
 [Wiki](https://wiki.bitplan.com/index.php/PyCEURmake)
 
-## CEUR-WS Volume Browser
-[Volume Browser http://ceur-ws-browser.bitplan.com](http://ceur-ws-browser.bitplan.com)
-
 

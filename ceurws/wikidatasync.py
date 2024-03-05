@@ -16,11 +16,11 @@ from lodstorage.lod import LOD
 from lodstorage.query import EndpointManager, QueryManager
 from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
-from spreadsheet.wikidata import PropertyMapping, UrlReference, WdDatatype, Wikidata
+from ez_wikidata.wikidata import UrlReference, Wikidata
+from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 
 from ceurws.ceur_ws import CEURWS, PaperManager, Volume, VolumeManager
 from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
-from ceurws.utils.download import Download
 from ceurws.utils.json_cache import JsonCacheManager
 from ceurws.indexparser import ParserConfig
 
@@ -51,7 +51,7 @@ class WikidataSync(object):
         self.prepareRDF()
         self.wdQuery = self.qm.queriesByName["Proceedings"]
         self.baseurl = baseurl
-        self.wd = Wikidata(baseurl=self.baseurl, debug=debug)
+        self.wd = Wikidata(debug=debug)
         self.sqldb = SQLDB(CEURWS.CACHE_FILE)
         self.procRecords = None
         self.dbpEndpoint = DblpEndpoint(endpoint=dblp_endpoint_url)
@@ -1069,7 +1069,7 @@ class WikidataSync(object):
             return (
                 None,
                 None,
-                f"An error occured during the creation of the proceedings entry for {volume}",
+                f"An error occured during the creation of the event entry for {volume}",
             )
 
     @classmethod

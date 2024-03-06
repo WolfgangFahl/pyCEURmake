@@ -179,9 +179,10 @@ class VolumeView(View):
         """
         try:
             wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
-            qId, err = self.wdSync.addProceedingsToWikidata(
+            result = self.wdSync.addProceedingsToWikidata(
                 wdRecord, write=True, ignoreErrors=False
             )
+            qId=result.qid
             if qId is not None:
                 msg = f"wikidata export of {self.volume.number} to {qId} done"
                 ui.notify(msg)
@@ -189,7 +190,7 @@ class VolumeView(View):
                     qId=qId, volume=self.volume
                 )
             else:
-                err_msg = f"error:{err}"
+                err_msg = f"error:{result.error}"
                 self.solution.log_view.push(err_msg)
         except Exception as ex:
             self.solution.handle_exception(ex)
@@ -417,15 +418,16 @@ class VolumeListView(View):
                 if self.dry_run:
                     markup=self.get_dict_as_html_table(wdRecord)
                     self.add_msg(markup)
-                qId, errors = self.wdSync.addProceedingsToWikidata(
+                result= self.wdSync.addProceedingsToWikidata(
                     wdRecord, write=write, ignoreErrors=self.ignore_errors
                 )
+                qId=result.qid
                 if qId is not None:
                     proc_link=self.createWdLink(qId, f"Proceedings entry for Vol {volume.number} {qId} was created")
                     self.add_msg(proc_link)
                 else:
                     self.add_msg(f"Creating wikidata Proceedings entry for Vol {volume.number} failed")
-                    for key,value in errors.items():
+                    for key,value in result.errors.items():
                         msg=f"{key}:{value}"
                         self.add_msg(msg)
         except Exception as ex:
@@ -444,20 +446,18 @@ class VolumeListView(View):
         """
         try:
             write=self.optional_login()
-            (
-                proceedingsQId,
-                eventQId,
-                msg,
-            ) = self.wdSync.doCreateEventItemAndLinkProceedings(volume, proceedingsWikidataId,write=write)
+            results = self.wdSync.doCreateEventItemAndLinkProceedings(volume, proceedingsWikidataId,write=write)
             if write:
                 self.wdSync.logout()
-            ui.notify(msg)
-            self.add_msg("<br>"+msg)
-            if eventQId:
-                event_link=self.createWdLink(eventQId,f"Event for Vol {volume.number} {eventQId}<br>")
-                proc_link=self.createWdLink(proceedingsQId, f"Proceedings for Vol {volume.number} {proceedingsQId}<br>")
-                self.add_msg(event_link)
-                self.add_msg(proc_link)
+            for key,result in results.items():
+                if result.qid:
+                    link=self.createWdLink(result.qid,f"{key} for Vol {volume.number} {result.qid}")
+                    self.add_msg("<br>"+link)
+                if result.msg:    
+                    self.add_msg("<br>"+result.msg)
+                if len(result.errors)>0:
+                    for error in result.errors.values():
+                        self.add_msg(f"error {str(error)}")
         except Exception as ex:
             self.solution.handle_exception(ex)
         pass

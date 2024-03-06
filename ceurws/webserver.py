@@ -63,7 +63,6 @@ class CeurWsWebServer(InputWebserver):
                 client,CeurWsSolution.wikidatasync
             )
      
-     
         @app.get("/volumes.json")
         async def volumes():
             """

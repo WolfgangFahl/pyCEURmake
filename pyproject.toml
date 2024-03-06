@@ -36,7 +36,7 @@ dependencies = [
    # https://pypi.org/project/pyGenericSpreadSheet/
    #'pyGenericSpreadSheet>=0.2.4',
    # https://pypi.org/project/py-ez-wikidata/
-   'py-ez-wikidata>=0.1.2',
+   'py-ez-wikidata>=0.1.5',
    # https://pypi.org/project/py-3rdparty-mediawiki/
    'py-3rdparty-mediawiki>=0.9.3',
    # https://github.com/tqdm/tqdm

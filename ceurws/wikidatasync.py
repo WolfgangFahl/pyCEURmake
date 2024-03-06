@@ -16,13 +16,14 @@ from lodstorage.lod import LOD
 from lodstorage.query import EndpointManager, QueryManager
 from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
-from ez_wikidata.wikidata import UrlReference, Wikidata
+from ez_wikidata.wikidata import UrlReference, Wikidata, WikidataResult
 from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 
 from ceurws.ceur_ws import CEURWS, PaperManager, Volume, VolumeManager
 from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 from ceurws.utils.json_cache import JsonCacheManager
 from ceurws.indexparser import ParserConfig
+
 
 class WikidataSync(object):
     """
@@ -400,14 +401,17 @@ class WikidataSync(object):
         """
         if write:
             self.login()
-        qid, errors = self.doAddProceedingsToWikidata(record, write, ignoreErrors)
+        result = self.doAddProceedingsToWikidata(record, write, ignoreErrors)
         if write:
             self.logout()
-        return qid, errors
+        return result
 
     def doAddProceedingsToWikidata(
-        self, record: dict, write: bool = True, ignoreErrors: bool = False
-    ):
+        self, 
+        record: dict, 
+        write: bool = True, 
+        ignoreErrors: bool = False
+    )->WikidataResult:
         """
         Creates a wikidata proceedings entry for the given record
 
@@ -415,7 +419,8 @@ class WikidataSync(object):
             record(dict): the data to add
             write(bool): if True actually write
             ignoreErrors(bool): if True ignore errors
-
+        Returns:
+            WikidataResult: the result of the add operation
         """
         mappings = [
             PropertyMapping(
@@ -484,14 +489,14 @@ class WikidataSync(object):
             ),
         ]
         reference = UrlReference(url=record.get("ceurwsUrl"))
-        qId, errors = self.wd.add_record(
+        result = self.wd.add_record(
             record=record,
             property_mappings=mappings,
             write=write,
             ignore_errors=ignoreErrors,
             reference=reference,
         )
-        return qId, errors
+        return result
 
     def askWikidata(self, askQuery: str) -> bool:
         try:
@@ -532,7 +537,7 @@ class WikidataSync(object):
         proceedingsWikidataId: str = None,
         write: bool = True,
         ignoreErrors: bool = False,
-    ):
+    )->WikidataResult:
         """
         add the link between the wikidata proceedings item and the given event wikidata item
         Args:
@@ -541,6 +546,9 @@ class WikidataSync(object):
             proceedingsWikidataId: wikidata id of the proceedings item
             write(bool): if True actually write
             ignoreErrors(bool): if True ignore errors
+            
+        Returns:
+            WikidataResult: the result of the add operation
         """
         if proceedingsWikidataId is None:
             proceedingsWikidataId = self.getWikidataIdByVolumeNumber(
@@ -559,7 +567,7 @@ class WikidataSync(object):
         volume_url = Volume.getVolumeUrlOf(volumeNumber)
         reference = UrlReference(volume_url)
         record = {"isProceedingsFrom": eventItemQid}
-        _, errors = self.wd.add_record(
+        result = self.wd.add_record(
             item_id=proceedingsWikidataId,
             record=record,
             property_mappings=mappings,
@@ -567,7 +575,7 @@ class WikidataSync(object):
             ignore_errors=ignoreErrors,
             reference=reference,
         )
-        return proceedingsWikidataId, errors
+        return result
 
     def doAddEventToWikidata(
         self, record: dict, write: bool = True, ignoreErrors: bool = False
@@ -580,7 +588,7 @@ class WikidataSync(object):
             ignoreErrors(bool): if True ignore errors
 
         Returns:
-            (qid, errors) id of the created entry and occurred errors
+            WikidataResult: the result of the add operation
         """
         entityQid = record.get("instanceOf")
         entity = record.get("description")
@@ -657,14 +665,14 @@ class WikidataSync(object):
         ]
         reference_url = record.pop("referenceUrl")
         reference = UrlReference(url=reference_url)
-        qId, errors = self.wd.add_record(
+        result = self.wd.add_record(
             record=record,
             property_mappings=mappings,
             write=write,
             ignore_errors=ignoreErrors,
             reference=reference,
         )
-        return qId, errors
+        return result
 
     def addDblpPublicationId(
         self,
@@ -672,7 +680,7 @@ class WikidataSync(object):
         dblpRecordId: str = None,
         write: bool = True,
         ignoreErrors: bool = False,
-    ):
+    )->WikidataResult:
         """
         try to add the dblp publication id (P8978) to the proceedings record
         Args:
@@ -680,6 +688,9 @@ class WikidataSync(object):
             dblpRecordId: dblp record id to add to the proceedings item. If None query dblp for the record id
             write: if True actually write
             ignoreErrors(bool): if True ignore errors
+            
+        Returns:
+            WikidataResult: the result of the add operation
         """
         proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
         if proceedingsWikidataId is None:
@@ -723,7 +734,7 @@ class WikidataSync(object):
         volume_url = Volume.getVolumeUrlOf(volumeNumber)
         reference = UrlReference(volume_url)
         record = {"DBLP publication ID": dblpRecordId}
-        _, errors = self.wd.add_record(
+        result = self.wd.add_record(
             item_id=proceedingsWikidataId,
             record=record,
             property_mappings=mappings,
@@ -731,7 +742,7 @@ class WikidataSync(object):
             ignore_errors=ignoreErrors,
             reference=reference,
         )
-        return True, errors
+        return result
 
     def addAcronymToItem(
         self,
@@ -789,7 +800,7 @@ class WikidataSync(object):
             ignoreErrors(bool): if True ignore errors
 
         Returns:
-            (qid, errors) id of the created entry and occurred errors
+            WikidataResult: the result of the add operation
         """
         mappings = [
             PropertyMapping(
@@ -1002,8 +1013,11 @@ class WikidataSync(object):
             return academicWorkshop
 
     def doCreateEventItemAndLinkProceedings(
-        self, volume: Volume, proceedingsWikidataId: str = None, write: bool = False
-    ):
+        self, 
+        volume: Volume, 
+        proceedingsWikidataId: str = None, 
+        write: bool = False
+    )->Dict[str,WikidataResult]:
         """
         Create event  wikidata item for given volume and link the proceedings with the event
         Args:
@@ -1014,63 +1028,63 @@ class WikidataSync(object):
         Returns:
             proceedingsQId, eventQId, msg
         """
+        results={} 
         volNumber = getattr(volume, "number")
         if proceedingsWikidataId is None and self.checkIfProceedingsFromExists(
             volNumber, eventItemQid=None
         ):
             # link between proceedings and event already exists
             proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volNumber)
-            return (
-                proceedingsWikidataId,
-                None,
-                "Event and Link between proceedings and event already exists",
+            results["Proceedings"]=WikidataResult(
+                qid=proceedingsWikidataId,
+                msg=f"Proceedings for Vol-{volNumber} already exists",
             )
         dblpEntityIds = self.dbpEndpoint.getDblpIdByVolumeNumber(volNumber)
-        if len(dblpEntityIds) > 1:
-            return (
-                None,
-                None,
-                f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}",
-            )
+        dblpEntityId=None
+        msg=None
+        if len(dblpEntityIds) > 1:    
+            msg=f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}",
         elif len(dblpEntityIds) == 1:
             dblpEntityId = dblpEntityIds[0]
         else:
             dblpEntityId = None
+        results["dblp"]=WikidataResult(
+            qid=dblpEntityId,
+            msg=msg
+        )
         wdItems = self.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
         msg = ""
         eventQid = None
-        errors = None
         if len(wdItems) == 0:
             # event item does not exist → create a new one
             volume.resolveLoctime()
             eventRecord = self.getWikidataEventRecord(volume)
-            eventQid, errors = self.doAddEventToWikidata(
+            event_result= self.doAddEventToWikidata(
                 record=eventRecord, write=write
             )
-            msg += "Created Event item;"
+            eventQid=event_result.qid
+            results["Event"]=event_result
         elif len(wdItems) == 1:
-            # the event item already exists
-            eventQid = wdItems[0]
-            msg += "Event item already exists;"
+            results["Event"]=WikidataResult(
+                # the event item already exists
+                qid = wdItems[0],
+                msg = "Event item already exists;"
+            )
         else:
-            return None, None, f"Multiple event entries exist: {','.join(wdItems)}"
+            results["Event"]=WikidataResult(
+                msg=f"Multiple event entries exist: {','.join(wdItems)}"
+            )
         if eventQid is not None:
             # add link between Proceedings and the event item
-            proceedingsWikidataId, errors = self.addLinkBetweenProceedingsAndEvent(
+            link_result = self.addLinkBetweenProceedingsAndEvent(
                 volumeNumber=volNumber,
                 eventItemQid=eventQid,
                 proceedingsWikidataId=proceedingsWikidataId,
                 write=write,
             )
-            msg += "Added Link between Proceedings and Event item;"
-            return proceedingsWikidataId, eventQid, msg
-
-        else:
-            return (
-                None,
-                None,
-                f"An error occured during the creation of the event entry for {volume}",
-            )
+            link_result.msg="Added Link between Proceedings and Event item;"
+            results["link"]=link_result
+        return results
 
     @classmethod
     def removeWdPrefix(cls, value: str):
@@ -1125,7 +1139,6 @@ class WikidataSync(object):
             name = record.get("personLabel")
             res[item_id] = name
         return res
-
 
 class DblpEndpoint:
     """

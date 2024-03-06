@@ -623,13 +623,17 @@ class TestWikidataSync(Basetest):
                 if event_record.get("homepage", None) is None:
                     print("adding", homepage)
                     record = {"homepage": homepage}
-                    self.wdSync.wd.add_record(
+                    result=self.wdSync.wd.add_record(
                         record=record,
                         item_id=event_qid,
                         property_mappings=prop_mapping,
                         write=True,
                         reference=UrlReference(url=parser.volumeUrl(volnumber)),
                     )
+                    if (len(result.errors)>0):
+                        print(f"error adding homepage for volume  {volnumber} failed")
+                        for index,error in enumerate(result.errors.values()):
+                            print(f"{index+1}:{str(error)}")
                 else:
                     print("event has already a homepage")
             else:

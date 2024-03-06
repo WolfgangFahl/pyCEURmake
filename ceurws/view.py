@@ -85,3 +85,29 @@ class View:
         url = formatterUrl + value
         link = self.createLink(url, text)
         return link
+    
+    def createItemLink(self, row: dict, key: str, separator: str = None) -> str:
+        """
+        create an item link
+        Args:
+            row: row object with the data
+            key: key of the value for which the link is created
+            separator: If not None split the value on the separator and create multiple links
+        """
+        value = self.getRowValue(row, key)
+        if value == View.noneValue:
+            return value
+        item = row[key]
+        itemLabel = row[f"{key}Label"]
+        itemLink = ""
+        if separator is not None:
+            item_parts = item.split(separator)
+            itemLabel_parts = itemLabel.split(separator)
+            links = []
+            for url, label in zip(item_parts, itemLabel_parts):
+                link = self.createLink(url, label)
+                links.append(link)
+            itemLink = "<br>".join(links)
+        else:
+            itemLink = self.createLink(item, itemLabel)
+        return itemLink

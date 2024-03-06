@@ -451,7 +451,11 @@ class VolumeListView(View):
                 self.wdSync.logout()
             for key,result in results.items():
                 if result.qid:
-                    link=self.createWdLink(result.qid,f"{key} for Vol {volume.number} {result.qid}")
+                    if key=="dblp":
+                        url=f"https://dblp.org/db/{result.qid}.html"
+                        link=self.createLink(url, f"dblp {result.qid}")
+                    else:
+                        link=self.createWdLink(result.qid,f"{key} for Vol {volume.number} {result.qid}")
                     self.add_msg("<br>"+link)
                 if result.msg:    
                     self.add_msg("<br>"+result.msg)

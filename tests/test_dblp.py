@@ -11,9 +11,14 @@ class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""
 
     def setUp(self, debug=False, profile=True):
+        """
+        override Basetest.setUp
+        """
         super().setUp(debug, profile)
         self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl)
+        # force cache refresh
+        self.dblpEndpoint.cache_manager.base_dir="/tmp"
 
     #@unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_getWikidataIdByVolumeNumber(self):

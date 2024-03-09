@@ -137,8 +137,8 @@ class CeurWsCmd(WebserverCmd):
             for _step, (cache_name, cache_function) in enumerate(
                 endpoint.cache_functions.items(), start=1
             ):
-                info = endpoint.json_cache_manager.get_cache_info(cache_name)
-                table_data.append(asdict(info))
+                cache=endpoint.cache_manager.get_cache_by_name(cache_name)
+                table_data.append(asdict(cache))
             table = tabulate(table_data, headers="keys", tablefmt="grid")
             print(table)
             pass

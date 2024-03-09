@@ -204,54 +204,48 @@ class DblpEndpoint:
             force_query(bool): if True force query
 
         """
-        query = self.qm.queriesByName["CEUR-WS all Volumes"]
-        cache_name = "dblp/volumes"
+        cache_name="dblp/volumes"
+        lod=self.get_lod(cache_name,"CEUR-WS all Volumes",force_query)
         volumes = []
-        if not force_query:
-            lod = self.cache_manager.load(cache_name)
-            volumes = [DblpProceeding(**d) for d in lod]
-        if force_query or lod is None:
-            lod = self.sparql.queryAsListOfDicts(query.query)
-            editors = self.get_all_ceur_editors(force_query=force_query)
-            editorsById = {a.dblp_author_id: a for a in editors}
-            papers = self.get_all_ceur_papers(force_query=force_query)
-            papersByProceeding = {
-                key: list(group)
-                for key, group in groupby(
+        editors = self.get_all_ceur_editors(force_query=force_query)
+        editorsById = {a.dblp_author_id: a for a in editors}
+        papers = self.get_all_ceur_papers(force_query=force_query)
+        papersByProceeding = {
+            key: list(group)
+            for key, group in groupby(
                     papers, lambda paper: paper.dblp_proceeding_id
-                )
-            }
-            volumes = []
-            for d in lod:
-                if int(d.get("volume_number")) == 3000:
-                    pass
-                vol_editors = []
-                editor_str = d.get("editor", "")
-                # >;<  qlever quirk until 2023-12
-                if ">;<" in editor_str:
-                    delim = ">;<"
-                else:
-                    delim = ";"
-                for dblp_author_id in editor_str.split(delim):
-                    editor = editorsById.get(dblp_author_id, None)
-                    if editor:
-                        vol_editors.append(editor)
-                volume = DblpProceeding(
-                    dblp_publication_id=d.get("proceeding"),
-                    volume_number=int(d.get("volume_number")),
-                    dblp_event_id=d.get("dblp_event_id"),
-                    title=d.get("title"),
-                    editors=vol_editors,
-                    papers=papersByProceeding.get(d.get("proceeding")),
-                )
-                volumes.append(volume)
+            )
+        }
+        for d in lod:
+            if int(d.get("volume_number")) == 3000:
+                pass
+            vol_editors = []
+            editor_str = d.get("editor", "")
+            # >;<  qlever quirk until 2023-12
+            if ">;<" in editor_str:
+                delim = ">;<"
+            else:
+                delim = ";"
+            for dblp_author_id in editor_str.split(delim):
+                editor = editorsById.get(dblp_author_id, None)
+                if editor:
+                    vol_editors.append(editor)
+            volume = DblpProceeding(
+                dblp_publication_id=d.get("proceeding"),
+                volume_number=int(d.get("volume_number")),
+                dblp_event_id=d.get("dblp_event_id"),
+                title=d.get("title"),
+                editors=vol_editors,
+                papers=papersByProceeding.get(d.get("proceeding")),
+            )
+            volumes.append(volume)
             self.cache_manager.store(
                 cache_name, [dataclasses.asdict(volume) for volume in volumes]
             )
             volume_by_number, _errors = LOD.getLookup(volumes, "volume_number")
             for number, volume in volume_by_number.items():
                 self.cache_manager.store(
-                    f"dblp/Vol-{number}/metadata", dataclasses.asdict(volume)
+                    f"dblp/Vol-{number}/metadata", volume
                 )
         return volumes
 

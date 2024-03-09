@@ -2,21 +2,24 @@ import json
 import os
 from urllib.error import HTTPError
 
-import justpy as jp
 import spreadsheet
-from jpwidgets.bt5widgets import Alert, Collapsible, IconButton
 from lodstorage.query import Endpoint, Query, QuerySyntaxHighlight
 from spreadsheet.spreadsheet import SpreadSheet, SpreadSheetType
 from tabulate import tabulate
 
-
-class QueryDisplay:
+class QueryView:
     """
-    display queries
+    view for SPAQRL queries
     """
 
     def __init__(
-        self, app, name: str, a, filenameprefix, text, sparql, endpointConf: Endpoint
+        self, 
+        app, name: str, 
+        a, 
+        filenameprefix, 
+        text, 
+        sparql, 
+        endpointConf: Endpoint
     ):
         """
         Args:

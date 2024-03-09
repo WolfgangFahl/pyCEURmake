@@ -8,6 +8,7 @@ from ceurws.wikidatasync import DblpEndpoint
 from ngwidgets.lod_grid import ListOfDictsGrid
 from nicegui import ui
 from typing import Dict,List
+from _ast import Try
 
 class WikidataView(View):
     """
@@ -89,14 +90,34 @@ class WikidataView(View):
         self.lod_grid.load_lod(lod)
         self.lod_grid.sizeColumnsToFit()
         
+    async def on_refresh_button_click(self):
+        """
+        handle the refreshing of the proceedings from wikidata
+        """
+        try:
+            ui.notify("")
+            pass
+        except Exception as ex:
+            self.solution.handle_exception(ex)
+        
     def setup_ui(self):
         """
         setup my User Interface elements
         """
         with self.parent:
+            with ui.row() as self.tool_bar:
+                self.refresh_button = (
+                    ui.button(
+                        icon="refresh",
+                        on_click=self.on_refresh_button_click,
+                    )
+                    .classes("btn btn-primary btn-sm col-1")
+                    .tooltip("Refresh from Wikidata SPARQL endpoint")
+                )
             #grid_config = GridConfig(
             #        key_col="Vol",
             #        multiselect=True)
+            
             self.lod_grid=ListOfDictsGrid()
             ui.timer(0,self.update_proceedings,once=True)
             pass

@@ -15,7 +15,7 @@ from lodstorage.yamlable import lod_storable
 from itertools import groupby
 from urllib.error import HTTPError
 from typing import Dict, List, Union
-
+            
     
 class DblpEndpoint:
     """
@@ -43,6 +43,24 @@ class DblpEndpoint:
             "dblp/papers": self.get_all_ceur_papers,
             "dblp/volumes": self.get_all_ceur_proceedings,
         }
+        
+    def get_lod(self,
+        cache_name:str,
+        query_name:str,
+        force_query: bool = False)->List:
+        """
+        get the list of dicts for the given cache and query names 
+        optionally forcing a query
+        """
+        cache=self.cache_manager.get_cache_by_name(cache_name)
+        if cache.is_stored and not force_query:
+            lod=self.cache_manager.load(cache_name)
+        else:
+            query = self.qm.queriesByName[query_name]
+            lod=self.sparql.queryAsListOfDicts(query.query)
+            self.cache_manager.store(cache_name, lod)
+        return lod
+
 
     def get_all_ceur_authors(self, force_query: bool = False) -> List[DblpScholar]:
         """
@@ -51,23 +69,11 @@ class DblpEndpoint:
         Args:
             force_query(bool): if True force query
         """
-        query = self.qm.queriesByName["CEUR-WS Paper Authors"]
-        cache_name = "dblp/authors"
-        if not force_query:
-            lod = self.cache_manager.load(cache_name)
-        if force_query or lod is None:
-            lod = self.sparql.queryAsListOfDicts(query.query)
-            authors = []
-            for d in lod:
-                author = DblpScholar(**d)
-                authors.append(author)
-            authors_lod=[dataclasses.asdict(author) for author in authors]
-            self.cache_manager.store(
-                cache_name, authors_lod
-            )
-        else:
-            authors = [DblpScholar(**d) for d in lod]
-
+        lod=self.get_lod("dblp/authors","CEUR-WS Paper Authors",force_query)
+        authors = []
+        for d in lod:
+            author = DblpScholar(**d)
+            authors.append(author)
         return authors
 
     def get_all_ceur_editors(self, force_query: bool = False) -> List[DblpScholar]:
@@ -78,21 +84,11 @@ class DblpEndpoint:
             force_query(bool): if True force query
 
         """
-        query = self.qm.queriesByName["CEUR-WS all Editors"]
-        cache_name = "dblp/editors"
-        if not force_query:
-            lod = self.cache_manager.load(cache_name)
-        if force_query or lod is None:
-            lod = self.sparql.queryAsListOfDicts(query.query)
-            editors = []
-            for d in lod:
-                editor = DblpScholar(**d)
-                editors.append(editor)
-            self.cache_manager.store(
-                cache_name, [dataclasses.asdict(editor) for editor in editors]
-            )
-        else:
-            editors = [DblpScholar(**d) for d in lod]
+        lod=self.get_lod("dblp/editors","CEUR-WS all Editors",force_query)
+        editors = []
+        for d in lod:
+            editor = DblpScholar(**d)
+            editors.append(editor)
         return editors
 
     def get_all_ceur_papers(self, force_query: bool = False) -> List[DblpPaper]:
@@ -107,7 +103,8 @@ class DblpEndpoint:
         papers = []
         if not force_query:
             lod = self.cache_manager.load(cache_name)
-            papers = [DblpPaper(**d) for d in lod]
+            if lod:
+                papers = [DblpPaper(**d) for d in lod]
         if force_query or lod is None:
             lod = self.sparql.queryAsListOfDicts(query.query)
             authors = self.get_all_ceur_authors(force_query)

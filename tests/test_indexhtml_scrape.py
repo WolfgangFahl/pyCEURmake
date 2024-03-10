@@ -24,16 +24,21 @@ class TestIndexHtml(Basetest):
         # default timeout is 3 secs - make it 12
         self.timeout = 12.0
 
-    def checkVolumes(self, volumes):
+    def checkVolumes(self,volumes):
         volumeCount = len(volumes)
         print(f"{volumeCount} volumes found")
+        prev_diff = None  # Track the previous difference
+    
         for index, volume in enumerate(volumes.values()):
             volumeNumber = volume["number"]
             expectedVolumeNumber = volumeCount - index
-            if volumeNumber != expectedVolumeNumber:
-                print(
-                    f"{expectedVolumeNumber:4}:{volumeNumber:4} {expectedVolumeNumber-volumeNumber}"
-                )
+            diff = expectedVolumeNumber - volumeNumber
+    
+            # Print only if the difference changes
+            if diff != prev_diff:
+                print(f"{expectedVolumeNumber:4}:{volumeNumber:4} {diff}")
+                prev_diff = diff
+
 
     def volumesAsCsv(self, volumes, minVolumeNumber, maxVolumeNumber):
         """

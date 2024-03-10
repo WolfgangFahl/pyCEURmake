@@ -11,18 +11,13 @@ import shutil
 
 class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""
-
-    def setUp(self, debug=False, profile=True):
-        """
-        override Basetest.setUp
-        """
-        super().setUp(debug, profile)
-        self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
-        self.dblpEndpoint = DblpEndpoint(self.endpointUrl)
-        # force cache refresh
-        self.dblpEndpoint.cache_manager.base_dir="/tmp"
-        self.rm_dir("/tmp/.ceurws")
-
+    
+    @classmethod
+    def setUpClass(cls)->None:
+        super(TestDblpEndpoint, cls).setUpClass()
+        cls.rm_dir("/tmp/.ceurws")
+        
+    @classmethod
     def rm_dir(self,directory: str):
         """
         Recursively removes all files and directories within the specified directory.
@@ -37,6 +32,16 @@ class TestDblpEndpoint(Basetest):
             for name in dirs:
                 shutil.rmtree(os.path.join(root, name))
         
+
+    def setUp(self, debug=False, profile=True):
+        """
+        override Basetest.setUp
+        """
+        super().setUp(debug, profile)
+        self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
+        self.dblpEndpoint = DblpEndpoint(self.endpointUrl)
+        # force cache refresh
+        self.dblpEndpoint.cache_manager.base_dir="/tmp"
 
     #@unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_getWikidataIdByVolumeNumber(self):
@@ -166,7 +171,7 @@ class TestDblpEndpoint(Basetest):
         if debug:
             print(f"found {len(volumes.lod)} volumes")
         # there should be over 2500 dblp indexed volumes so far    
-        self.assertGreaterEqual(2500, len(volumes.lod))
+        self.assertGreaterEqual(len(volumes.lod),2500)
 
     #@unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_get_ceur_proceeding(self):

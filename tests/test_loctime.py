@@ -39,6 +39,7 @@ class TestLoctimeParser(Basetest):
         """
         Test function to analyze loctime and count occurrences of parts.
         """
+        debug=self.debug
         ltp = self.loctime_parser
         for v in self.volumes:
             loctime = v["loctime"]
@@ -56,16 +57,19 @@ class TestLoctimeParser(Basetest):
             for part, count in counter.most_common(100):
                 percentage_table.add_value(row_title=f"{key}: {part}", value=count)
 
-        print(percentage_table.generate_table())
+        if debug:
+            print(percentage_table.generate_table())
 
         for reverse_pos in range(1, 8):
             counter = ltp.counters[str(reverse_pos)]
-            print(f"== {reverse_pos} ({len(counter)}) ==")
+            if debug:
+                print(f"== {reverse_pos} ({len(counter)}) ==")
             # Sorting the counter items by count in descending order
             for part, count in sorted(
                 counter.items(), key=lambda item: item[1], reverse=True
             ):
-                print(f"  {part}: {count}")
+                if debug:
+                    print(f"  {part}: {count}")
 
         pareto_dict = ltp.create_pareto_analysis(level=2)
         if self.debug:
@@ -82,4 +86,5 @@ class TestLoctimeParser(Basetest):
 
             for threshold, count in pareto_range.items():
                 percentage_table.add_value(f"{threshold:.1f}%", count)
-            print(percentage_table.generate_table())
+            if debug:    
+                print(percentage_table.generate_table())

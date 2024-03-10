@@ -89,6 +89,7 @@ class WikidataSync(object):
         wd_sync = cls(
             baseurl=wd_ep.endpoint, dblp_endpoint_url=dblp_ep.endpoint, debug=debug
         )
+        wd_sync.wikidata_endpoint=wd_ep
         return wd_sync
 
     def login(self):

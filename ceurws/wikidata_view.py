@@ -46,9 +46,7 @@ class WikidataView(View):
         """
         reverseLod = sorted(
             olod,
-            key=lambda row: int(row["sVolume"])
-            if "sVolume" in row
-            else int(row["Volume"]),
+            key=lambda row: int(row.get("sVolume") or row.get("Volume") or 0),
             reverse=True,
         )
         lod = []
@@ -116,7 +114,9 @@ class WikidataView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("Refresh from Wikidata SPARQL endpoint")
                 )
-                self.query_view=QueryView(self.solution)
+                self.query_view=QueryView(self.solution,
+                    name="CEUR-WS wikidata sync",
+                    sparql_endpoint=self.solution.wdSync.wikidata_endpoint)
                 self.query_view.show_query(self.solution.wdSync.wdQuery.query)
             
             #grid_config = GridConfig(

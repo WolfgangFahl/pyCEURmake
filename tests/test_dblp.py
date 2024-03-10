@@ -43,7 +43,8 @@ class TestDblpEndpoint(Basetest):
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl,debug=self.debug)
         # force cache refresh
         self.dblpEndpoint.cache_manager.base_dir="/tmp" 
-        self.dblpEndpoint.progress_bar=tqdm(total=100) # expected 36 secs = 100%    
+        if not self.inPublicCI():
+            self.dblpEndpoint.progress_bar=tqdm(total=100) # expected 36 secs = 100%    
       
     #@unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_getWikidataIdByVolumeNumber(self):

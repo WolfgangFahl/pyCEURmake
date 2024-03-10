@@ -13,4 +13,8 @@ CEUR make python implementation for https://ceur-ws.org/
 ## Docs and Tutorials
 [Wiki](https://wiki.bitplan.com/index.php/PyCEURmake)
 
+## Demos
+[CEUR-Volume Browser at RWTH Aachen i5](http://cvb.wikidata.dbis.rwth-aachen.de/)
+
+
 

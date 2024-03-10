@@ -123,9 +123,13 @@ class TestDblpEndpoint(Basetest):
         """
         tests get_all_ceur_authors
         """
-        authors = self.dblpEndpoint.get_all_ceur_authors()
-        authorsById = {a.dblp_author_id: a for a in authors}
-        self.assertGreaterEqual(len(authorsById), 40000)
+        dblp_authors = self.dblpEndpoint.dblp_authors
+        dblp_authors.load()
+        debug=True
+        if debug:
+            print(f"found {len(dblp_authors.authors)} authors")
+            print(f"found {len(dblp_authors.authorsById)} authors by id")
+        self.assertGreaterEqual(len(dblp_authors.authorsById), 75700)
         expected_decker = DblpScholar(
             dblp_author_id="https://dblp.org/pid/d/StefanDecker",
             label="Stefan Decker",
@@ -133,14 +137,16 @@ class TestDblpEndpoint(Basetest):
             orcid_id="0000-0001-6324-7164",
             #gnd_id="173443443",
         )
-        decker = authorsById.get("https://dblp.org/pid/d/StefanDecker")
+        decker = dblp_authors.authorsById.get("https://dblp.org/pid/d/StefanDecker")
         self.assertEqual(expected_decker, decker)
         
     def test_get_all_ceur_editors(self):
         """
         test get all CEUR-WS editors
         """
-        editors=self.dblpEndpoint.get_all_ceur_editors()
+        dblp_editors=self.dblpEndpoint.dblp_editors
+        dblp_editors.load()
+        editors=dblp_editors.editors
         debug=True
         if debug:
             print(f"found {len(editors)} CEUR-WS editors")
@@ -151,10 +157,10 @@ class TestDblpEndpoint(Basetest):
         """
         tests get_all_ceur_papers
         """
-        papers = self.dblpEndpoint.get_all_ceur_papers()
-        papersById = {p.dblp_publication_id: p for p in papers}
-        self.assertGreaterEqual(len(papers), 40000)
-        paper = papersById.get("https://dblp.org/rec/conf/semweb/FahlHW0D22")
+        dblp_papers = self.dblpEndpoint.dblp_papers
+        dblp_papers.load()
+        self.assertGreaterEqual(len(dblp_papers.papers), 40000)
+        paper = dblp_papers.papersById.get("https://dblp.org/rec/conf/semweb/FahlHW0D22")
         self.assertIn(
             "https://dblp.org/pid/d/StefanDecker",
             [a.dblp_author_id for a in paper.authors],
@@ -164,14 +170,14 @@ class TestDblpEndpoint(Basetest):
         """
         test the dblp volumes handling
         """
-        volumes=DblpVolumes(endpoint=self.dblpEndpoint)
-        volumes.load()
+        dblp_volumes=self.dblpEndpoint.dblp_volumes
+        dblp_volumes.load()
         debug=self.debug
         debug=True
         if debug:
-            print(f"found {len(volumes.lod)} volumes")
+            print(f"found {len(dblp_volumes.lod)} volumes")
         # there should be over 2500 dblp indexed volumes so far    
-        self.assertGreaterEqual(len(volumes.lod),2500)
+        self.assertGreaterEqual(len(dblp_volumes.lod),2500)
 
     #@unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_get_ceur_proceeding(self):

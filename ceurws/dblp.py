@@ -3,6 +3,7 @@ Created on 2024-03-09
 
 @author: wf
 """
+import time
 import dataclasses
 from dataclasses import dataclass
 import os
@@ -132,14 +133,9 @@ class DblpPapers(DblpManager):
                     authors=authors,
                 )
                 self.papers.append(paper)
-            papers_by_volume = LOD.getLookup(
+            self.papers_by_volume = LOD.getLookup(
                 self.papers, "volume_number", withDuplicates=True
             )
-            for volume_number, vol_papers in papers_by_volume.items():
-                self.endpoint.cache_manager.store(
-                    f"dblp/Vol-{volume_number}/papers",
-                    [dataclasses.asdict(paper) for paper in vol_papers],
-                )
             self.papersByProceeding = {
                 key: list(group)
                 for key, group in groupby(
@@ -147,7 +143,17 @@ class DblpPapers(DblpManager):
                 )
             }
             self.papersById = {p.dblp_publication_id: p for p in self.papers}
- 
+            # papers per volume
+            for volume_number, vol_papers in sorted(self.papers_by_volume.items()):
+                vol_paper_lod=[dataclasses.asdict(paper) for paper in vol_papers]
+                cache_name=f"dblp/Vol-{volume_number}/papers"
+                if self.endpoint.debug:
+                    print(f"caching {cache_name}")
+                self.endpoint.cache_manager.store(
+                    cache_name,
+                    vol_paper_lod,
+                )
+  
 class DblpVolumes(DblpManager):
     """
     Manage all DBLP indexed volumes.
@@ -191,11 +197,14 @@ class DblpVolumes(DblpManager):
                     papers=dblp_papers.papersByProceeding.get(d.get("proceeding")),
                 )
                 volumes.append(volume)
-                volume_by_number, _errors = LOD.getLookup(volumes, "volume_number")
-                for number, volume in volume_by_number.items():
-                    self.endpoint.cache_manager.store(
-                        f"dblp/Vol-{number}/metadata", volume
-                    )
+            volume_by_number, _errors = LOD.getLookup(volumes, "volume_number")
+            for number, volume in sorted(volume_by_number.items()):
+                cache_name=f"dblp/Vol-{number}/metadata"
+                if self.endpoint.debug:
+                    print(f"caching {cache_name}")
+                self.endpoint.cache_manager.store(
+                    cache_name, volume
+                )
         return self.volumes
     
 class DblpEndpoint:
@@ -206,10 +215,11 @@ class DblpEndpoint:
     DBLP_REC_PREFIX = "https://dblp.org/rec/"
     DBLP_EVENT_PREFIX = "https://dblp.org/db/"
 
-    def __init__(self, endpoint):
+    def __init__(self, endpoint,debug:bool=False):
         """
         constructor
         """
+        self.debug=debug
         self.sparql = SPARQL(endpoint)
         path = os.path.dirname(__file__)
         qYamlFile = f"{path}/resources/queries/dblp.yaml"
@@ -233,16 +243,34 @@ class DblpEndpoint:
         query_name:str,
         force_query: bool = False)->List:
         """
-        get the list of dicts for the given cache and query names 
-        optionally forcing a query
+        Get the list of dictionaries for the given cache and query names,
+        optionally forcing a query.
+    
+        Args:
+            cache_name (str): The name of the cache to load or store the LOD.
+            query_name (str): The name of the query to execute if the data is not cached or forced to query.
+            force_query (bool): If True, forces the query execution even if the data is cached. Defaults to False.
+    
+        Returns:
+            List[Dict]: The list of dictionaries loaded either from cache or by executing the SPARQL query.
         """
+        start_time = time.time()  # Record the start time of the operation
         cache=self.cache_manager.get_cache_by_name(cache_name)
         if cache.is_stored and not force_query:
+            if self.debug:
+                print(f"loading {cache_name} from cache")
             lod=self.cache_manager.load(cache_name)
         else:
             query = self.qm.queriesByName[query_name]
+            if self.debug:
+                print(f"loading {cache_name} from SPARQL query {query_name}")
             lod=self.sparql.queryAsListOfDicts(query.query)
             self.cache_manager.store(cache_name, lod)
+        end_time = time.time()  # Record the end time of the operation
+        duration = end_time - start_time  # Calculate the duration of the loading process
+    
+        if self.debug:
+            print(f"loaded {len(lod)} records for {cache_name} in {duration:.2f} seconds")
         return lod
 
     def get_ceur_volume_papers(self, volume_number: int) -> List[DblpPaper]:
@@ -251,17 +279,7 @@ class DblpEndpoint:
         """
         cache_name = f"dblp/Vol-{volume_number}/papers"
         lod = self.cache_manager.load(cache_name)
-        if lod is None:
-            all_papers = self.get_all_ceur_papers()
-            papers = [
-                paper for paper in all_papers if paper.volume_number == volume_number
-            ]
-            self.cache_manager.store(
-                f"dblp/Vol-{volume_number}/papers",
-                [dataclasses.asdict(paper) for paper in papers],
-            )
-        else:
-            papers = [DblpPaper(**d) for d in lod]
+        papers = [DblpPaper(**d) for d in lod]
         return papers
 
     def getDblpIdByVolumeNumber(self, number) -> List[str]:

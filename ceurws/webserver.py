@@ -158,7 +158,7 @@ class CeurWsWebServer(InputWebserver):
             """
             try:
                 proceeding = self.wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
-            except VolumeNotFound as e:
+            except Exception as e:
                 raise HTTPException(status_code=404, detail=e.msg)
             if proceeding:
                 return proceeding
@@ -172,7 +172,7 @@ class CeurWsWebServer(InputWebserver):
             """
             try:
                 proceeding = self.wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
-            except VolumeNotFound as e:
+            except Exception as e:
                 raise HTTPException(status_code=404, detail=e.msg)
             if proceeding:
                 return proceeding.editors

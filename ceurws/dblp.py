@@ -11,11 +11,112 @@ from lodstorage.cache import CacheManager
 from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 from lodstorage.query import  QueryManager
 from lodstorage.lod import LOD
-from lodstorage.yamlable import lod_storable
 from itertools import groupby
 from urllib.error import HTTPError
 from typing import Dict, List, Union
-            
+
+class DblpManager:
+    """
+    Manage DBLP entities.
+    
+    Attributes:
+        endpoint (DblpEndpoint): The endpoint for DBLP queries.
+        cache_name (str): The name of the cache to use.
+        query_name (str): The name of the query to execute.
+    """
+    
+    def __init__(self, endpoint: 'DblpEndpoint', cache_name: str, query_name: str):
+        """
+        Initializes the DBLP Manager with the given endpoint, cache name, and query name.
+
+        Args:
+            endpoint (DblpEndpoint): The endpoint for DBLP queries.
+            cache_name (str): The name of the cache to use.
+            query_name (str): The name of the query to execute.
+        """
+        self.endpoint = endpoint
+        self.cache_name = cache_name
+        self.query_name = query_name
+        
+    def load(self, force_query: bool = False):
+        """
+        Loads a list of dictionaries from the DBLP endpoint.
+
+        Args:
+            force_query (bool): If True, forces a new query to the endpoint. Defaults to False.
+        """
+        self.lod = self.endpoint.get_lod(self.cache_name, self.query_name, force_query=force_query)
+
+class DblpVolumes(DblpManager):
+    """
+    Manage all DBLP indexed volumes.
+    """
+    
+    def __init__(self, endpoint: 'DblpEndpoint'):
+        """
+        Initializes the DBLP Volumes manager with the given endpoint.
+
+        Args:
+            endpoint (DblpEndpoint): The endpoint for DBLP queries.
+        """
+        # Call the super constructor with specific cache and query names for volumes
+        super().__init__(endpoint, "dblp/volumes", "CEUR-WS all Volumes")
+        
+    def load(self, force_query: bool = False):
+        """
+        load my volumes
+        """
+        super().load(force_query=force_query)
+    
+class DblpAuthors(DblpManager):
+    """
+    Manage all authors of DBLP indexed volumes.
+    """
+    
+    def __init__(self, endpoint: 'DblpEndpoint'):
+        """
+        Initializes the DBLP Authors manager with the given endpoint.
+
+        Args:
+            endpoint (DblpEndpoint): The endpoint for DBLP queries.
+        """
+        # Call the super constructor with specific cache and query names for volumes
+        super().__init__(endpoint, "dblp/authors","CEUR-WS Paper Authors")
+        
+    def load(self, force_query: bool = False):
+        """
+        load my authors
+        """
+        super().load(force_query=force_query)
+        self.authors = []
+        for d in self.lod:
+            author = DblpScholar(**d)
+            self.authors.append(author)
+                           
+class DblpEditors(DblpManager):
+    """
+    Manage all editors of DBLP indexed volumes.
+    """
+    
+    def __init__(self, endpoint: 'DblpEndpoint'):
+        """
+        Initializes the DBLP Editors manager with the given endpoint.
+
+        Args:
+            endpoint (DblpEndpoint): The endpoint for DBLP queries.
+        """
+        # Call the super constructor with specific cache and query names for volumes
+        super().__init__(endpoint, "dblp/editors","CEUR-WS all Editors")
+        
+    def load(self, force_query: bool = False):
+        """
+        load my editors
+        """
+        super().load(force_query=force_query)
+        self.editors = []
+        for d in self.lod:
+            editor = DblpScholar(**d)
+            self.editors.append(editor)
     
 class DblpEndpoint:
     """
@@ -69,12 +170,9 @@ class DblpEndpoint:
         Args:
             force_query(bool): if True force query
         """
-        lod=self.get_lod("dblp/authors","CEUR-WS Paper Authors",force_query)
-        authors = []
-        for d in lod:
-            author = DblpScholar(**d)
-            authors.append(author)
-        return authors
+        dblp_authors=DblpAuthors(endpoint=self)
+        dblp_authors.load(force_query)
+        return dblp_authors.authors
 
     def get_all_ceur_editors(self, force_query: bool = False) -> List[DblpScholar]:
         """
@@ -84,12 +182,9 @@ class DblpEndpoint:
             force_query(bool): if True force query
 
         """
-        lod=self.get_lod("dblp/editors","CEUR-WS all Editors",force_query)
-        editors = []
-        for d in lod:
-            editor = DblpScholar(**d)
-            editors.append(editor)
-        return editors
+        dblp_editors=DblpEditors(endpoint=self)
+        dblp_editors.load(force_query)
+        return dblp_editors.editors
 
     def get_all_ceur_papers(self, force_query: bool = False) -> List[DblpPaper]:
         """
@@ -204,8 +299,8 @@ class DblpEndpoint:
             force_query(bool): if True force query
 
         """
-        cache_name="dblp/volumes"
-        lod=self.get_lod(cache_name,"CEUR-WS all Volumes",force_query)
+        dblp_volumes=DblpVolumes(endpoint=self)
+        lod=dblp_volumes.load(force_query)
         volumes = []
         editors = self.get_all_ceur_editors(force_query=force_query)
         editorsById = {a.dblp_author_id: a for a in editors}
@@ -240,7 +335,7 @@ class DblpEndpoint:
             )
             volumes.append(volume)
             self.cache_manager.store(
-                cache_name, [dataclasses.asdict(volume) for volume in volumes]
+                dblp_volumes.cache_name, [dataclasses.asdict(volume) for volume in volumes]
             )
             volume_by_number, _errors = LOD.getLookup(volumes, "volume_number")
             for number, volume in volume_by_number.items():
@@ -256,21 +351,10 @@ class DblpEndpoint:
             volume_number: number of the volume
         """
         cache_name = f"dblp/Vol-{volume_number}/metadata"
-        record = self.cache_manager.load(cache_name)
-        if record is None:
-            all_volumes = self.get_all_ceur_proceedings()
-            vols_by_no = {v.volume_number: v for v in all_volumes}
-            proceeding = vols_by_no.get(volume_number, None)
-            if proceeding:
-                self.cache_manager.store(
-                    f"dblp/Vol-{proceeding.volume_number}/metadata",
-                    dataclasses.asdict(proceeding),
-                )
-        else:
-            proceeding = DblpProceeding(**record)
-        if proceeding is None:
-            raise VolumeNotFound(f"Volume {volume_number} not found in dblp")
-        return proceeding
+        volume = self.cache_manager.load(cache_name,cls=DblpProceeding)
+        if volume is None:
+            raise ValueError(f"Volume {volume_number} metadata not found in cache") 
+        return volume
 
     def getDblpUrlByDblpId(self, entityId) -> Union[str, None]:
         """
@@ -386,17 +470,6 @@ class DblpEndpoint:
                         '"|"'
                     )  # issue in qlever see https://github.com/ad-freiburg/qlever/discussions/806
         return qres
-
-
-class VolumeNotFound(Exception):
-    """
-    Volume not found
-    """
-
-    def __init__(self, msg: str):
-        if msg is None:
-            msg = "Volume not found"
-        self.msg = msg
 
 
 @dataclass

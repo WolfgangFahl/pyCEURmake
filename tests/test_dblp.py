@@ -4,8 +4,10 @@ Created on 2024-03-09
 @author: wf
 """
 from ceurws.models.dblp import DblpScholar
-from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier
+from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier, DblpVolumes
 from tests.basetest import Basetest
+import os
+import shutil
 
 class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""
@@ -19,6 +21,22 @@ class TestDblpEndpoint(Basetest):
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl)
         # force cache refresh
         self.dblpEndpoint.cache_manager.base_dir="/tmp"
+        self.rm_dir("/tmp/.ceurws")
+
+    def rm_dir(self,directory: str):
+        """
+        Recursively removes all files and directories within the specified directory.
+    
+        Args:
+            directory (str): The path to the directory from which files and directories will be removed.
+    
+        """
+        for root, dirs, files in os.walk(directory, topdown=False):
+            for name in files:
+                os.unlink(os.path.join(root, name))
+            for name in dirs:
+                shutil.rmtree(os.path.join(root, name))
+        
 
     #@unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_getWikidataIdByVolumeNumber(self):
@@ -136,6 +154,19 @@ class TestDblpEndpoint(Basetest):
             "https://dblp.org/pid/d/StefanDecker",
             [a.dblp_author_id for a in paper.authors],
         )
+        
+    def test_dblp_volumes(self):
+        """
+        test the dblp volumes handling
+        """
+        volumes=DblpVolumes(endpoint=self.dblpEndpoint)
+        volumes.load()
+        debug=self.debug
+        debug=True
+        if debug:
+            print(f"found {len(volumes.lod)} volumes")
+        # there should be over 2500 dblp indexed volumes so far    
+        self.assertGreaterEqual(2500, len(volumes.lod))
 
     #@unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_get_ceur_proceeding(self):

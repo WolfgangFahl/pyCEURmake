@@ -8,7 +8,7 @@ from ceurws.wikidatasync import DblpEndpoint
 from ngwidgets.lod_grid import ListOfDictsGrid
 from nicegui import ui
 from typing import Dict,List
-from _ast import Try
+from wd.query_view import QueryView
 
 class WikidataView(View):
     """
@@ -95,7 +95,9 @@ class WikidataView(View):
         handle the refreshing of the proceedings from wikidata
         """
         try:
-            ui.notify("")
+            ui.notify("wikidata refresh button clicked")
+            wd_records=self.solution.wdSync.update()
+            self.lod_grid.load_lod(wd_records)
             pass
         except Exception as ex:
             self.solution.handle_exception(ex)
@@ -114,6 +116,9 @@ class WikidataView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("Refresh from Wikidata SPARQL endpoint")
                 )
+                self.query_view=QueryView(self.solution)
+                self.query_view.show_query(self.solution.wdSync.wdQuery.query)
+            
             #grid_config = GridConfig(
             #        key_col="Vol",
             #        multiselect=True)

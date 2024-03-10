@@ -4,10 +4,10 @@
 	<comment></comment>
 	<projects>
 		<project>ConferenceCorpus</project>
-		<project>justpy</project>
 		<project>PyGenericSpreadSheet</project>
 		<project>pyJustpyWidgets</project>
 		<project>pyLoDStorage</project>
+		<project>wdgrid</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

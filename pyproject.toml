@@ -45,6 +45,8 @@ dependencies = [
    'neo4j',
    # https://github.com/WolfgangFahl/nicegui_widgets
    'ngwidgets>=0.12.5',
+   # https://pypi.org/project/wdgrid/
+   'wdgrid>=0.1.0'
 ]
 
 requires-python = ">=3.9"

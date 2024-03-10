@@ -4,7 +4,7 @@ Created on 2024-03-09
 @author: wf
 """
 from ceurws.models.dblp import DblpScholar
-from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier, DblpVolumes
+from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier
 from tests.basetest import Basetest
 import os
 import shutil
@@ -33,13 +33,13 @@ class TestDblpEndpoint(Basetest):
                 shutil.rmtree(os.path.join(root, name))
         
 
-    def setUp(self, debug=False, profile=True):
+    def setUp(self, debug=True, profile=True):
         """
         override Basetest.setUp
         """
         super().setUp(debug, profile)
         self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
-        self.dblpEndpoint = DblpEndpoint(self.endpointUrl)
+        self.dblpEndpoint = DblpEndpoint(self.endpointUrl,debug=self.debug)
         # force cache refresh
         self.dblpEndpoint.cache_manager.base_dir="/tmp"
 

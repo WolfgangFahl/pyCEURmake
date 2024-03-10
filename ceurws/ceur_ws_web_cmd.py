@@ -116,15 +116,15 @@ class CeurWsCmd(WebserverCmd):
             wdsync.update(withStore=True)
         if args.dblp_update:
             wdsync = WikidataSync.from_args(args)
-            endpoint = wdsync.dbpEndpoint
+            endpoint = wdsync.dblpEndpoint
             print(f"updating dblp cache from SPARQL endpoint {endpoint.sparql.url}")
             # Instantiate the progress bar
             pbar = tqdm(total=len(wdsync.dbpEndpoint.cache_functions))
-            for _step, (cache_name, cache_function) in enumerate(
-                endpoint.cache_functions.items(), start=1
+            for _step, (cache_name, dblp_manager) in enumerate(
+                endpoint.dblp_managers.items(), start=1
             ):
                 # Call the corresponding function to refresh cache data
-                cache_function(force_query=args.force)
+                dblp_manager.load(force_query=args.force)
                 # Update the progress bar description with the cache name and increment
                 pbar.set_description(f"{cache_name} updated ...")
 
@@ -134,8 +134,8 @@ class CeurWsCmd(WebserverCmd):
             # Close the progress bar after the loop
             pbar.close()
             table_data = []
-            for _step, (cache_name, cache_function) in enumerate(
-                endpoint.cache_functions.items(), start=1
+            for _step, (cache_name, dblp_manager) in enumerate(
+                endpoint.dblp_managers.items(), start=1
             ):
                 cache=endpoint.cache_manager.get_cache_by_name(cache_name)
                 table_data.append(asdict(cache))

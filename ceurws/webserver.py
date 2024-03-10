@@ -97,7 +97,7 @@ class CeurWsWebServer(InputWebserver):
             """
             direct fastapi return of paper information from dblp
             """
-            papers = self.wdSync.dbpEndpoint.get_all_ceur_papers()
+            papers = self.wdSync.dblpEndpoint.get_all_ceur_papers()
             return ORJSONResponse(papers)
 
         @app.get(
@@ -109,7 +109,7 @@ class CeurWsWebServer(InputWebserver):
             """
             direct fastapi return of paper information from dblp
             """
-            authors = self.wdSync.dbpEndpoint.get_all_ceur_authors()
+            authors = self.wdSync.dblpEndpoint.get_all_ceur_authors()
             return ORJSONResponse(content=authors)
 
         @app.get("/dblp/papers", tags=["dblp complete dataset"])
@@ -122,7 +122,7 @@ class CeurWsWebServer(InputWebserver):
 
             Returns:
             """
-            papers = self.wdSync.dbpEndpoint.get_all_ceur_papers()
+            papers = self.wdSync.dblpEndpoint.get_all_ceur_papers()
             return papers[offset:limit]
 
         @app.get("/dblp/editors", tags=["dblp complete dataset"])
@@ -135,7 +135,7 @@ class CeurWsWebServer(InputWebserver):
 
             Returns:
             """
-            editors = self.wdSync.dbpEndpoint.get_all_ceur_editors()
+            editors = self.wdSync.dblpEndpoint.get_all_ceur_editors()
             return editors[offset:limit]
 
         @app.get("/dblp/volumes", tags=["dblp complete dataset"])
@@ -148,7 +148,7 @@ class CeurWsWebServer(InputWebserver):
 
             Returns:
             """
-            proceedings = self.wdSync.dbpEndpoint.get_all_ceur_proceedings()
+            proceedings = self.wdSync.dblpEndpoint.get_all_ceur_proceedings()
             return proceedings[offset:limit]
 
         @app.get("/dblp/volume/{volume_number}", tags=["dblp"])
@@ -157,7 +157,7 @@ class CeurWsWebServer(InputWebserver):
             Get ceur-ws volume form dblp
             """
             try:
-                proceeding = self.wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+                proceeding = self.wdSync.dblpEndpoint.get_ceur_proceeding(volume_number)
             except Exception as e:
                 raise HTTPException(status_code=404, detail=e.msg)
             if proceeding:
@@ -171,7 +171,7 @@ class CeurWsWebServer(InputWebserver):
             Get ceur-ws volume editors form dblp
             """
             try:
-                proceeding = self.wdSync.dbpEndpoint.get_ceur_proceeding(volume_number)
+                proceeding = self.wdSync.dblpEndpoint.get_ceur_proceeding(volume_number)
             except Exception as e:
                 raise HTTPException(status_code=404, detail=e.msg)
             if proceeding:
@@ -188,7 +188,7 @@ class CeurWsWebServer(InputWebserver):
 
             Returns:
             """
-            papers = self.wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            papers = self.wdSync.dblpEndpoint.get_ceur_volume_papers(volume_number)
             return papers
 
         @app.get("/dblp/volume/{volume_number}/paper/{paper_id}", tags=["dblp"])
@@ -196,7 +196,7 @@ class CeurWsWebServer(InputWebserver):
             """
             Get ceur-ws volume paper form dblp
             """
-            paper = self.wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            paper = self.wdSync.dblpEndpoint.get_ceur_volume_papers(volume_number)
             if paper:
                 for paper in paper:
                     if paper.pdf_id == f"Vol-{volume_number}/{paper_id}":
@@ -212,7 +212,7 @@ class CeurWsWebServer(InputWebserver):
             """
             Get ceur-ws volume paper form dblp
             """
-            paper = self.wdSync.dbpEndpoint.get_ceur_volume_papers(volume_number)
+            paper = self.wdSync.dblpEndpoint.get_ceur_volume_papers(volume_number)
             if paper:
                 for paper in paper:
                     if paper.pdf_id == f"Vol-{volume_number}/{paper_id}":

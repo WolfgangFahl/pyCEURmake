@@ -17,7 +17,8 @@ from nicegui.events import ValueChangeEventArguments
 from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 from ceurws.version import Version
 from ceurws.volume_view import VolumeView, VolumeListView
-from ceurws.wikidatasync import VolumeNotFound, WikidataSync
+from ceurws.dblp import VolumeNotFound
+from ceurws.wikidatasync import WikidataSync
 from ceurws.wikidata_view import WikidataView
 
 class CeurWsWebServer(InputWebserver):

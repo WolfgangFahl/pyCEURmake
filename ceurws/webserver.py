@@ -19,6 +19,7 @@ from ceurws.version import Version
 from ceurws.volume_view import VolumeView, VolumeListView
 from ceurws.wikidatasync import WikidataSync
 from ceurws.wikidata_view import WikidataView
+from lodstorage.query  import EndpointManager
 
 class CeurWsWebServer(InputWebserver):
     """
@@ -44,7 +45,7 @@ class CeurWsWebServer(InputWebserver):
         constructor
         """
         InputWebserver.__init__(self, config=CeurWsWebServer.get_config())
-
+       
         @ui.page("/volumes")
         async def show_volumes(client: Client):
             return await self.page(

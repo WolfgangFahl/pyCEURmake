@@ -15,6 +15,7 @@ from lodstorage.lod import LOD
 from itertools import groupby
 from urllib.error import HTTPError
 from typing import Dict, List, Union
+from ngwidgets.progress import Progressbar
 
 class DblpManager:
     """
@@ -237,6 +238,7 @@ class DblpEndpoint:
             "dblp/papers": self.dblp_papers,
             "dblp/volumes": self.dblp_volumes
         }
+        self.progress_bar=None
         
     def get_lod(self,
         cache_name:str,
@@ -281,6 +283,17 @@ class DblpEndpoint:
         lod = self.cache_manager.load(cache_name)
         papers = [DblpPaper(**d) for d in lod]
         return papers
+    
+    def get_ceur_proceeding(self, volume_number: int) -> DblpProceeding:
+        """
+        get ceur proceeding by volume number from dblp
+        Args:
+            volume_number: number of the volume
+        """
+        cache_name = f"dblp/Vol-{volume_number}/metadata"
+        volume=self.cache_manager.load(cache_name,cls=DblpProceeding)
+        return volume
+
 
     def getDblpIdByVolumeNumber(self, number) -> List[str]:
         """

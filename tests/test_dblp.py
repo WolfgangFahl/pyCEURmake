@@ -8,6 +8,7 @@ from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier
 from tests.basetest import Basetest
 import os
 import shutil
+from tqdm import tqdm
 
 class TestDblpEndpoint(Basetest):
     """tests DblpEndpoint"""
@@ -41,8 +42,9 @@ class TestDblpEndpoint(Basetest):
         self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl,debug=self.debug)
         # force cache refresh
-        self.dblpEndpoint.cache_manager.base_dir="/tmp"
-
+        self.dblpEndpoint.cache_manager.base_dir="/tmp" 
+        self.dblpEndpoint.progress_bar=tqdm(total=100) # expected 36 secs = 100%    
+      
     #@unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_getWikidataIdByVolumeNumber(self):
         """tests getWikidataIdByVolumeNumber"""

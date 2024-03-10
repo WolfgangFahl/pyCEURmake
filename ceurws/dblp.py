@@ -148,8 +148,9 @@ class DblpPapers(DblpManager):
             for volume_number, vol_papers in sorted(self.papers_by_volume.items()):
                 vol_paper_lod=[dataclasses.asdict(paper) for paper in vol_papers]
                 cache_name=f"dblp/Vol-{volume_number}/papers"
-                if self.endpoint.debug:
-                    print(f"caching {cache_name}")
+                if self.endpoint.progress_bar:
+                    self.endpoint.progress_bar.update(30/3650)
+                    #print(f"caching {cache_name}")
                 self.endpoint.cache_manager.store(
                     cache_name,
                     vol_paper_lod,
@@ -201,8 +202,8 @@ class DblpVolumes(DblpManager):
             volume_by_number, _errors = LOD.getLookup(volumes, "volume_number")
             for number, volume in sorted(volume_by_number.items()):
                 cache_name=f"dblp/Vol-{number}/metadata"
-                if self.endpoint.debug:
-                    print(f"caching {cache_name}")
+                if self.endpoint.progress_bar:
+                    self.endpoint.progress_bar.update(30/3650)
                 self.endpoint.cache_manager.store(
                     cache_name, volume
                 )
@@ -273,6 +274,8 @@ class DblpEndpoint:
     
         if self.debug:
             print(f"loaded {len(lod)} records for {cache_name} in {duration:.2f} seconds")
+        if self.progress_bar:
+            self.progress_bar.update(duration*100/36)    
         return lod
 
     def get_ceur_volume_papers(self, volume_number: int) -> List[DblpPaper]:

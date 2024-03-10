@@ -119,7 +119,7 @@ class CeurWsCmd(WebserverCmd):
             endpoint = wdsync.dblpEndpoint
             print(f"updating dblp cache from SPARQL endpoint {endpoint.sparql.url}")
             # Instantiate the progress bar
-            pbar = tqdm(total=len(wdsync.dbpEndpoint.cache_functions))
+            pbar = tqdm(total=len(wdsync.dbpEndpoint.dblp_managers))
             for _step, (cache_name, dblp_manager) in enumerate(
                 endpoint.dblp_managers.items(), start=1
             ):

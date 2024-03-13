@@ -17,7 +17,7 @@ class Version(object):
     name = "CEUR-WS Volume Browser"
     version = ceurws.__version__
     date = "2022-08-14"
-    updated = "2024-03-10"
+    updated = "2024-03-13"
     description = "CEUR-WS Volume browser"
 
     authors = "Tim Holzheim, Wolfgang Fahl"

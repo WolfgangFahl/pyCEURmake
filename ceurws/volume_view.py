@@ -315,7 +315,7 @@ class VolumeListView(View):
                 url=f"/volume/{volume.number}"
                 text=f"{volume}:{volume.acronym}"
                 link=self.createLink(url,text)
-                self.add_msg+=f":{link}"   
+                self.add_msg(f":{link}")   
             pass
             self.wdSync.storeVolumes()
             self.progress_bar.reset()

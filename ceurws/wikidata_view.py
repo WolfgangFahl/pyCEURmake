@@ -52,16 +52,19 @@ class WikidataView(View):
         lod = []
         for row in reverseLod:
             volume = self.getRowValue(row, "sVolume")
-            if volume == "?":
+            if volume == self.noneValue:
                 volume = self.getRowValue(row, "Volume")
-            volNumber = "?"
-            if volume != "?":
-                volNumber = int(volume)
-                volumeLink = self.createLink(
-                    f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volNumber:04}"
-                )
+            volNumber = self.noneValue
+            if volume != self.noneValue:
+                try:
+                    volNumber = int(volume)
+                    volumeLink = self.createLink(
+                        f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volNumber:04}"
+                    )
+                except Exception as _ex:
+                    volumeLink = self.noneValue
             else:
-                volumeLink = "?"
+                volumeLink = self.noneValue
             itemLink = self.createItemLink(row, "item")
             eventLink = self.createItemLink(row, "event", separator="|")
             eventSeriesLink = self.createItemLink(row, "eventSeries", separator="|")

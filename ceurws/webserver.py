@@ -97,7 +97,8 @@ class CeurWsWebServer(InputWebserver):
             """
             direct fastapi return of paper information from dblp
             """
-            papers = self.wdSync.dblpEndpoint.get_all_ceur_papers()
+            self.wdSync.dblp_papers.load()
+            papers = self.wdSync.dblp_papers.papers
             return ORJSONResponse(papers)
 
         @app.get(
@@ -227,6 +228,7 @@ class CeurWsWebServer(InputWebserver):
         """
         InputWebserver.configure_run(self)
         self.wdSync = WikidataSync.from_args(self.args)
+        self.wdSync.dblpEndpoint.load_all()
 
 
 class CeurWsSolution(InputWebSolution):

@@ -241,6 +241,14 @@ class DblpEndpoint:
         }
         self.progress_bar=None
         
+    def load_all(self,force_query:bool=False):
+        """
+        load all managers
+        """
+        for _key,manager in self.dblp_managers.items():
+            manager.load(force_query=force_query)
+            
+        
     def get_lod(self,
         cache_name:str,
         query_name:str,

@@ -195,3 +195,25 @@
             }
         } 
         GROUP BY ?dblp_author_id
+'CEUR-WS-Editorship':
+  sparql: |
+    PREFIX dblp: <https://dblp.org/rdf/schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    SELECT DISTINCT ?volume_number ?dblp_author_id
+    WHERE {
+      ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
+      ?proceeding dblp:publishedInSeriesVolume ?volume_number.
+      ?proceeding dblp:editedBy ?editor.
+      BIND(STRAFTER(STR(?editor), "https://dblp.org/pid/") AS ?dblp_author_id)
+    }
+'CEUR-WS-Authorship':
+  sparql: |
+    PREFIX dblp: <https://dblp.org/rdf/schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    SELECT DISTINCT ?paper ?dblp_author_id
+    WHERE {
+      ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
+      ?paper dblp:publishedAsPartOf ?proceeding.
+      ?paper dblp:authoredBy ?author.
+      BIND(STRAFTER(STR(?author), "https://dblp.org/pid/") AS ?dblp_author_id)
+    }

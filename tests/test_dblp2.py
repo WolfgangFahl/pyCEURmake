@@ -7,7 +7,7 @@ from tests.basetest import Basetest
 from lodstorage.sparql import SPARQL
 import os
 from lodstorage.query import  QueryManager
-from ceurws.models.dblp2 import Paper
+from ceurws.models.dblp2 import Paper,Scholar, Proceeding
 from ceurws.cache import Cached, SqlDB
 
 class TestDblpCache(Basetest):
@@ -23,12 +23,19 @@ class TestDblpCache(Basetest):
         qYamlFile = f"{path}/ceurws/resources/queries/dblp.yaml"
         if os.path.isfile(qYamlFile):
             self.qm = QueryManager(lang="sparql", queriesPath=qYamlFile)
-        self.sql_db=SqlDB("/tmp/ceurws.db",debug=self.debug)
+        self.sql_db=SqlDB("/tmp/ceurws.db",debug=False)
       
     def test_dblp_caches(self):
         """
         test the dblp caches
         """
-        paper_cache=Cached(Paper,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Papers",debug=self.debug)
-        paper_cache.get_lod(self.qm)
-        paper_cache.store()       
+        caches=[
+            Cached(Proceeding,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS all Volumes",debug=self.debug),
+            Cached(Scholar,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Scholars",debug=self.debug),
+            Cached(Paper,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Papers",debug=self.debug)
+        ]
+        for cache in caches:
+            cache.fetch_or_query(self.qm)
+        #paper_cache.get_lod(self.qm)
+        #paper_cache.store()       
+        

@@ -7,7 +7,6 @@ from tests.basetest import Basetest
 from lodstorage.sparql import SPARQL
 import os
 from lodstorage.query import  QueryManager
-from ceurws.models.dblp2 import Paper,Scholar, Proceeding
 from ceurws.cache import Cached, SqlDB
 
 class TestDblpCache(Basetest):
@@ -29,7 +28,11 @@ class TestDblpCache(Basetest):
         """
         test the dblp caches
         """
+        from ceurws.models.dblp2 import Paper,Scholar, Proceeding, Authorship, Editorship
+
         caches=[
+            Cached(Editorship, self.sparql, sql_db=self.sql_db, query_name="CEUR-WS-Editorship", debug=self.debug),  # Assuming this query exists
+            Cached(Authorship, self.sparql, sql_db=self.sql_db, query_name="CEUR-WS-Authorship", debug=self.debug),  # Assuming this query exists
             Cached(Proceeding,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS all Volumes",debug=self.debug),
             Cached(Scholar,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Scholars",debug=self.debug),
             Cached(Paper,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Papers",debug=self.debug)

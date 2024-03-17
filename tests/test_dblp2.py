@@ -31,14 +31,15 @@ class TestDblpCache(Basetest):
         from ceurws.models.dblp2 import Paper,Scholar, Proceeding, Authorship, Editorship
 
         caches=[
-            Cached(Editorship, self.sparql, sql_db=self.sql_db, query_name="CEUR-WS-Editorship", debug=self.debug),  # Assuming this query exists
-            Cached(Authorship, self.sparql, sql_db=self.sql_db, query_name="CEUR-WS-Authorship", debug=self.debug),  # Assuming this query exists
             Cached(Proceeding,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS all Volumes",debug=self.debug),
             Cached(Scholar,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Scholars",debug=self.debug),
-            Cached(Paper,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Papers",debug=self.debug)
+            Cached(Paper,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Papers",debug=self.debug),
+            Cached(Editorship, self.sparql, sql_db=self.sql_db, query_name="CEUR-WS-Editorship", debug=self.debug),  
+            Cached(Authorship, self.sparql, sql_db=self.sql_db, query_name="CEUR-WS-Authorship", debug=self.debug) 
         ]
+        force_query=True
         for cache in caches:
-            cache.fetch_or_query(self.qm)
+            cache.fetch_or_query(self.qm,force_query=force_query)
         #paper_cache.get_lod(self.qm)
         #paper_cache.store()       
         

@@ -3,9 +3,11 @@ Created on 2024-03-16
 
 @author: wf
 """
+from lodstorage.sparql import SPARQL
 from lodstorage.query import  QueryManager
 from sqlmodel import Session, create_engine, select
 from ngwidgets.profiler import Profiler
+from typing import Any,Dict,List,Type
 
 class SqlDB:
     """
@@ -17,8 +19,13 @@ class SqlDB:
         connect_args = {"check_same_thread": False}
         self.engine = create_engine(sqlite_url, echo=debug, connect_args=connect_args)
       
-    def get_session(self):
-        # Provide a session for database operations
+    def get_session(self) -> Session:
+        """
+        Provide a session for database operations.
+        
+        Returns:
+            Session: A SQLAlchemy Session object bound to the engine for database operations.
+        """
         return Session(bind=self.engine)
 
 class Cached:
@@ -26,9 +33,22 @@ class Cached:
     Manage cached entities.
     """
     
-    def __init__(self, clazz, sparql, sql_db, query_name: str, debug:bool=False):
+    def __init__(self, 
+        clazz: Type[Any], 
+        sparql: SPARQL, 
+        sql_db: str, 
+        query_name: str, 
+        debug: bool = False):
         """
-        Initializes the Manager with the given endpoint, cache name, and query name.
+        Initializes the Manager with class reference, SPARQL endpoint URL, SQL database connection string,
+        query name, and an optional debug flag.
+
+        Args:
+            clazz (Type[Any]): The class reference for the type of objects managed by this manager.
+            sparql (SPARQL): a SPARQL endpoint.
+            sql_db (str): The connection string for the SQL database.
+            query_name (str): The name of the query to be executed.
+            debug (bool, optional): Flag to enable debug mode. Defaults to False.
         """
         self.clazz = clazz
         self.sparql = sparql
@@ -38,19 +58,29 @@ class Cached:
         # Ensure the table for the class exists
         clazz.metadata.create_all(self.sql_db.engine)
         
-    def fetch_or_query(self, qm: QueryManager):
+    def fetch_or_query(self, qm, force_query=False):
         """
-        Fetches data from the local cache if available; otherwise, queries via SPARQL and caches the results.
+        Fetches data from the local cache if available. 
+        If the data is not in the cache or if force_query is True, 
+        it queries via SPARQL and caches the results.
+    
+        Args:
+            qm (QueryManager): The query manager object used for making SPARQL queries.
+            force_query (bool, optional): A flag to force querying via SPARQL even if the data exists in the local cache. Defaults to False.
         """
-        if self.check_local_cache():
+        if not force_query and self.check_local_cache():
             self.fetch_from_local()
         else:
             self.get_lod(qm)
             self.store()
+
             
     def check_local_cache(self) -> bool:
         """
         Checks if there is data in the local cache (SQL database).
+        
+        Returns:
+            bool: True if  there is at least one record in the local SQL cache table
         """
         with self.sql_db.get_session() as session:
             result = session.exec(select(self.clazz)).first()
@@ -68,24 +98,41 @@ class Cached:
                 print(f"Loaded {len(self.entities)} records from local cache")
         profiler.time()
   
-    def get_lod(self, qm: QueryManager):
+    def get_lod(self, qm: QueryManager) -> List[Dict]:
         """
-        Fetches data using the SPARQL query.
+        Fetches data using the SPARQL query specified by my query_name.
+        
+        Args:
+            qm (QueryManager): The query manager object used for making SPARQL queries.
+
+        Returns:
+            List[Dict]: A list of dictionaries representing the data fetched.
         """
+        profiler = Profiler(f"fetch {self.query_name} from SPARQL endpoint {self.sparql.url}", profile=self.debug)
         query = qm.queriesByName[self.query_name]
         self.lod = self.sparql.queryAsListOfDicts(query.query)
+        profiler.time()
         if self.debug:
             print(f"Found {len(self.lod)} records for {self.query_name}")
+        return self.lod
   
-    def store(self):
+    def store(self)->List[Any]:
         """
         Stores the fetched data into the local SQL database.
+        
+        Returns:
+            List[Any]: A list of entity instances that were stored in the database.
+ 
         """
         profiler = Profiler(f"store {self.query_name}", profile=self.debug)
-        self.entities = [self.clazz.parse_obj(record) for record in self.lod]
+        self.entities = []
+        for record in self.lod:
+            entity=self.clazz.model_validate(record) 
+            self.entities.append(entity)
         with self.sql_db.get_session() as session:
             session.add_all(self.entities)
             session.commit()
             if self.debug:
                 print(f"Stored {len(self.entities)} records in local cache")
         profiler.time()
+        return self.entities

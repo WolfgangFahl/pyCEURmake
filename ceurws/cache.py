@@ -37,7 +37,8 @@ class Cached:
         clazz: Type[Any], 
         sparql: SPARQL, 
         sql_db: str, 
-        query_name: str, 
+        query_name: str,
+        max_errors: int=0, 
         debug: bool = False):
         """
         Initializes the Manager with class reference, SPARQL endpoint URL, SQL database connection string,
@@ -54,7 +55,10 @@ class Cached:
         self.sparql = sparql
         self.sql_db = sql_db
         self.query_name = query_name
+        self.max_errors=max_errors
         self.debug = debug
+        self.entities = []
+        self.errors=[]
         # Ensure the table for the class exists
         clazz.metadata.create_all(self.sql_db.engine)
         
@@ -115,20 +119,52 @@ class Cached:
         if self.debug:
             print(f"Found {len(self.lod)} records for {self.query_name}")
         return self.lod
+    
+    def to_entities(self, max_errors: int = None) -> List[Any]:
+        """
+        Converts records fetched from the LOD into entity instances, applying validation.
+
+        Args:
+            max_errors (int, optional): Maximum allowed validation errors. Defaults to 0.
+
+        Returns:
+            List[Any]: A list of entity instances that have passed validation.
+        """
+        self.entities = []
+        self.errors=[]
+        error_records=[]
+        if max_errors is None:
+            max_errors=self.max_errors
+        for record in self.lod:
+            try:
+                entity = self.clazz.model_validate(record)
+                self.entities.append(entity)
+            except Exception as e: 
+                self.errors.append(e)
+                error_records.append(record)
+        error_count=len(self.errors)
+        if error_count > max_errors:
+            msg=f"found {error_count} errors > maximum allowed {max_errors} errors"
+            if self.debug:
+                print(msg)
+                for i,e in enumerate(self.errors):
+                    print(f"{i}:{str(e)} for \n{error_records[i]}")
+            raise Exception(msg) 
+        return self.entities
   
-    def store(self)->List[Any]:
+    def store(self,max_errors:int=None)->List[Any]:
         """
         Stores the fetched data into the local SQL database.
         
+        Args:
+            max_errors (int, optional): Maximum allowed validation errors. Defaults to 0.
+
         Returns:
             List[Any]: A list of entity instances that were stored in the database.
  
         """
         profiler = Profiler(f"store {self.query_name}", profile=self.debug)
-        self.entities = []
-        for record in self.lod:
-            entity=self.clazz.model_validate(record) 
-            self.entities.append(entity)
+        self.to_entities(max_errors=max_errors)
         with self.sql_db.get_session() as session:
             session.add_all(self.entities)
             session.commit()

@@ -34,7 +34,7 @@ class TestDblpCache(Basetest):
         from ceurws.models.dblp2 import Paper,Scholar, Proceeding, Authorship, Editorship
 
         caches=[
-            Cached(Proceeding,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Volumes",debug=self.debug),
+            Cached(Proceeding,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Volumes",max_errors=1,debug=self.debug),
             Cached(Scholar,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Scholars",debug=self.debug),
             Cached(Paper,self.sparql,sql_db=self.sql_db,query_name="CEUR-WS-Papers",debug=self.debug),
             Cached(Editorship, self.sparql, sql_db=self.sql_db, query_name="CEUR-WS-Editorship", debug=self.debug),  

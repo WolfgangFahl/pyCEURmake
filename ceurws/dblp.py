@@ -376,7 +376,7 @@ class DblpEndpoint:
             withPostfix: If True add the postfix ".html"
 
         Returns:
-            ddblp url of None if the url can not be generated for the given input
+            dblp url of None if the url can not be generated for the given input
         """
         urlId = self.convertEntityIdToUrlId(entityId)
         if urlId is None:

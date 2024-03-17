@@ -19,7 +19,6 @@ from ceurws.version import Version
 from ceurws.volume_view import VolumeView, VolumeListView
 from ceurws.wikidatasync import WikidataSync
 from ceurws.wikidata_view import WikidataView
-from lodstorage.query  import EndpointManager
 
 class CeurWsWebServer(InputWebserver):
     """
@@ -228,7 +227,7 @@ class CeurWsWebServer(InputWebserver):
         """
         InputWebserver.configure_run(self)
         self.wdSync = WikidataSync.from_args(self.args)
-        self.wdSync.dblpEndpoint.load_all()
+        #self.wdSync.dblpEndpoint.load_all()
 
 
 class CeurWsSolution(InputWebSolution):

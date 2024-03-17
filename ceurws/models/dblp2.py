@@ -21,7 +21,7 @@ class Paper(SQLModel, table=True):
     A paper indexed in DBLP with additional details. The paper URL is used as the unique identifier.
     """
     paper: str = Field(primary_key=True)
-    proceeding: str = Field(index=True)
+    proceeding: Optional[str] = Field(foreign_key="proceeding.proceeding")
     volume_number: str = Field(index=True)
     title: str
     pdf_url: Optional[str]
@@ -31,7 +31,6 @@ class Proceeding(SQLModel, table=True):
     A proceeding indexed in DBLP with additional details.
     """
     proceeding:str = Field(primary_key=True)
-    dblp_publication_id: Optional[str] 
     volume_number: int = Field(index=True)
     title: str
     dblp_event_id: Optional[str] = None

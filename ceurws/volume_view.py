@@ -147,8 +147,6 @@ class VolumeView(View):
                         links += delim + link
                         delim = "&nbsp;"
 
-            # template=self.templateEnv.getTemplate('volume_index_body.html')
-            # html=template.render(volume=volume)
             headerHtml = f"""{links}<h3 style='font-size: 24px; font-weight: normal; margin-top: 20px; margin-bottom: 10px;'>{volume.h1}</h3>
     <a href='{volume.url}'>{volume.acronym}<a>
     {volume.title}<br>

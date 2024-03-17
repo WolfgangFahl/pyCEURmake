@@ -24,7 +24,7 @@ class Paper(SQLModel, table=True):
     proceeding: Optional[str] = Field(foreign_key="proceeding.proceeding")
     volume_number: str = Field(index=True)
     title: str
-    pdf_url: Optional[str]
+    pdf_url: Optional[str]=None
     
 class Proceeding(SQLModel, table=True):
     """

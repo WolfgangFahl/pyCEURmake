@@ -137,7 +137,29 @@
             ?gnd_blank litre:hasLiteralValue ?_gnd_id.
         }
     }GROUP BY ?dblp_author_id
-    
+'CEUR-WS-Volumes':
+    sparql: |
+        # CEUR-WS-Proceedings query
+        # Tim Holzheim 2022
+        # refactored WF 2024-03-17
+        # 
+        PREFIX datacite: <http://purl.org/spar/datacite/>
+        PREFIX dblp: <https://dblp.org/rdf/schema#>
+        PREFIX litre: <http://purl.org/spar/literal/>
+        SELECT DISTINCT
+          ?proceeding
+          ?volume_number
+          (SAMPLE(?_title) as ?title)
+          (GROUP_CONCAT(?_editor; SEPARATOR=";") as ?editor_urls)
+          (SAMPLE(?_dblp_event_id) as ?dblp_event_id)
+          WHERE{
+             ?proceeding dblp:publishedIn "CEUR Workshop Proceedings".
+             ?proceeding dblp:publishedInSeriesVolume ?volume_number.
+             OPTIONAL{?proceeding dblp:title ?_title .}
+             OPTIONAL{?proceeding dblp:editedBy ?_editor}
+             OPTIONAL{?proceeding dblp:listedOnTocPage ?_dblp_event_id}
+          }
+        GROUP BY ?proceeding ?volume_number
 'CEUR-WS-Papers':
     sparql: |
         PREFIX datacite: <http://purl.org/spar/datacite/>

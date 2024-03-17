@@ -30,8 +30,9 @@ class Proceeding(SQLModel, table=True):
     """
     A proceeding indexed in DBLP with additional details.
     """
+    proceeding:str = Field(primary_key=True)
     dblp_publication_id: Optional[str] 
-    volume_number: int = Field(primary_key=True)
+    volume_number: int = Field(index=True)
     title: str
     dblp_event_id: Optional[str] = None
     

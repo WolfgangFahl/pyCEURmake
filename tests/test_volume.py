@@ -1,7 +1,6 @@
 import datetime
 
 from ceurws.ceur_ws import Conference, Editor, Paper, Session, Volume, VolumeManager
-from ceurws.template import TemplateEnv
 from tests.basetest import Basetest
 
 
@@ -12,7 +11,6 @@ class TestVolume(Basetest):
 
     def setUp(self, debug=False, profile=True) -> None:
         Basetest.setUp(self, debug, profile)
-        self.templateEnv = TemplateEnv()
         self.vm = VolumeManager()
         self.vm.load()
 

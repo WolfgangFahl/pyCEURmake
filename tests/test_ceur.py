@@ -5,7 +5,7 @@ Created on 2024-03-17
 """
 from tests.basetest import Basetest
 from ceurws.models.ceur import Volume, Paper
-from ceurws.cache import SqlDB
+from ceurws.sql_cache import SqlDB
 from ceurws.ceur_ws import CEURWS
 from sqlmodel import SQLModel, Session, create_engine, Field, select  # Added 'select' here
 

@@ -7,7 +7,7 @@ from tests.basetest import Basetest
 from lodstorage.sparql import SPARQL
 import os
 from lodstorage.query import  QueryManager
-from ceurws.cache import Cached, SqlDB
+from lodstorage.sql_cache import Cached, SqlDB
 
 class TestDblpCache(Basetest):
     """tests Dblp data caching"""

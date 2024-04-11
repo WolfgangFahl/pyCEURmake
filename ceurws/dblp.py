@@ -4,18 +4,20 @@ Created on 2024-03-09
 @author: wf
 """
 
-import time
 import dataclasses
-from dataclasses import dataclass
 import os
-from lodstorage.sparql import SPARQL
-from lodstorage.cache import CacheManager
-from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
-from lodstorage.query import QueryManager
-from lodstorage.lod import LOD
+import time
+from dataclasses import dataclass
 from itertools import groupby
-from urllib.error import HTTPError
 from typing import Union
+from urllib.error import HTTPError
+
+from lodstorage.cache import CacheManager
+from lodstorage.lod import LOD
+from lodstorage.query import QueryManager
+from lodstorage.sparql import SPARQL
+
+from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 
 
 class DblpManager:

@@ -4,12 +4,14 @@ Created on 2024-03-09
 @author: wf
 """
 
-from ceurws.models.dblp import DblpScholar
-from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier
-from tests.basetest import Basetest
 import os
 import shutil
+
 from tqdm import tqdm
+
+from ceurws.dblp import DblpAuthorIdentifier, DblpEndpoint
+from ceurws.models.dblp import DblpScholar
+from tests.basetest import Basetest
 
 
 class TestDblpEndpoint(Basetest):

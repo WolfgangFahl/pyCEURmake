@@ -4,11 +4,12 @@ Created on 2024-03-17
 @author: wf
 """
 
-from tests.basetest import Basetest
-from ceurws.models.ceur import Volume, Paper
-from ceurws.sql_cache import SqlDB
-from ceurws.ceur_ws import CEURWS
 from sqlmodel import select  # Added 'select' here
+
+from ceurws.ceur_ws import CEURWS
+from ceurws.models.ceur import Paper, Volume
+from ceurws.sql_cache import SqlDB
+from tests.basetest import Basetest
 
 
 class TestCEUR(Basetest):

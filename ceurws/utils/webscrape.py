@@ -6,13 +6,14 @@ Created on 2020-08-20
 this is a redundant copy of the sources at https://github.com/WolfgangFahl/ConferenceCorpus/blob/main/corpus/datasources/webscrape.py
 """
 
+import re
 import typing
 import urllib.request
 from dataclasses import dataclass
 from urllib.error import HTTPError
-from urllib.request import build_opener, HTTPCookieProcessor
+from urllib.request import HTTPCookieProcessor, build_opener
+
 from bs4 import BeautifulSoup
-import re
 
 
 class WebScrape:

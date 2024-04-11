@@ -4,11 +4,13 @@ Created on 2024-03-16
 @author: wf
 """
 
-from tests.basetest import Basetest
-from lodstorage.sparql import SPARQL
 import os
+
 from lodstorage.query import QueryManager
+from lodstorage.sparql import SPARQL
 from lodstorage.sql_cache import Cached, SqlDB
+
+from tests.basetest import Basetest
 
 
 class TestDblpCache(Basetest):
@@ -36,11 +38,11 @@ class TestDblpCache(Basetest):
         test the dblp caches
         """
         from ceurws.models.dblp2 import (
-            Paper,
-            Scholar,
-            Proceeding,
             Authorship,
             Editorship,
+            Paper,
+            Proceeding,
+            Scholar,
         )
 
         caches = [

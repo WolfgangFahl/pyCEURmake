@@ -11,8 +11,9 @@ from dataclasses import asdict
 from ngwidgets.cmd import WebserverCmd
 from tabulate import tabulate
 from tqdm import tqdm
-from ceurws.indexparser import ParserConfig
+
 from ceurws.ceur_ws import VolumeManager
+from ceurws.indexparser import ParserConfig
 from ceurws.namedqueries import NamedQueries
 from ceurws.webserver import CeurWsWebServer
 from ceurws.wikidatasync import WikidataSync

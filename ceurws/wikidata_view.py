@@ -4,11 +4,12 @@ Created on 2024-02-23
 @author: wf
 """
 
-from ceurws.view import View
-from ceurws.wikidatasync import DblpEndpoint
 from ngwidgets.lod_grid import ListOfDictsGrid
 from nicegui import ui
 from wd.query_view import QueryView
+
+from ceurws.view import View
+from ceurws.wikidatasync import DblpEndpoint
 
 
 class WikidataView(View):

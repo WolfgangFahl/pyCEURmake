@@ -9,16 +9,16 @@ import os
 import sys
 from typing import Union
 
+from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
+from ez_wikidata.wikidata import UrlReference, Wikidata, WikidataResult
 from lodstorage.lod import LOD
 from lodstorage.query import EndpointManager, QueryManager
 from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
-from ez_wikidata.wikidata import UrlReference, Wikidata, WikidataResult
-from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 
 from ceurws.ceur_ws import CEURWS, PaperManager, Volume, VolumeManager
+from ceurws.dblp import DblpAuthorIdentifier, DblpEndpoint
 from ceurws.indexparser import ParserConfig
-from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier
 
 
 class WikidataSync:

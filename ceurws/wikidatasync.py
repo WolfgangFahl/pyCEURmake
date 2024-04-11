@@ -76,11 +76,11 @@ class WikidataSync(object):
             dblp_en(str): dblp endpoint name
         """
         endpoints = EndpointManager.getEndpoints()
-        if not wd_en in endpoints:
+        if wd_en not in endpoints:
             raise Exception(
                 f"invalid wikidata endpoint name {wd_en}\nsee sparqlquery -le "
             )
-        if not dblp_en in endpoints:
+        if dblp_en not in endpoints:
             raise Exception(
                 f"invalid dblp endpoint name {dblp_en}\nsee sparqlquery -le "
             )
@@ -585,7 +585,7 @@ class WikidataSync(object):
             WikidataResult: the result of the add operation
         """
         entityQid = record.get("instanceOf")
-        entity = record.get("description")
+        # entity = record.get("description")
         mappings = [
             PropertyMapping(
                 column="instanceof",
@@ -810,24 +810,6 @@ class WikidataSync(object):
                 propertyType=WdDatatype.itemid,
             ),
         ]
-        wdMetadata = [
-            {
-                "Column": "official website",
-                "PropertyName": "official website",
-                "PropertyId": "P856",
-                "Type": "url",
-                "Lookup": "",
-            },
-            {
-                "Column": "language of work or name",
-                "PropertyName": "language of work or name",
-                "PropertyId": "P407",
-                "Type": "itemid",
-                "Qualifier": "official website",
-                "Lookup": "",
-            },
-        ]
-        mapDict, _ = LOD.getLookup(wdMetadata, "PropertyId")
         record = {
             "official website": officialWebsite,
             "language of work or name": "Q1860",
@@ -835,7 +817,7 @@ class WikidataSync(object):
         qId, errors = self.wd.add_record(
             item_id=itemId,
             record=record,
-            property_mappings=mapDict,
+            property_mappings=mappings,
             write=write,
             ignore_errors=ignoreErrors,
         )
@@ -1108,7 +1090,6 @@ class WikidataSync(object):
             if id_value is not None and id_value != "":
                 id_query = None
                 if id_name in id_map:
-                    wd_prop = id_map.get(id_name).wikidata_property
                     id_query = DblpAuthorIdentifier.getWikidataIdQueryPart(
                         id_name, id_value, "?person"
                     )

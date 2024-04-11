@@ -3,7 +3,6 @@ Created on 2023-03-21
 
 @author: wf
 """
-import yaml
 from lodstorage.query import Query, QueryManager
 from wikibot3rd.smw import SMWClient
 from wikibot3rd.wikiclient import WikiClient

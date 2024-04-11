@@ -358,7 +358,7 @@ class TestWikidataSync(Basetest):
             """
         qres = self.wdSync.sparql.queryAsListOfDicts(query)
         print(len(qres), "Volume urls have a missing language qualifier!")
-        qualifier = st = wbi_datatype.Item(value="Q1860", prop_nr="P407")
+        qualifier = wbi_datatype.Item(value="Q1860", prop_nr="P407")
         self.wdSync.wd.loginWithCredentials()
         for record in qres:
             proceeedingQid = record.get("proceeding")[
@@ -560,7 +560,7 @@ class TestWikidataSync(Basetest):
             try:
                 volume.extractValuesFromVolumePage()
                 print("")
-            except Exception as ex:
+            except Exception:
                 print("error")
         self.wdSync.storeVolumes()
 

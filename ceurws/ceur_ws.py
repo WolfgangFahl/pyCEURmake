@@ -228,7 +228,7 @@ class Volume(JSONAble):
                     dates.sort()
                     dateFrom = dates[0]
                     dateTo = dates[1]
-            except:
+            except Exception:
                 pass
             if dateTo is not None and dateFrom is not None:
                 delta = dateTo - dateFrom
@@ -495,7 +495,10 @@ class Paper(JSONAble):
     """
 
     @staticmethod
-    def getSamples():
+    def getSamples() -> typing.List[dict]:
+        """
+        get sample records of the entity
+        """
         samples = [
             {
                 "id": "Vol-2436/s1/summary",  # id is constructed with volume and position → <volNumber>/s<position>/<type>_<position_relative_to_type>
@@ -533,6 +536,7 @@ class Paper(JSONAble):
                 "authors": ["Alexandru Mara", "Jefrey Lijffijt", "Tijl De Bie"],
             },
         ]
+        return samples
 
     def __str__(self):
         """
@@ -570,7 +574,11 @@ class Session(JSONAble):
     Represents a session in ceur-ws
     """
 
-    def getSamples(self):
+    @staticmethod
+    def getSamples() -> typing.List[dict]:
+        """
+        get sample records of the entity
+        """
         samples = [
             {
                 "id": "Vol-2436/s1",  # id is constructed with volume and position → <volNumber>/s<position>
@@ -583,6 +591,7 @@ class Session(JSONAble):
                 },
             }
         ]
+        return samples
 
     @property
     def volume(self) -> Volume:
@@ -640,7 +649,10 @@ class Editor(JSONAble):
     """
 
     @staticmethod
-    def getSamples():
+    def getSamples() -> typing.List[dict]:
+        """
+        get sample records of the entity
+        """
         samples = [
             {
                 "id": "Vol-2436/John Doe",
@@ -659,6 +671,7 @@ class Editor(JSONAble):
                 "submitted": True,
             },
         ]
+        return samples
 
 
 class EditorManager(EntityManager):
@@ -685,7 +698,10 @@ class Conference(JSONAble):
     """
 
     @staticmethod
-    def getSamples():
+    def getSamples() -> typing.List[dict]:
+        """
+        get sample records of the entity
+        """
         samples = [
             {
                 "id": "Vol-2436",
@@ -694,6 +710,7 @@ class Conference(JSONAble):
                 "acronym": "SDM 2019",
             }
         ]
+        return samples
 
 
 class ConferenceManager(EntityManager):

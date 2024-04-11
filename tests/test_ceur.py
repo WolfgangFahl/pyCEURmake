@@ -7,7 +7,7 @@ from tests.basetest import Basetest
 from ceurws.models.ceur import Volume, Paper
 from ceurws.sql_cache import SqlDB
 from ceurws.ceur_ws import CEURWS
-from sqlmodel import SQLModel, Session, create_engine, Field, select  # Added 'select' here
+from sqlmodel import select  # Added 'select' here
 
 class TestCEUR(Basetest):
     """

@@ -261,7 +261,7 @@ class TestVolumeParser(Basetest):
             elif pageStatement in f'<link rel="foaf:page" href="{url}">':
                 count += 1
                 print(url, end="")
-            elif pageStatement in f"foaf:name":
+            elif pageStatement in "foaf:name":
                 count += 1
                 print(url, end="")
             print("")

@@ -5,7 +5,7 @@ Created on 2023-12-28
 
 Class URN is designed to verify and calculate check digits for URNs (Uniform Resource Names) as used in the DNB URN service.
 The class provides methods for both verifying a full URN's check digit (check_urn_checksum) and calculating the check digit for a given URN (calc_urn_checksum).
-It's adapted from PHP and JavaScript sources, following the guidelines and methods outlined by the DNB (German National Library) URN service. 
+It's adapted from PHP and JavaScript sources, following the guidelines and methods outlined by the DNB (German National Library) URN service.
 
 """
 
@@ -72,6 +72,8 @@ class URN:
                 )
 
         # Assuming v2 is not 0 at the end of your URN calculations
-        check_digit = (_sum // v2) % 10  # Using integer division for floor behavior
+        check_digit = (
+            _sum // v2
+        ) % 10  # Using integer division for floor behavior
 
         return check_digit

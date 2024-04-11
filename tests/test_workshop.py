@@ -3,6 +3,7 @@ Created on 2020-11-22
 
 @author: wf
 """
+
 import unittest
 
 from ceurws.workshop import Workshop

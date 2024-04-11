@@ -3,6 +3,7 @@ Created on 2022-08-14
 
 @author: wf
 """
+
 import datetime
 import os
 import sys
@@ -18,6 +19,7 @@ from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 from ceurws.ceur_ws import CEURWS, PaperManager, Volume, VolumeManager
 from ceurws.indexparser import ParserConfig
 from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier
+
 
 class WikidataSync(object):
     """
@@ -87,9 +89,11 @@ class WikidataSync(object):
         dblp_ep = endpoints[dblp_en]
         wd_ep = endpoints[wd_en]
         wd_sync = cls(
-            baseurl=wd_ep.endpoint, dblp_endpoint_url=dblp_ep.endpoint, debug=debug
+            baseurl=wd_ep.endpoint,
+            dblp_endpoint_url=dblp_ep.endpoint,
+            debug=debug,
         )
-        wd_sync.wikidata_endpoint=wd_ep
+        wd_sync.wikidata_endpoint = wd_ep
         return wd_sync
 
     def login(self):
@@ -131,14 +135,18 @@ class WikidataSync(object):
         """
         self.vm = VolumeManager()
         self.vm.load()
-        self.volumesByNumber, _duplicates = LOD.getLookup(self.vm.getList(), "number")
+        self.volumesByNumber, _duplicates = LOD.getLookup(
+            self.vm.getList(), "number"
+        )
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
         self.volumeOptions = {}
         reverse_keys = sorted(self.volumesByNumber.keys(), reverse=True)
         for volume_number in reverse_keys:
             volume = self.volumesByNumber[volume_number]
-            self.volumeOptions[volume.number] = f"Vol-{volume.number}:{volume.title}"
+            self.volumeOptions[volume.number] = (
+                f"Vol-{volume.number}:{volume.title}"
+            )
 
     def addVolume(self, volume: Volume):
         """
@@ -162,8 +170,8 @@ class WikidataSync(object):
         """
         self.prepareVolumeManager()
         refreshVm = VolumeManager()
-        parser_config=ParserConfig()
-        parser_config.force_download=True
+        parser_config = ParserConfig()
+        parser_config.force_download = True
         self.vm.set_down_to_volume(parser_config)
         refreshVm.loadFromIndexHtml(parser_config=parser_config)
         refreshVolumesByNumber, _duplicates = LOD.getLookup(
@@ -208,7 +216,9 @@ class WikidataSync(object):
         """
         volumeTitle = getattr(volume, "title", None)
         volumeNumber = getattr(volume, "number", None)
-        dblpEntityIds = self.dblpEndpoint.getDblpIdByVolumeNumber(number=volumeNumber)
+        dblpEntityIds = self.dblpEndpoint.getDblpIdByVolumeNumber(
+            number=volumeNumber
+        )
         instanceOf, description = self.getEventTypeFromTitle(volumeTitle)
         record = {
             "title": self.getEventNameFromTitle(volumeTitle),
@@ -249,9 +259,13 @@ class WikidataSync(object):
         )
         # query events
         event_query = self.qm.queriesByName["EventsByProceeding"]
-        wd_event_records: List[dict] = self.sparql.queryAsListOfDicts(event_query.query)
+        wd_event_records: List[dict] = self.sparql.queryAsListOfDicts(
+            event_query.query
+        )
         # add events to proceeding records
-        proceedings_event_map, _duplicates = LOD.getLookup(wd_event_records, "item")
+        proceedings_event_map, _duplicates = LOD.getLookup(
+            wd_event_records, "item"
+        )
         for proceedings_record in wd_proceedings_records:
             item = proceedings_record.get("item")
             if item in proceedings_event_map:
@@ -269,7 +283,9 @@ class WikidataSync(object):
             sampleRecordCount=5000,
             failIfTooFew=False,
         )
-        procsByURN, duplicates = LOD.getLookup(wd_proceedings_records, "URN_NBN")
+        procsByURN, duplicates = LOD.getLookup(
+            wd_proceedings_records, "URN_NBN"
+        )
         if withStore:
             self.sqldb.store(
                 procsByURN.values(), entityInfo, executeMany=True, fixNone=True
@@ -321,7 +337,9 @@ class WikidataSync(object):
         Returns:
             List of corresponding wikidata item ids or empty list of no matching item is found
         """
-        query = f"""SELECT ?proceeding WHERE{{ ?proceeding wdt:P4109 "{urn}"}}"""
+        query = (
+            f"""SELECT ?proceeding WHERE{{ ?proceeding wdt:P4109 "{urn}"}}"""
+        )
         qres = self.sparql.queryAsListOfDicts(query)
         wdItems = [record.get("proceeding") for record in qres]
         return wdItems
@@ -401,11 +419,8 @@ class WikidataSync(object):
         return result
 
     def doAddProceedingsToWikidata(
-        self, 
-        record: dict, 
-        write: bool = True, 
-        ignoreErrors: bool = False
-    )->WikidataResult:
+        self, record: dict, write: bool = True, ignoreErrors: bool = False
+    ) -> WikidataResult:
         """
         Creates a wikidata proceedings entry for the given record
 
@@ -507,7 +522,9 @@ class WikidataSync(object):
         eventVar = "?event"
         if eventItemQid is not None:
             eventVar = f"wd:{eventItemQid}"
-        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
+        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(
+            number=volumeNumber
+        )
         query = f"""ASK{{ wd:{proceedingsWikidataId} wdt:P4745 {eventVar}.}}"""
         proceedingExists = self.askWikidata(query)
         return proceedingExists
@@ -531,7 +548,7 @@ class WikidataSync(object):
         proceedingsWikidataId: str = None,
         write: bool = True,
         ignoreErrors: bool = False,
-    )->WikidataResult:
+    ) -> WikidataResult:
         """
         add the link between the wikidata proceedings item and the given event wikidata item
         Args:
@@ -540,7 +557,7 @@ class WikidataSync(object):
             proceedingsWikidataId: wikidata id of the proceedings item
             write(bool): if True actually write
             ignoreErrors(bool): if True ignore errors
-            
+
         Returns:
             WikidataResult: the result of the add operation
         """
@@ -549,7 +566,10 @@ class WikidataSync(object):
                 number=volumeNumber
             )
         if proceedingsWikidataId is None:
-            return None, "Volume is not unique → Proceedings item can not be determined"
+            return (
+                None,
+                "Volume is not unique → Proceedings item can not be determined",
+            )
         mappings = [
             PropertyMapping(
                 column="isProceedingsFrom",
@@ -674,7 +694,7 @@ class WikidataSync(object):
         dblpRecordId: str = None,
         write: bool = True,
         ignoreErrors: bool = False,
-    )->WikidataResult:
+    ) -> WikidataResult:
         """
         try to add the dblp publication id (P8978) to the proceedings record
         Args:
@@ -682,20 +702,26 @@ class WikidataSync(object):
             dblpRecordId: dblp record id to add to the proceedings item. If None query dblp for the record id
             write: if True actually write
             ignoreErrors(bool): if True ignore errors
-            
+
         Returns:
             WikidataResult: the result of the add operation
         """
-        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
+        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(
+            number=volumeNumber
+        )
         if proceedingsWikidataId is None:
             return False, "Proceedings item can not be determined"
-        if self.hasItemPropertyValueFor(item=proceedingsWikidataId, propertyId="P8978"):
+        if self.hasItemPropertyValueFor(
+            item=proceedingsWikidataId, propertyId="P8978"
+        ):
             return (
                 False,
                 "dblp publication id is already assigned to the proceedings item",
             )
         if dblpRecordId is None:
-            dblpRecordIds = self.dblpEndpoint.getDblpIdByVolumeNumber(volumeNumber)
+            dblpRecordIds = self.dblpEndpoint.getDblpIdByVolumeNumber(
+                volumeNumber
+            )
             if len(dblpRecordIds) == 1:
                 dblpRecordId = dblpRecordIds[0]
             elif len(dblpRecordIds) > 1:
@@ -704,7 +730,10 @@ class WikidataSync(object):
                     f"More than one proceedings record found ({dblpRecordIds})",
                 )
             else:
-                return False, f"Proceedings of volume {volumeNumber} are not in dblp"
+                return (
+                    False,
+                    f"Proceedings of volume {volumeNumber} are not in dblp",
+                )
         mappings = [
             PropertyMapping(
                 column="DBLP publication ID",
@@ -851,7 +880,9 @@ class WikidataSync(object):
         Returns:
             list of matching wikidata items
         """
-        dblpEventId = self.dblpEndpoint.convertEntityIdToUrlId(entityId=entityId)
+        dblpEventId = self.dblpEndpoint.convertEntityIdToUrlId(
+            entityId=entityId
+        )
         dblpIds = [entityId, dblpEventId]
         dblpIdsStr = " ".join([f'"{dblpId}"' for dblpId in dblpIds])
         urls = " ".join(
@@ -989,11 +1020,11 @@ class WikidataSync(object):
             return academicWorkshop
 
     def doCreateEventItemAndLinkProceedings(
-        self, 
-        volume: Volume, 
-        proceedingsWikidataId: str = None, 
-        write: bool = False
-    )->Dict[str,WikidataResult]:
+        self,
+        volume: Volume,
+        proceedingsWikidataId: str = None,
+        write: bool = False,
+    ) -> Dict[str, WikidataResult]:
         """
         Create event  wikidata item for given volume and link the proceedings with the event
         Args:
@@ -1004,30 +1035,31 @@ class WikidataSync(object):
         Returns:
             proceedingsQId, eventQId, msg
         """
-        results={} 
+        results = {}
         volNumber = getattr(volume, "number")
         if proceedingsWikidataId is None and self.checkIfProceedingsFromExists(
             volNumber, eventItemQid=None
         ):
             # link between proceedings and event already exists
-            proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volNumber)
-            results["Proceedings"]=WikidataResult(
+            proceedingsWikidataId = self.getWikidataIdByVolumeNumber(
+                number=volNumber
+            )
+            results["Proceedings"] = WikidataResult(
                 qid=proceedingsWikidataId,
                 msg=f"Proceedings for Vol-{volNumber} already exists",
             )
         dblpEntityIds = self.dblpEndpoint.getDblpIdByVolumeNumber(volNumber)
-        dblpEntityId=None
-        msg=None
-        if len(dblpEntityIds) > 1:    
-            msg=f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}",
+        dblpEntityId = None
+        msg = None
+        if len(dblpEntityIds) > 1:
+            msg = (
+                f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}",
+            )
         elif len(dblpEntityIds) == 1:
             dblpEntityId = dblpEntityIds[0]
         else:
             dblpEntityId = None
-        results["dblp"]=WikidataResult(
-            qid=dblpEntityId,
-            msg=msg
-        )
+        results["dblp"] = WikidataResult(qid=dblpEntityId, msg=msg)
         wdItems = self.getWikidataIdByDblpEventId(dblpEntityId, volNumber)
         msg = ""
         eventQid = None
@@ -1035,19 +1067,19 @@ class WikidataSync(object):
             # event item does not exist → create a new one
             volume.resolveLoctime()
             eventRecord = self.getWikidataEventRecord(volume)
-            event_result= self.doAddEventToWikidata(
+            event_result = self.doAddEventToWikidata(
                 record=eventRecord, write=write
             )
-            eventQid=event_result.qid
-            results["Event"]=event_result
+            eventQid = event_result.qid
+            results["Event"] = event_result
         elif len(wdItems) == 1:
-            results["Event"]=WikidataResult(
+            results["Event"] = WikidataResult(
                 # the event item already exists
-                qid = wdItems[0],
-                msg = "Event item already exists;"
+                qid=wdItems[0],
+                msg="Event item already exists;",
             )
         else:
-            results["Event"]=WikidataResult(
+            results["Event"] = WikidataResult(
                 msg=f"Multiple event entries exist: {','.join(wdItems)}"
             )
         if eventQid is not None:
@@ -1058,8 +1090,8 @@ class WikidataSync(object):
                 proceedingsWikidataId=proceedingsWikidataId,
                 write=write,
             )
-            link_result.msg="Added Link between Proceedings and Event item;"
-            results["link"]=link_result
+            link_result.msg = "Added Link between Proceedings and Event item;"
+            results["link"] = link_result
         return results
 
     @classmethod

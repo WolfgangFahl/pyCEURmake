@@ -3,6 +3,7 @@ Created on 2024-03-09
 
 @author: wf
 """
+
 import time
 import dataclasses
 from dataclasses import dataclass
@@ -10,23 +11,26 @@ import os
 from lodstorage.sparql import SPARQL
 from lodstorage.cache import CacheManager
 from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
-from lodstorage.query import  QueryManager
+from lodstorage.query import QueryManager
 from lodstorage.lod import LOD
 from itertools import groupby
 from urllib.error import HTTPError
 from typing import Dict, List, Union
 
+
 class DblpManager:
     """
     Manage DBLP entities.
-    
+
     Attributes:
         endpoint (DblpEndpoint): The endpoint for DBLP queries.
         cache_name (str): The name of the cache to use.
         query_name (str): The name of the query to execute.
     """
-    
-    def __init__(self, endpoint: 'DblpEndpoint', cache_name: str, query_name: str):
+
+    def __init__(
+        self, endpoint: "DblpEndpoint", cache_name: str, query_name: str
+    ):
         """
         Initializes the DBLP Manager with the given endpoint, cache name, and query name.
 
@@ -38,7 +42,7 @@ class DblpManager:
         self.endpoint = endpoint
         self.cache_name = cache_name
         self.query_name = query_name
-        
+
     def load(self, force_query: bool = False):
         """
         Loads a list of dictionaries from the DBLP endpoint.
@@ -46,17 +50,20 @@ class DblpManager:
         Args:
             force_query (bool): If True, forces a new query to the endpoint. Defaults to False.
         """
-        self.lod = self.endpoint.get_lod(self.cache_name, self.query_name, force_query=force_query)
-    
+        self.lod = self.endpoint.get_lod(
+            self.cache_name, self.query_name, force_query=force_query
+        )
+
+
 class DblpAuthors(DblpManager):
     """
     Manage all authors of DBLP indexed volumes.
     """
-    
-    def __init__(self, endpoint: 'DblpEndpoint'):
-        super().__init__(endpoint, "dblp/authors","CEUR-WS Paper Authors")
-        self.authors=None
-        
+
+    def __init__(self, endpoint: "DblpEndpoint"):
+        super().__init__(endpoint, "dblp/authors", "CEUR-WS Paper Authors")
+        self.authors = None
+
     def load(self, force_query: bool = False):
         """
         load my authors
@@ -68,15 +75,17 @@ class DblpAuthors(DblpManager):
                 author = DblpScholar(**d)
                 self.authors.append(author)
             self.authorsById = {a.dblp_author_id: a for a in self.authors}
-                         
+
+
 class DblpEditors(DblpManager):
     """
     Manage all editors of DBLP indexed volumes.
     """
-    def __init__(self, endpoint: 'DblpEndpoint'):
-        super().__init__(endpoint, "dblp/editors","CEUR-WS all Editors")
-        self.editors=None
-        
+
+    def __init__(self, endpoint: "DblpEndpoint"):
+        super().__init__(endpoint, "dblp/editors", "CEUR-WS all Editors")
+        self.editors = None
+
     def load(self, force_query: bool = False):
         """
         load my editors
@@ -88,21 +97,23 @@ class DblpEditors(DblpManager):
                 editor = DblpScholar(**d)
                 self.editors.append(editor)
             self.editorsById = {e.dblp_author_id: e for e in self.editors}
-    
+
+
 class DblpPapers(DblpManager):
     """
     manage all CEUR-WS papers indexed by dblp
     """
-    def __init__(self, endpoint: 'DblpEndpoint'):
-        super().__init__(endpoint,"dblp/papers","CEUR-WS all Papers")
-        self.papers=None
-                   
+
+    def __init__(self, endpoint: "DblpEndpoint"):
+        super().__init__(endpoint, "dblp/papers", "CEUR-WS all Papers")
+        self.papers = None
+
     def load(self, force_query: bool = False):
         """
         load my editors
         """
         if self.papers is None:
-            super().load(force_query=force_query)  
+            super().load(force_query=force_query)
             dblp_authors = self.endpoint.dblp_authors
             dblp_authors.load(force_query=force_query)
             self.papers = []
@@ -139,31 +150,36 @@ class DblpPapers(DblpManager):
             self.papersByProceeding = {
                 key: list(group)
                 for key, group in groupby(
-                        self.papers, lambda paper: paper.dblp_proceeding_id
+                    self.papers, lambda paper: paper.dblp_proceeding_id
                 )
             }
             self.papersById = {p.dblp_publication_id: p for p in self.papers}
             # papers per volume
-            for volume_number, vol_papers in sorted(self.papers_by_volume.items()):
-                vol_paper_lod=[dataclasses.asdict(paper) for paper in vol_papers]
-                cache_name=f"dblp/Vol-{volume_number}/papers"
+            for volume_number, vol_papers in sorted(
+                self.papers_by_volume.items()
+            ):
+                vol_paper_lod = [
+                    dataclasses.asdict(paper) for paper in vol_papers
+                ]
+                cache_name = f"dblp/Vol-{volume_number}/papers"
                 if self.endpoint.progress_bar:
-                    self.endpoint.progress_bar.update(30/3650)
-                    #print(f"caching {cache_name}")
+                    self.endpoint.progress_bar.update(30 / 3650)
+                    # print(f"caching {cache_name}")
                 self.endpoint.cache_manager.store(
                     cache_name,
                     vol_paper_lod,
                 )
-  
+
+
 class DblpVolumes(DblpManager):
     """
     Manage all DBLP indexed volumes.
     """
-    
-    def __init__(self, endpoint: 'DblpEndpoint'):
+
+    def __init__(self, endpoint: "DblpEndpoint"):
         super().__init__(endpoint, "dblp/volumes", "CEUR-WS all Volumes")
-        self.volumes=None
-        
+        self.volumes = None
+
     def load(self, force_query: bool = False):
         """
         load my volumes
@@ -195,19 +211,20 @@ class DblpVolumes(DblpManager):
                     dblp_event_id=d.get("dblp_event_id"),
                     title=d.get("title"),
                     editors=vol_editors,
-                    papers=dblp_papers.papersByProceeding.get(d.get("proceeding")),
+                    papers=dblp_papers.papersByProceeding.get(
+                        d.get("proceeding")
+                    ),
                 )
                 volumes.append(volume)
             volume_by_number, _errors = LOD.getLookup(volumes, "volume_number")
             for number, volume in sorted(volume_by_number.items()):
-                cache_name=f"dblp/Vol-{number}/metadata"
+                cache_name = f"dblp/Vol-{number}/metadata"
                 if self.endpoint.progress_bar:
-                    self.endpoint.progress_bar.update(30/3650)
-                self.endpoint.cache_manager.store(
-                    cache_name, volume
-                )
+                    self.endpoint.progress_bar.update(30 / 3650)
+                self.endpoint.cache_manager.store(cache_name, volume)
         return self.volumes
-    
+
+
 class DblpEndpoint:
     """
     provides queries and a dblp endpoint to execute them
@@ -216,11 +233,11 @@ class DblpEndpoint:
     DBLP_REC_PREFIX = "https://dblp.org/rec/"
     DBLP_EVENT_PREFIX = "https://dblp.org/db/"
 
-    def __init__(self, endpoint,debug:bool=False):
+    def __init__(self, endpoint, debug: bool = False):
         """
         constructor
         """
-        self.debug=debug
+        self.debug = debug
         self.sparql = SPARQL(endpoint)
         path = os.path.dirname(__file__)
         qYamlFile = f"{path}/resources/queries/dblp.yaml"
@@ -228,61 +245,63 @@ class DblpEndpoint:
             self.qm = QueryManager(lang="sparql", queriesPath=qYamlFile)
         # there is one cache manager for all our json caches
         self.cache_manager = CacheManager("ceurws")
-        self.dblp_authors=DblpAuthors(endpoint=self)
-        self.dblp_editors=DblpEditors(endpoint=self)
-        self.dblp_papers= DblpPapers(endpoint=self)
+        self.dblp_authors = DblpAuthors(endpoint=self)
+        self.dblp_editors = DblpEditors(endpoint=self)
+        self.dblp_papers = DblpPapers(endpoint=self)
         self.dblp_volumes = DblpVolumes(endpoint=self)
-        self.dblp_managers= {
+        self.dblp_managers = {
             "dblp/authors": self.dblp_authors,
             "dblp/editors": self.dblp_editors,
             "dblp/papers": self.dblp_papers,
-            "dblp/volumes": self.dblp_volumes
+            "dblp/volumes": self.dblp_volumes,
         }
-        self.progress_bar=None
-        
-    def load_all(self,force_query:bool=False):
+        self.progress_bar = None
+
+    def load_all(self, force_query: bool = False):
         """
         load all managers
         """
-        for _key,manager in self.dblp_managers.items():
+        for _key, manager in self.dblp_managers.items():
             manager.load(force_query=force_query)
-            
-        
-    def get_lod(self,
-        cache_name:str,
-        query_name:str,
-        force_query: bool = False)->List:
+
+    def get_lod(
+        self, cache_name: str, query_name: str, force_query: bool = False
+    ) -> List:
         """
         Get the list of dictionaries for the given cache and query names,
         optionally forcing a query.
-    
+
         Args:
             cache_name (str): The name of the cache to load or store the LOD.
             query_name (str): The name of the query to execute if the data is not cached or forced to query.
             force_query (bool): If True, forces the query execution even if the data is cached. Defaults to False.
-    
+
         Returns:
             List[Dict]: The list of dictionaries loaded either from cache or by executing the SPARQL query.
         """
         start_time = time.time()  # Record the start time of the operation
-        cache=self.cache_manager.get_cache_by_name(cache_name)
+        cache = self.cache_manager.get_cache_by_name(cache_name)
         if cache.is_stored and not force_query:
             if self.debug:
                 print(f"loading {cache_name} from cache")
-            lod=self.cache_manager.load(cache_name)
+            lod = self.cache_manager.load(cache_name)
         else:
             query = self.qm.queriesByName[query_name]
             if self.debug:
                 print(f"loading {cache_name} from SPARQL query {query_name}")
-            lod=self.sparql.queryAsListOfDicts(query.query)
+            lod = self.sparql.queryAsListOfDicts(query.query)
             self.cache_manager.store(cache_name, lod)
         end_time = time.time()  # Record the end time of the operation
-        duration = end_time - start_time  # Calculate the duration of the loading process
-    
+        duration = (
+            end_time - start_time
+        )  # Calculate the duration of the loading process
+
         if self.debug:
-            print(f"loaded {len(lod)} records for {cache_name} in {duration:.2f} seconds")
+            print(
+                f"loaded {len(lod)} records for {cache_name} in {duration:.2f} seconds"
+            )
         if self.progress_bar:
-            self.progress_bar.update(duration*100/36)    
+            self.progress_bar.update(duration * 100 / 36)
         return lod
 
     def get_ceur_volume_papers(self, volume_number: int) -> List[DblpPaper]:
@@ -293,7 +312,7 @@ class DblpEndpoint:
         lod = self.cache_manager.load(cache_name)
         papers = [DblpPaper(**d) for d in lod]
         return papers
-    
+
     def get_ceur_proceeding(self, volume_number: int) -> DblpProceeding:
         """
         get ceur proceeding by volume number from dblp
@@ -301,9 +320,8 @@ class DblpEndpoint:
             volume_number: number of the volume
         """
         cache_name = f"dblp/Vol-{volume_number}/metadata"
-        volume=self.cache_manager.load(cache_name,cls=DblpProceeding)
+        volume = self.cache_manager.load(cache_name, cls=DblpProceeding)
         return volume
-
 
     def getDblpIdByVolumeNumber(self, number) -> List[str]:
         """
@@ -326,7 +344,8 @@ class DblpEndpoint:
         qIds = []
         if qres is not None and qres != []:
             qIds = [
-                record.get("proceeding")[len(self.DBLP_REC_PREFIX) :] for record in qres
+                record.get("proceeding")[len(self.DBLP_REC_PREFIX) :]
+                for record in qres
             ]
         return qIds
 
@@ -348,7 +367,10 @@ class DblpEndpoint:
         qres = self.sparql.queryAsListOfDicts(query)
         qIds = []
         if qres is not None and qres != []:
-            qIds = [record.get("url")[len(self.DBLP_EVENT_PREFIX) :] for record in qres]
+            qIds = [
+                record.get("url")[len(self.DBLP_EVENT_PREFIX) :]
+                for record in qres
+            ]
         qId = qIds[0] if qIds is not None and len(qIds) > 0 else None
         return qId
 
@@ -367,7 +389,9 @@ class DblpEndpoint:
         """
         return self.getDblpUrlByDblpId(entityId)
 
-    def toDblpUrl(self, entityId: str, withPostfix: bool = False) -> Union[str, None]:
+    def toDblpUrl(
+        self, entityId: str, withPostfix: bool = False
+    ) -> Union[str, None]:
         """
         Convert the given id to the corresponding dblp url
         Args:
@@ -466,15 +490,21 @@ class DblpAuthorIdentifier:
             DblpAuthorIdentifier("dblp", "datacite:dblp", "P2456"),
             DblpAuthorIdentifier("wikidata", "datacite:wikidata", None),
             DblpAuthorIdentifier("orcid", "datacite:orcid", "P496"),
-            DblpAuthorIdentifier("googleScholar", "datacite:google-scholar", "P1960"),
+            DblpAuthorIdentifier(
+                "googleScholar", "datacite:google-scholar", "P1960"
+            ),
             DblpAuthorIdentifier("acm", "datacite:acm", "P864"),
             DblpAuthorIdentifier("twitter", "datacite:twitter", "P2002"),
             DblpAuthorIdentifier("github", "datacite:github", "P2037"),
             DblpAuthorIdentifier("viaf", "datacite:viaf", "P214"),
             DblpAuthorIdentifier("scigraph", "datacite:scigraph", "P10861"),
             DblpAuthorIdentifier("zbmath", "datacite:zbmath", "P1556"),
-            DblpAuthorIdentifier("researchGate", "datacite:research-gate", "P6023"),
-            DblpAuthorIdentifier("mathGenealogy", "datacite:math-genealogy", "P549"),
+            DblpAuthorIdentifier(
+                "researchGate", "datacite:research-gate", "P6023"
+            ),
+            DblpAuthorIdentifier(
+                "mathGenealogy", "datacite:math-genealogy", "P549"
+            ),
             DblpAuthorIdentifier("loc", "datacite:loc", "P244"),
             DblpAuthorIdentifier("linkedin", "datacite:linkedin", "P6634"),
             DblpAuthorIdentifier("lattes", "datacite:lattes", "P1007"),
@@ -522,7 +552,9 @@ class DblpAuthorIdentifier:
                             {var} wdt:{wd_prop} ?{id_name}.}} 
                             }}  # {id_name}"""
             else:
-                query = f"""{{ {var} wdt:{wd_prop} "{value}". }}  # {id_name}"""
+                query = (
+                    f"""{{ {var} wdt:{wd_prop} "{value}". }}  # {id_name}"""
+                )
         else:
             pass
         return query

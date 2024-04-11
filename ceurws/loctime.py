@@ -3,6 +3,7 @@ Created on 2023-12-22
 
 @author: wf
 """
+
 import os
 import re
 from collections import Counter
@@ -92,7 +93,10 @@ class LoctimeParser:
             yaml.YAMLError: If there is an error parsing the YAML file.
         """
         data_dict = {}
-        if os.path.isfile(self.filepath) and os.path.getsize(self.filepath) > 0:
+        if (
+            os.path.isfile(self.filepath)
+            and os.path.getsize(self.filepath) > 0
+        ):
             with open(self.filepath, "r") as yaml_file:
                 data_dict = yaml.safe_load(yaml_file)
         return data_dict
@@ -106,7 +110,10 @@ class LoctimeParser:
         )  # Ensure directory exists
         with open(self.filepath, "w", encoding="utf-8") as yaml_file:
             yaml.dump(
-                self.lookups, yaml_file, default_flow_style=False, allow_unicode=True
+                self.lookups,
+                yaml_file,
+                default_flow_style=False,
+                allow_unicode=True,
             )
 
     def get_parts(self, loctime):
@@ -156,7 +163,9 @@ class LoctimeParser:
                 lookup_dict,
             ) in self.multi_word_lookups.items():
                 if part in lookup_dict:
-                    self.counters[lookup_key][part] += 1  # Increment the lookup counter
+                    self.counters[lookup_key][part] += (
+                        1  # Increment the lookup counter
+                    )
                     found_in_lookup = True
                     # set result dict
                     result[lookup_key] = part
@@ -232,7 +241,10 @@ class LoctimeParser:
             # Calculate cumulative counts for each segment
             for _, count in sorted_items:
                 item_percentage = count / total * 100
-                if total_pc + item_percentage > current_threshold + 0.000000000001:
+                if (
+                    total_pc + item_percentage
+                    > current_threshold + 0.000000000001
+                ):
                     segment_cutoff[current_threshold] = count
                     tindex += 1
                     if tindex >= len(thresholds):
@@ -278,8 +290,12 @@ class PercentageTable:
             row_title (str): The title for the row.
             value (float): The value for the row, which is used to calculate its percentage of the total.
         """
-        percentage = round((value / self.total) * 100, self.digits) if self.total else 0
-        self.rows.append({self.column_title: row_title, "#": value, "%": percentage})
+        percentage = (
+            round((value / self.total) * 100, self.digits) if self.total else 0
+        )
+        self.rows.append(
+            {self.column_title: row_title, "#": value, "%": percentage}
+        )
 
     def generate_table(self, tablefmt="grid") -> str:
         """
@@ -291,6 +307,9 @@ class PercentageTable:
         if not self.rows:
             return ""
         tabulate_markup = tabulate(
-            self.rows, headers="keys", tablefmt=tablefmt, floatfmt=f".{self.digits}f"
+            self.rows,
+            headers="keys",
+            tablefmt=tablefmt,
+            floatfmt=f".{self.digits}f",
         )
         return tabulate_markup

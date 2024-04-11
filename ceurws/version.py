@@ -3,6 +3,7 @@ Created on 2022-09-11
 
 @author: wf
 """
+
 from dataclasses import dataclass
 
 import ceurws

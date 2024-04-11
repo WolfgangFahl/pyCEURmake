@@ -1,6 +1,13 @@
 import datetime
 
-from ceurws.ceur_ws import Conference, Editor, Paper, Session, Volume, VolumeManager
+from ceurws.ceur_ws import (
+    Conference,
+    Editor,
+    Paper,
+    Session,
+    Volume,
+    VolumeManager,
+)
 from tests.basetest import Basetest
 
 
@@ -54,7 +61,9 @@ class TestVolume(Basetest):
                 "id": "Vol-2436/s1",  # id is constructed with volume and position → <volNumber>/s<position>
                 "title": "Information Technologies and Intelligent Decision Making Systems II",
                 "position": 1,
-                "papers": {"VOL-2436/s1/p1": paper1},  # 1:n relation / command chain
+                "papers": {
+                    "VOL-2436/s1/p1": paper1
+                },  # 1:n relation / command chain
             }
         )
         volume = Volume()
@@ -233,7 +242,9 @@ class TestVolume(Basetest):
                     datetime.datetime.fromisoformat(expectedDateTo).date(),
                     getattr(vol, "dateTo"),
                 )
-                self.assertEqual(expectedCity, getattr(vol, "cityWikidataId", None))
+                self.assertEqual(
+                    expectedCity, getattr(vol, "cityWikidataId", None)
+                )
                 self.assertEqual(
                     expectedCountry, getattr(vol, "countryWikidataId", None)
                 )
@@ -276,10 +287,16 @@ class TestVolume(Basetest):
         test_params = [  # input, pattern, expected
             ("Moscow, Russia, July 18, 2016", "\d", "Moscow, Russia"),
             ("Berlin, Germany, June 30 & July 1, 2011", "[a-zA-Z]", " 2011"),
-            ("Berlin, Germany, June 30 & July 1, 2011", "\d", "Berlin, Germany"),
+            (
+                "Berlin, Germany, June 30 & July 1, 2011",
+                "\d",
+                "Berlin, Germany",
+            ),
         ]
         for param in test_params:
             with self.subTest("Tests removePartsMatching on", param=param):
                 value, pattern, expectedResult = param
-                actualResult = Volume.removePartsMatching(value, pattern=pattern)
+                actualResult = Volume.removePartsMatching(
+                    value, pattern=pattern
+                )
                 self.assertEqual(expectedResult, actualResult)

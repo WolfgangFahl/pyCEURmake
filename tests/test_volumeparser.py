@@ -3,6 +3,7 @@ Created on 2022-08-14
 
 @author: wf
 """
+
 import json
 import time
 import unittest
@@ -13,6 +14,7 @@ from lodstorage.lod import LOD
 from ceurws.ceur_ws import VolumeManager
 from ceurws.volumeparser import VolumePageCache, VolumeParser
 from tests.basetest import Basetest
+
 
 class TestVolumeParser(Basetest):
     """
@@ -29,7 +31,9 @@ class TestVolumeParser(Basetest):
         self.vm = VolumeManager()
         self.vm.load()
         self.volumeList = self.vm.getList()
-        self.volumesByNumber, _duplicates = LOD.getLookup(self.volumeList, "number")
+        self.volumesByNumber, _duplicates = LOD.getLookup(
+            self.volumeList, "number"
+        )
 
     def testVolumeParser(self):
         """
@@ -40,7 +44,7 @@ class TestVolumeParser(Basetest):
         # acronym > = 901
         dolimit = self.inPublicCI()
         dolimit = True
-        #debug = True
+        # debug = True
         if dolimit:
             start = 3249
             limit = 3250
@@ -86,9 +90,13 @@ class TestVolumeParser(Basetest):
         tests why the extraction of the acronym fails for some volumes
         """
         volumeWithKnownIssue = 435
-        scrapedDict, _soup = self.volumeParser.parse_volume(volumeWithKnownIssue)
+        scrapedDict, _soup = self.volumeParser.parse_volume(
+            volumeWithKnownIssue
+        )
         self.assertEqual("SWAT4LS 2008", scrapedDict.get("acronym"))
-        self.assertEqual("http://www.swat4ls.org/", scrapedDict.get("homepage"))
+        self.assertEqual(
+            "http://www.swat4ls.org/", scrapedDict.get("homepage")
+        )
         if self.debug:
             print(scrapedDict)
 
@@ -134,7 +142,9 @@ class TestVolumeParser(Basetest):
             (2196, 10, 10, 10),
         ]
         for param in test_params[0:]:
-            with self.subTest(f"test editor parsing for Vol-{param[0]}", param=param):
+            with self.subTest(
+                f"test editor parsing for Vol-{param[0]}", param=param
+            ):
                 number, exp_editors, exp_homepages, exp_affiliations = param
                 url = self.volumeParser.volumeUrl(number)
                 soup = self.volumeParser.getSoup(url)
@@ -150,7 +160,9 @@ class TestVolumeParser(Basetest):
                 )
                 affiliations = []
                 for e in res.values():
-                    affiliations.extend([a.get("name") for a in e.get("affiliation")])
+                    affiliations.extend(
+                        [a.get("name") for a in e.get("affiliation")]
+                    )
                 number_of_affiliations = len(set(affiliations))
                 print(
                     f"Vol-{number}:#editors={number_of_editors} #homepages={number_of_homepages} #affiliations={number_of_affiliations} ({url})"
@@ -179,7 +191,9 @@ class TestVolumeParser(Basetest):
                 msg = f"({i:04}/{total})"
                 try:
                     res = self.volumeParser.parseEditors(soup)
-                    with open("/tmp/editors.json", mode="a", encoding="utf8") as f:
+                    with open(
+                        "/tmp/editors.json", mode="a", encoding="utf8"
+                    ) as f:
                         json.dump(res, fp=f, ensure_ascii=False)
                         f.write("\n")
                 except Exception as ex:
@@ -211,7 +225,8 @@ class TestVolumeParser(Basetest):
                     )
                     error_msg = (
                         "❌"
-                        if number_of_editors != number_of_editors_with_affiliations
+                        if number_of_editors
+                        != number_of_editors_with_affiliations
                         else ""
                     )
                     msg += f"{error_msg} #editors={number_of_editors} #affiliations={number_of_affiliation} #hompages={number_of_hompages} ({url})"
@@ -243,7 +258,9 @@ class TestVolumeParser(Basetest):
         with open(log_file, mode="w") as fp:
             json.dump(volume_editors, fp, indent=4)
 
-    @unittest.skipIf(True, "Analyses how often rdfa is used on the volume pages")
+    @unittest.skipIf(
+        True, "Analyses how often rdfa is used on the volume pages"
+    )
     def test_rdfa(self):
         count = 0
         for i in range(3231, 1, -1):

@@ -3,6 +3,7 @@ Created on 2022-08-11
 
 @author: wf
 """
+
 import datetime
 import logging
 
@@ -24,28 +25,30 @@ class TestIndexHtml(Basetest):
         # default timeout is 3 secs - make it 12
         self.timeout = 12.0
 
-    def checkVolumes(self,volumes):
+    def checkVolumes(self, volumes):
         volumeCount = len(volumes)
         print(f"{volumeCount} volumes found")
         prev_diff = None  # Track the previous difference
-    
+
         for index, volume in enumerate(volumes.values()):
             volumeNumber = volume["number"]
             expectedVolumeNumber = volumeCount - index
             diff = expectedVolumeNumber - volumeNumber
-    
+
             # Print only if the difference changes
             if diff != prev_diff:
                 print(f"{expectedVolumeNumber:4}:{volumeNumber:4} {diff}")
                 prev_diff = diff
-
 
     def volumesAsCsv(self, volumes, minVolumeNumber, maxVolumeNumber):
         """
         show the given range of volumes in CSV format
         """
         for volume in volumes:
-            if volume.number >= minVolumeNumber and volume.number <= maxVolumeNumber:
+            if (
+                volume.number >= minVolumeNumber
+                and volume.number <= maxVolumeNumber
+            ):
                 print(
                     f"{volume.number}\t{volume.acronym}\t{volume.desc}\t{volume.h1}\t{volume.title}\tQ1860\t{volume.published}\t{volume.urn}\t{volume.url}"
                 )
@@ -59,7 +62,7 @@ class TestIndexHtml(Basetest):
         withStore = False
         if withStore:
             vm.store()
-            
+
     def testReadingHtml(self):
         """
         test reading the HTML file
@@ -125,13 +128,13 @@ class TestIndexHtml(Basetest):
         tests extraction of series link over seeAlso
         """
         vm = VolumeManager()
-        parser_config=ParserConfig()
-        debug=self.debug
-        #debug=True
-        parser_config.debug=debug
-        parser_config.verbose=debug
+        parser_config = ParserConfig()
+        debug = self.debug
+        # debug=True
+        parser_config.debug = debug
+        parser_config.verbose = debug
         htmlText = vm.getIndexHtml(parser_config)
-        indexParser = IndexHtmlParser(htmlText,parser_config)
+        indexParser = IndexHtmlParser(htmlText, parser_config)
         volumes = indexParser.parse()
         expected_see_also = {  # volume: expected see also list
             3333: [3067],
@@ -174,6 +177,8 @@ class TestIndexHtml(Basetest):
         }
         for volume_number, see_also in expected_see_also.items():
             with self.subTest(volume_number=volume_number, see_also=see_also):
-                actual_see_also = volumes.get(volume_number).get("seealso", None)
+                actual_see_also = volumes.get(volume_number).get(
+                    "seealso", None
+                )
                 see_also = [f"Vol-{vn}" for vn in see_also]
                 self.assertListEqual(see_also, actual_see_also)

@@ -6,16 +6,19 @@ CEUR Workshop Proceedings (CEUR-WS.org)
 Metamodel
 @author: wf
 """
+
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime, date
+
 
 class Volume(SQLModel, table=True):
     """
     a single CEUR-WS Volume
     """
+
     __tablename__ = "volumes"
-    
+
     fromLine: Optional[int] = Field(default=None)
     toLine: Optional[int] = Field(default=None)
     valid: Optional[int] = Field(default=None)
@@ -29,7 +32,9 @@ class Volume(SQLModel, table=True):
     pubDate: Optional[datetime] = Field(default=None)
     number: int = Field(primary_key=True)
     archive: Optional[str] = Field(default=None)
-    desc: Optional[str] = Field(alias="description", default=None)  # 'desc' is a SQL keyword, so it's aliased
+    desc: Optional[str] = Field(
+        alias="description", default=None
+    )  # 'desc' is a SQL keyword, so it's aliased
     h1: Optional[str] = Field(default=None)
     h3: Optional[str] = Field(default=None)
     volname: Optional[str] = Field(default=None)
@@ -52,11 +57,13 @@ class Volume(SQLModel, table=True):
     colocated: Optional[str] = Field(default=None)
     virtualEvent: Optional[int] = Field(default=None)
     tdtitle: Optional[str] = Field(default=None)
-    
+
+
 class Paper(SQLModel, table=True):
     """
     Represents a paper with details such as authors, volume number, and title.
     """
+
     __tablename__ = "papers"
     authors: Optional[str] = Field(default=None, index=False)
     vol_number: Optional[int] = Field(default=None, index=True)
@@ -65,4 +72,3 @@ class Paper(SQLModel, table=True):
     title: Optional[str] = Field(default=None, index=False)
     pages: Optional[str] = Field(default=None, index=False)
     fail: Optional[str] = Field(default=None, index=False)
-

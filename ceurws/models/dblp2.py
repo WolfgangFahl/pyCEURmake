@@ -4,8 +4,9 @@ Created on 2024-03-16
 @author: wf
 """
 
-from sqlmodel import SQLModel, Field
 from typing import Optional
+
+from sqlmodel import Field, SQLModel
 
 
 class Scholar(SQLModel, table=True):

@@ -6,11 +6,11 @@ this is a redundant copy see e.g. https://github.com/WolfgangFahl/ConferenceCorp
 @author: wf
 """
 
-import os
-import urllib
 import gzip
+import os
 import shutil
 import time
+import urllib
 
 
 class Download:

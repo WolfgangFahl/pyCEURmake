@@ -7,9 +7,10 @@ Metamodel
 @author: wf
 """
 
-from sqlmodel import SQLModel, Field
+from datetime import date, datetime
 from typing import Optional
-from datetime import datetime, date
+
+from sqlmodel import Field, SQLModel
 
 
 class Volume(SQLModel, table=True):

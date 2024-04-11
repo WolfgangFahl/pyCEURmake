@@ -8,8 +8,9 @@ import datetime
 import html
 import re
 
-from ceurws.textparser import Textparser
 from ngwidgets.progress import Progressbar
+
+from ceurws.textparser import Textparser
 
 
 class ParserConfig:

@@ -10,14 +10,15 @@ import pprint
 import time
 import typing
 import unittest
+
 from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 from ez_wikidata.wikidata import UrlReference
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator import datatypes as wbi_datatype
 
+from ceurws.dblp import DblpAuthorIdentifier
 from ceurws.volumeparser import VolumeParser
 from ceurws.wikidatasync import WikidataSync
-from ceurws.dblp import DblpAuthorIdentifier
 from tests.basetest import Basetest
 
 

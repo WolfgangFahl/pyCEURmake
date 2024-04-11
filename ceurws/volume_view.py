@@ -4,14 +4,16 @@ Created on 2024-02-23
 @author: wf
 """
 
+import time
+
 from ngwidgets.lod_grid import GridConfig, ListOfDictsGrid
+from ngwidgets.progress import NiceguiProgressbar
 from ngwidgets.widgets import Link
 from nicegui import ui
-import time
+
 from ceurws.ceur_ws import Volume
 from ceurws.view import View
 from ceurws.wikidatasync import DblpEndpoint
-from ngwidgets.progress import NiceguiProgressbar
 
 
 class VolumeView(View):

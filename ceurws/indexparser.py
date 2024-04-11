@@ -3,6 +3,7 @@ Created on 11.08.2022
 
 @author: wf
 """
+
 import datetime
 import html
 import re
@@ -10,16 +11,20 @@ import re
 from ceurws.textparser import Textparser
 from ngwidgets.progress import Progressbar
 
+
 class ParserConfig:
     """
     parser configuration
     """
-    def __init__(self,
-        progress_bar:Progressbar=None,
-        down_to_volume:int=1,
-        force_download:bool=False,
+
+    def __init__(
+        self,
+        progress_bar: Progressbar = None,
+        down_to_volume: int = 1,
+        force_download: bool = False,
         verbose: bool = False,
-        debug:bool=False):
+        debug: bool = False,
+    ):
         """
         Initializes the ParserConfig with a progress bar, volume threshold, and debug mode setting.
 
@@ -30,19 +35,19 @@ class ParserConfig:
             verbose(bool): if True give verbose feedback
             debug (bool, optional): Indicates whether debugging mode is enabled. If True, additional debug information will be provided during parsing. Defaults to False.
         """
-        self.progress_bar=progress_bar
-        self.down_to_volume=down_to_volume
-        self.force_download=force_download
-        self.verbose=verbose
-        self.debug=debug
-    
+        self.progress_bar = progress_bar
+        self.down_to_volume = down_to_volume
+        self.force_download = force_download
+        self.verbose = verbose
+        self.debug = debug
+
 
 class IndexHtmlParser(Textparser):
     """
     CEUR-WS Index.html parser
     """
 
-    def __init__(self, htmlText, config:ParserConfig=None):
+    def __init__(self, htmlText, config: ParserConfig = None):
         """
         Constructor
 
@@ -50,8 +55,8 @@ class IndexHtmlParser(Textparser):
             htmlText(str): the HTML text of the index page
         """
         if config is None:
-            config=ParserConfig()
-        self.config=config
+            config = ParserConfig()
+        self.config = config
         Textparser.__init__(self, debug=config.debug)
         self.htmlText = htmlText
         # soup (in memory is slow)
@@ -94,7 +99,11 @@ class IndexHtmlParser(Textparser):
         return None
 
     def findVolume(
-        self, volCount: int, startLine: int, expectedTr: int = 3, progress: int = 10
+        self,
+        volCount: int,
+        startLine: int,
+        expectedTr: int = 3,
+        progress: int = 10,
     ) -> int:
         """
         find Volume lines from the given startLine
@@ -212,7 +221,9 @@ class IndexHtmlParser(Textparser):
         if see_also_section:
             # Extract the volumes using regex from the see also section
             volumes = re.findall(
-                r'<a href="#(Vol-\d+)">', see_also_section.group(1), re.IGNORECASE
+                r'<a href="#(Vol-\d+)">',
+                see_also_section.group(1),
+                re.IGNORECASE,
             )
         volume["seealso"] = volumes
 
@@ -236,7 +247,9 @@ class IndexHtmlParser(Textparser):
                 infoValue = html.unescape(infoValue)
             if info == "pubDate":
                 try:
-                    infoValue = datetime.datetime.strptime(infoValue, "%d-%b-%Y")
+                    infoValue = datetime.datetime.strptime(
+                        infoValue, "%d-%b-%Y"
+                    )
                     published = infoValue.strftime("%Y-%m-%d")
                     volume["published"] = published
                     volume["year"] = infoValue.year
@@ -250,10 +263,14 @@ class IndexHtmlParser(Textparser):
                     if info == "url":
                         self.setVolumeNumber(volume, href)
                     if info == "urn":
-                        infoValue = href.replace("https://nbn-resolving.org/", "")
+                        infoValue = href.replace(
+                            "https://nbn-resolving.org/", ""
+                        )
             volume[info] = infoValue
 
-    def parseVolume(self, volCount: int, fromLine: int, toLine: int, verbose: bool):
+    def parseVolume(
+        self, volCount: int, fromLine: int, toLine: int, verbose: bool
+    ):
         """
         parse a volume from the given line range
         """
@@ -289,7 +306,9 @@ class IndexHtmlParser(Textparser):
                 print(line)
         volumeNumber = volume.get("number", "?")
         acronym = volume.get("acronym", "?")
-        self.log(f"{volumeNumber:4}-{volCount:4}:{fromLine}+{lineCount} {acronym}")
+        self.log(
+            f"{volumeNumber:4}-{volCount:4}:{fromLine}+{lineCount} {acronym}"
+        )
         return volume
 
     def parse(self):
@@ -311,13 +330,16 @@ class IndexHtmlParser(Textparser):
             else:
                 volCount += 1
                 volume = self.parseVolume(
-                    volCount, volStartLine, volEndLine, verbose=self.config.verbose
+                    volCount,
+                    volStartLine,
+                    volEndLine,
+                    verbose=self.config.verbose,
                 )
                 # synchronize on <tr><th and not on end since trailing TR might be missing
                 lineNo = volStartLine + 1
                 if "number" in volume:
-                    volume_number=volume["number"]
-                    if volume_number<self.config.down_to_volume:
+                    volume_number = volume["number"]
+                    if volume_number < self.config.down_to_volume:
                         break
                     volumes[volume_number] = volume
                     if self.config.progress_bar:

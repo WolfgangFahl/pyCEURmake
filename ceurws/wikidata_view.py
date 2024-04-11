@@ -3,6 +3,7 @@ Created on 2024-02-23
 
 @author: wf
 """
+
 from ceurws.view import View
 from ceurws.wikidatasync import DblpEndpoint
 from ngwidgets.lod_grid import ListOfDictsGrid
@@ -10,11 +11,12 @@ from nicegui import ui
 from typing import List
 from wd.query_view import QueryView
 
+
 class WikidataView(View):
     """
     Wikidata View
     """
-    
+
     def __init__(self, solution, parent):
         """
         constructor
@@ -27,20 +29,24 @@ class WikidataView(View):
         self.solution = solution
         self.parent = parent
         self.setup_ui()
-        
+
     async def update_proceedings(self):
         """
         update the cached proceedings
         """
         try:
-            self.proceedings_records=self.solution.wdSync.loadProceedingsFromCache()
+            self.proceedings_records = (
+                self.solution.wdSync.loadProceedingsFromCache()
+            )
             with self.parent:
-                ui.notify(f"found {len(self.proceedings_records)} cached wikidata proceedings records")
+                ui.notify(
+                    f"found {len(self.proceedings_records)} cached wikidata proceedings records"
+                )
                 self.reload_aggrid(self.proceedings_records)
         except Exception as ex:
             self.solution.handle_exception(ex)
-            
-    def reload_aggrid(self,olod:List):
+
+    def reload_aggrid(self, olod: List):
         """
         reload my aggrid with the list of Volumes
         """
@@ -59,7 +65,8 @@ class WikidataView(View):
                 try:
                     volNumber = int(volume)
                     volumeLink = self.createLink(
-                        f"http://ceur-ws.org/Vol-{volume}", f"Vol-{volNumber:04}"
+                        f"http://ceur-ws.org/Vol-{volume}",
+                        f"Vol-{volNumber:04}",
                     )
                 except Exception as _ex:
                     volumeLink = self.noneValue
@@ -67,12 +74,17 @@ class WikidataView(View):
                 volumeLink = self.noneValue
             itemLink = self.createItemLink(row, "item")
             eventLink = self.createItemLink(row, "event", separator="|")
-            eventSeriesLink = self.createItemLink(row, "eventSeries", separator="|")
+            eventSeriesLink = self.createItemLink(
+                row, "eventSeries", separator="|"
+            )
             dblpLink = self.createExternalLink(
                 row, "dblpProceedingsId", "dblp", DblpEndpoint.DBLP_REC_PREFIX
             )
             k10PlusLink = self.createExternalLink(
-                row, "ppnId", "k10plus", "https://opac.k10plus.de/DB=2.299/PPNSET?PPN="
+                row,
+                "ppnId",
+                "k10plus",
+                "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",
             )
             lod.append(
                 {
@@ -90,19 +102,19 @@ class WikidataView(View):
             )
         self.lod_grid.load_lod(lod)
         self.lod_grid.sizeColumnsToFit()
-        
+
     async def on_refresh_button_click(self):
         """
         handle the refreshing of the proceedings from wikidata
         """
         try:
             ui.notify("wikidata refresh button clicked")
-            wd_records=self.solution.wdSync.update()
+            wd_records = self.solution.wdSync.update()
             self.lod_grid.load_lod(wd_records)
             pass
         except Exception as ex:
             self.solution.handle_exception(ex)
-        
+
     def setup_ui(self):
         """
         setup my User Interface elements
@@ -117,16 +129,17 @@ class WikidataView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("Refresh from Wikidata SPARQL endpoint")
                 )
-                self.query_view=QueryView(self.solution,
+                self.query_view = QueryView(
+                    self.solution,
                     name="CEUR-WS wikidata sync",
-                    sparql_endpoint=self.solution.wdSync.wikidata_endpoint)
+                    sparql_endpoint=self.solution.wdSync.wikidata_endpoint,
+                )
                 self.query_view.show_query(self.solution.wdSync.wdQuery.query)
-            
-            #grid_config = GridConfig(
+
+            # grid_config = GridConfig(
             #        key_col="Vol",
             #        multiselect=True)
-            
-            self.lod_grid=ListOfDictsGrid()
-            ui.timer(0,self.update_proceedings,once=True)
+
+            self.lod_grid = ListOfDictsGrid()
+            ui.timer(0, self.update_proceedings, once=True)
             pass
-    

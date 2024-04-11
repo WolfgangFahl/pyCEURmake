@@ -4,30 +4,35 @@ Created on 2023
 
 refactored 2024-03-09 by wf
 """
+
 from dataclasses import field
 from typing import List, Optional
 from lodstorage.yamlable import lod_storable
+
 
 @lod_storable
 class DblpScholar:
     """
     a scholar indexed by dblp.org
-    
+
     example: Tim Berners-Lee
     https://dblp.org/pid/b/TimBernersLee.html
-    
+
     """
+
     dblp_author_id: str
     label: Optional[str] = None
     wikidata_id: Optional[str] = None
     orcid_id: Optional[str] = None
     gnd_id: Optional[str] = None
 
+
 @lod_storable
 class DblpPaper:
     """
     a paper indexed by dblp.org
     """
+
     dblp_publication_id: str
     dblp_proceeding_id: str
     volume_number: int
@@ -40,11 +45,13 @@ class DblpPaper:
             if isinstance(author, dict):
                 self.authors[i] = DblpScholar(**author)
 
+
 @lod_storable
 class DblpProceeding:
     """
     a proceeding indexed by dblp.org
     """
+
     dblp_publication_id: str
     volume_number: int
     title: str

@@ -83,7 +83,9 @@ class Volume(JSONAble):
         return url
 
     @staticmethod
-    def getVolumeUrlOf(number: typing.Union[str, int]) -> typing.Union[str, None]:
+    def getVolumeUrlOf(
+        number: typing.Union[str, int],
+    ) -> typing.Union[str, None]:
         """
         get the volume url of the given volume number
         Args:
@@ -223,7 +225,9 @@ class Volume(JSONAble):
                         endDate = dayMonthParts[0] + dateParts[1]
                         dateTwo = dateutil.parser.parse(f"{endDate} {year}")
                     else:
-                        dateTwo = dateutil.parser.parse(f"{dateParts[1]} {year}")
+                        dateTwo = dateutil.parser.parse(
+                            f"{dateParts[1]} {year}"
+                        )
                     dates = [dateOne, dateTwo]
                     dates.sort()
                     dateFrom = dates[0]
@@ -273,7 +277,11 @@ class Volume(JSONAble):
         for location in locations:
             locationsToCheck = []
             if isinstance(location, City):
-                locationsToCheck = [location, location.region, location.country]
+                locationsToCheck = [
+                    location,
+                    location.region,
+                    location.country,
+                ]
             elif isinstance(location, Region):
                 locationsToCheck = [location, location.country]
             elif isinstance(location, Country):
@@ -283,7 +291,9 @@ class Volume(JSONAble):
                 if ltc.name in locationStr:
                     score += 1
             rankedLocations.append((score, location))
-        rankedLocations.sort(key=lambda scoreTuple: scoreTuple[0], reverse=True)
+        rankedLocations.sort(
+            key=lambda scoreTuple: scoreTuple[0], reverse=True
+        )
         return [location for score, location in rankedLocations]
 
     def __str__(self):
@@ -374,30 +384,30 @@ class VolumeManager(EntityManager):
         load from the SQLITE Cache file
         """
         self.fromStore(cacheFile=CEURWS.CACHE_FILE)
-        
-    def update(self,parser_config:ParserConfig):
+
+    def update(self, parser_config: ParserConfig):
         """
         update me by a checking for recently added volumes
         """
         self.set_down_to_volume(parser_config)
         self.update_or_recreate(parser_config)
-        
-    def set_down_to_volume(self,parser_config):
-        volumeCount=len(self.volumes)
-        if volumeCount>0:
-            max_vol=self.volumes[-1]
-            parser_config.down_to_volume=max_vol.number+1
+
+    def set_down_to_volume(self, parser_config):
+        volumeCount = len(self.volumes)
+        if volumeCount > 0:
+            max_vol = self.volumes[-1]
+            parser_config.down_to_volume = max_vol.number + 1
         else:
             pass
-        
-    def recreate(self,parser_config:ParserConfig):
+
+    def recreate(self, parser_config: ParserConfig):
         """
         recreate me by a full parse of all volume files
         """
-       
+
         self.update_or_recreate(parser_config)
 
-    def update_or_recreate(self,parser_config:ParserConfig):
+    def update_or_recreate(self, parser_config: ParserConfig):
         """
         recreate or update me by parsing the index.html file
 
@@ -405,13 +415,13 @@ class VolumeManager(EntityManager):
             progress(bool): if True show progress
             down_to_volume(int): the volume number to parse down to
         """
-        progress_bar=parser_config.progress_bar
+        progress_bar = parser_config.progress_bar
         loctime_parser = LoctimeParser()
         pm = PaperManager()
-        if parser_config.down_to_volume!=1:
+        if parser_config.down_to_volume != 1:
             pm.fromStore(cacheFile=CEURWS.CACHE_FILE)
         paper_list = pm.getList()
-        
+
         # first reload me from the main index
         self.loadFromIndexHtml(parser_config)
         invalid = 0
@@ -420,7 +430,9 @@ class VolumeManager(EntityManager):
                 break
             _volume_record, soup = volume.extractValuesFromVolumePage()
             if soup:
-                ptp = PaperTocParser(number=volume.number, soup=soup, debug=self.debug)
+                ptp = PaperTocParser(
+                    number=volume.number, soup=soup, debug=self.debug
+                )
                 paper_records = ptp.parsePapers()
                 for paper_record in paper_records:
                     paper = Paper()
@@ -453,16 +465,16 @@ class VolumeManager(EntityManager):
         print(f"storing {len(paper_list)} papers")
         pm.store()
 
-    def loadFromIndexHtml(self, parser_config:ParserConfig=None):
+    def loadFromIndexHtml(self, parser_config: ParserConfig = None):
         """
         load my content from the index.html file
 
         Args:
             parser_config(ParserConfig): the parser Configuration to use
         """
-        force=parser_config.force_download if parser_config else True
+        force = parser_config.force_download if parser_config else True
         htmlText = self.getIndexHtml(force)
-        indexParser = IndexHtmlParser(htmlText,parser_config)
+        indexParser = IndexHtmlParser(htmlText, parser_config)
         volumeRecords = indexParser.parse()
         for volumeRecord in volumeRecords.values():
             volume = Volume()
@@ -533,7 +545,11 @@ class Paper(JSONAble):
                 "pdf": "http://ceur-ws.org/Vol-2436/article_2.pdf",
                 "pagesFrom": 5,
                 "pagesTo": 13,
-                "authors": ["Alexandru Mara", "Jefrey Lijffijt", "Tijl De Bie"],
+                "authors": [
+                    "Alexandru Mara",
+                    "Jefrey Lijffijt",
+                    "Tijl De Bie",
+                ],
             },
         ]
         return samples
@@ -582,7 +598,9 @@ class Session(JSONAble):
         samples = [
             {
                 "id": "Vol-2436/s1",  # id is constructed with volume and position → <volNumber>/s<position>
-                "volume": {"Vol-2436": Volume},  # n:1 relation / reporting chain
+                "volume": {
+                    "Vol-2436": Volume
+                },  # n:1 relation / reporting chain
                 "title": "Information Technologies and Intelligent Decision Making Systems II",
                 "position": 1,
                 "papers": {  # 1:n relation / command chain

@@ -38,7 +38,9 @@ class Neo4j:
             uri = f"{scheme}://{host}:{bolt_port}"
             if not Neo4j.is_port_available(host, bolt_port):
                 raise ValueError(f"port at {uri} not available")
-            self.driver = GraphDatabase.driver(uri, auth=auth, encrypted=encrypted)
+            self.driver = GraphDatabase.driver(
+                uri, auth=auth, encrypted=encrypted
+            )
         except (ServiceUnavailable, AuthError, ConfigurationError) as e:
             self.error = e
 
@@ -164,7 +166,9 @@ class Volume:
         )
         # Add progress option
         parser.add_argument(
-            "--progress", action="store_true", help="Display progress information"
+            "--progress",
+            action="store_true",
+            help="Display progress information",
         )
 
         return parser.parse_args(argv)

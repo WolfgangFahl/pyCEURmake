@@ -3,6 +3,7 @@ Created on 2024-02-22
 
 @author: wf
 """
+
 import os
 from pathlib import Path
 from typing import List
@@ -19,6 +20,7 @@ from ceurws.version import Version
 from ceurws.volume_view import VolumeView, VolumeListView
 from ceurws.wikidatasync import WikidataSync
 from ceurws.wikidata_view import WikidataView
+
 
 class CeurWsWebServer(InputWebserver):
     """
@@ -44,25 +46,21 @@ class CeurWsWebServer(InputWebserver):
         constructor
         """
         InputWebserver.__init__(self, config=CeurWsWebServer.get_config())
-       
+
         @ui.page("/volumes")
         async def show_volumes(client: Client):
-            return await self.page(
-                client,CeurWsSolution.volumes
-            )
-            
+            return await self.page(client, CeurWsSolution.volumes)
+
         @ui.page("/volume/{volnumber}")
-        async def show_volume_page(client: Client,vol_number):
+        async def show_volume_page(client: Client, vol_number):
             return await self.page(
-                client,CeurWsSolution.volumePage,vol_number
+                client, CeurWsSolution.volumePage, vol_number
             )
-            
+
         @ui.page("/wikidatasync")
         async def wikidatasync(client: Client):
-            return await self.page(
-                client,CeurWsSolution.wikidatasync
-            )
-     
+            return await self.page(client, CeurWsSolution.wikidatasync)
+
         @app.get("/volumes.json")
         async def volumes():
             """
@@ -113,7 +111,9 @@ class CeurWsWebServer(InputWebserver):
             return ORJSONResponse(content=authors)
 
         @app.get("/dblp/papers", tags=["dblp complete dataset"])
-        async def dblp_papers(limit: int = 100, offset: int = 0) -> List[DblpPaper]:
+        async def dblp_papers(
+            limit: int = 100, offset: int = 0
+        ) -> List[DblpPaper]:
             """
             Get ceur-ws volumes form dblp
             Args:
@@ -126,7 +126,9 @@ class CeurWsWebServer(InputWebserver):
             return papers[offset:limit]
 
         @app.get("/dblp/editors", tags=["dblp complete dataset"])
-        async def dblp_editors(limit: int = 100, offset: int = 0) -> List[DblpScholar]:
+        async def dblp_editors(
+            limit: int = 100, offset: int = 0
+        ) -> List[DblpScholar]:
             """
             Get ceur-ws volume editors form dblp
             Args:
@@ -139,7 +141,9 @@ class CeurWsWebServer(InputWebserver):
             return editors[offset:limit]
 
         @app.get("/dblp/volumes", tags=["dblp complete dataset"])
-        async def dblp_volumes(limit: int = 100, offset: int = 0) -> List[DblpPaper]:
+        async def dblp_volumes(
+            limit: int = 100, offset: int = 0
+        ) -> List[DblpPaper]:
             """
             Get ceur-ws volumes form dblp
             Args:
@@ -157,7 +161,9 @@ class CeurWsWebServer(InputWebserver):
             Get ceur-ws volume form dblp
             """
             try:
-                proceeding = self.wdSync.dblpEndpoint.get_ceur_proceeding(volume_number)
+                proceeding = self.wdSync.dblpEndpoint.get_ceur_proceeding(
+                    volume_number
+                )
             except Exception as e:
                 raise HTTPException(status_code=404, detail=e.msg)
             if proceeding:
@@ -171,7 +177,9 @@ class CeurWsWebServer(InputWebserver):
             Get ceur-ws volume editors form dblp
             """
             try:
-                proceeding = self.wdSync.dblpEndpoint.get_ceur_proceeding(volume_number)
+                proceeding = self.wdSync.dblpEndpoint.get_ceur_proceeding(
+                    volume_number
+                )
             except Exception as e:
                 raise HTTPException(status_code=404, detail=e.msg)
             if proceeding:
@@ -188,15 +196,21 @@ class CeurWsWebServer(InputWebserver):
 
             Returns:
             """
-            papers = self.wdSync.dblpEndpoint.get_ceur_volume_papers(volume_number)
+            papers = self.wdSync.dblpEndpoint.get_ceur_volume_papers(
+                volume_number
+            )
             return papers
 
-        @app.get("/dblp/volume/{volume_number}/paper/{paper_id}", tags=["dblp"])
+        @app.get(
+            "/dblp/volume/{volume_number}/paper/{paper_id}", tags=["dblp"]
+        )
         async def dblp_paper(volume_number: int, paper_id: str) -> DblpPaper:
             """
             Get ceur-ws volume paper form dblp
             """
-            paper = self.wdSync.dblpEndpoint.get_ceur_volume_papers(volume_number)
+            paper = self.wdSync.dblpEndpoint.get_ceur_volume_papers(
+                volume_number
+            )
             if paper:
                 for paper in paper:
                     if paper.pdf_id == f"Vol-{volume_number}/{paper_id}":
@@ -205,14 +219,19 @@ class CeurWsWebServer(InputWebserver):
             else:
                 raise HTTPException(status_code=404, detail="Volume not found")
 
-        @app.get("/dblp/volume/{volume_number}/paper/{paper_id}/author", tags=["dblp"])
+        @app.get(
+            "/dblp/volume/{volume_number}/paper/{paper_id}/author",
+            tags=["dblp"],
+        )
         async def dblp_paper_authors(
             volume_number: int, paper_id: str
         ) -> List[DblpScholar]:
             """
             Get ceur-ws volume paper form dblp
             """
-            paper = self.wdSync.dblpEndpoint.get_ceur_volume_papers(volume_number)
+            paper = self.wdSync.dblpEndpoint.get_ceur_volume_papers(
+                volume_number
+            )
             if paper:
                 for paper in paper:
                     if paper.pdf_id == f"Vol-{volume_number}/{paper_id}":
@@ -227,7 +246,7 @@ class CeurWsWebServer(InputWebserver):
         """
         InputWebserver.configure_run(self)
         self.wdSync = WikidataSync.from_args(self.args)
-        #self.wdSync.dblpEndpoint.load_all()
+        # self.wdSync.dblpEndpoint.load_all()
 
 
 class CeurWsSolution(InputWebSolution):
@@ -245,16 +264,16 @@ class CeurWsSolution(InputWebSolution):
             webserver (CeurWsWebServer): The webserver instance associated with this context.
             client (Client): The client instance this context is associated with.
         """
-        super().__init__(webserver, client)  # Call to the superclass constructor
+        super().__init__(
+            webserver, client
+        )  # Call to the superclass constructor
         self.wdSync = self.webserver.wdSync
-        
+
     def configure_menu(self):
         InputWebSolution.configure_menu(self)
+        self.link_button(name="volumes", icon_name="table", target="/volumes")
         self.link_button(
-            name="volumes", icon_name="table", target="/volumes"
-        )
-        self.link_button(
-            name="wikidata",icon_name="cloud_sync",target="/wikidatasync"
+            name="wikidata", icon_name="cloud_sync", target="/wikidatasync"
         )
 
     def prepare_ui(self):
@@ -280,25 +299,25 @@ class CeurWsSolution(InputWebSolution):
                     ui.add_head_html(
                         f'<link rel="stylesheet" type="text/css" href="/css/{css_file}">'
                     )
-                    
+
     async def wikidatasync(self):
         """
         show the wikidata sync table
         """
+
         def show():
-            self.wikidata_view =WikidataView(
-                self, self.container
-            )
+            self.wikidata_view = WikidataView(self, self.container)
+
         await self.setup_content_div(show)
-        
+
     async def volumes(self):
         """
         show the volumes table
         """
+
         def show():
-            self.volume_list_view = VolumeListView(
-                self, self.container
-            )
+            self.volume_list_view = VolumeListView(self, self.container)
+
         await self.setup_content_div(show)
 
     async def home(self):

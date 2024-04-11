@@ -3,6 +3,7 @@ Created on 2024-02-22
 
 @author: wf
 """
+
 import sys
 from argparse import ArgumentParser
 from dataclasses import asdict
@@ -15,6 +16,7 @@ from ceurws.ceur_ws import VolumeManager
 from ceurws.namedqueries import NamedQueries
 from ceurws.webserver import CeurWsWebServer
 from ceurws.wikidatasync import WikidataSync
+
 
 class CeurWsCmd(WebserverCmd):
     """
@@ -35,7 +37,10 @@ class CeurWsCmd(WebserverCmd):
         """
         parser = super().getArgParser(description, version_msg)
         parser.add_argument(
-            "-dbu", "--dblp_update", action="store_true", help="update dblp cache"
+            "-dbu",
+            "--dblp_update",
+            action="store_true",
+            help="update dblp cache",
         )
         parser.add_argument(
             "-nq",
@@ -103,10 +108,9 @@ class CeurWsCmd(WebserverCmd):
         if args.recreate or args.update:
             manager = VolumeManager()
             manager.load()
-            progress_bar=tqdm(total=len(manager.volumes))
-            parser_config=ParserConfig(progress_bar,
-            debug=args.debug)
-            
+            progress_bar = tqdm(total=len(manager.volumes))
+            parser_config = ParserConfig(progress_bar, debug=args.debug)
+
             if args.recreate:
                 manager.recreate(parser_config)
             else:
@@ -117,7 +121,9 @@ class CeurWsCmd(WebserverCmd):
         if args.dblp_update:
             wdsync = WikidataSync.from_args(args)
             endpoint = wdsync.dblpEndpoint
-            print(f"updating dblp cache from SPARQL endpoint {endpoint.sparql.url}")
+            print(
+                f"updating dblp cache from SPARQL endpoint {endpoint.sparql.url}"
+            )
             # Instantiate the progress bar
             pbar = tqdm(total=len(wdsync.dbpEndpoint.dblp_managers))
             for _step, (cache_name, dblp_manager) in enumerate(
@@ -129,7 +135,9 @@ class CeurWsCmd(WebserverCmd):
                 pbar.set_description(f"{cache_name} updated ...")
 
                 # Update the progress bar manually
-                pbar.update(1)  # Increment the progress bar by 1 for each iteration
+                pbar.update(
+                    1
+                )  # Increment the progress bar by 1 for each iteration
 
             # Close the progress bar after the loop
             pbar.close()
@@ -137,7 +145,7 @@ class CeurWsCmd(WebserverCmd):
             for _step, (cache_name, dblp_manager) in enumerate(
                 endpoint.dblp_managers.items(), start=1
             ):
-                cache=endpoint.cache_manager.get_cache_by_name(cache_name)
+                cache = endpoint.cache_manager.get_cache_by_name(cache_name)
                 table_data.append(asdict(cache))
             table = tabulate(table_data, headers="keys", tablefmt="grid")
             print(table)

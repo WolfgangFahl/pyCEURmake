@@ -3,6 +3,7 @@ Created on 2022-08-14
 
 @author: wf
 """
+
 import os.path
 import pathlib
 import re
@@ -65,7 +66,9 @@ class VolumeParser(Textparser):
         Returns:
             parsed webpage
         """
-        return self.scrape.getSoup(url, showHtml=self.showHtml, debug=self.debug)
+        return self.scrape.getSoup(
+            url, showHtml=self.showHtml, debug=self.debug
+        )
 
     def get_volume_soup(
         self, number: int, use_cache: bool = True
@@ -179,7 +182,9 @@ class VolumeParser(Textparser):
             firstDesc = soup.find("meta", {"name": descValue})
             if firstDesc is not None:
                 desc = firstDesc["content"]
-                desc = Textparser.sanitize(desc, ["CEUR Workshop Proceedings "])
+                desc = Textparser.sanitize(
+                    desc, ["CEUR Workshop Proceedings "]
+                )
                 scrapedDict["desc"] = desc
                 break
 
@@ -213,7 +218,9 @@ class VolumeParser(Textparser):
             scrapedDict, "acronym"
         ):
             scrapedDict["acronym"] = scrapedDict["desc"]
-        if self.hasValue(scrapedDict, "h1") and not self.hasValue(scrapedDict, "title"):
+        if self.hasValue(scrapedDict, "h1") and not self.hasValue(
+            scrapedDict, "title"
+        ):
             scrapedDict["title"] = scrapedDict["h1"]
         if (
             self.hasValue(scrapedDict, "h1")
@@ -251,7 +258,6 @@ class VolumeParser(Textparser):
             return None
         editor_spans = editor_h3.find_all(attrs={"class": "CEURVOLEDITOR"})
         if editor_spans is not None and len(editor_spans) > 0:
-
             for editor_span in editor_spans:
                 editor_name = editor_span.text
                 editor = {"name": editor_name}
@@ -259,12 +265,16 @@ class VolumeParser(Textparser):
                     homepage = editor_span.parent.attrs.get("href", None)
                     editor["homepage"] = homepage
                     if editor_span.parent.next_sibling is not None:
-                        affiliation_keys = editor_span.parent.next_sibling.text.strip()
+                        affiliation_keys = (
+                            editor_span.parent.next_sibling.text.strip()
+                        )
                     else:
                         affiliation_keys = None
                 else:
                     if editor_span.next_sibling is not None:
-                        affiliation_keys = editor_span.next_sibling.text.strip()
+                        affiliation_keys = (
+                            editor_span.next_sibling.text.strip()
+                        )
                     else:
                         affiliation_keys = None
                 if affiliation_keys is None or affiliation_keys == "":
@@ -322,7 +332,9 @@ class VolumeParser(Textparser):
                 editor_affiliations = []
                 for key in keys:
                     if key in affiliation_map:
-                        editor_affiliations.append(affiliation_map.get(key.strip()))
+                        editor_affiliations.append(
+                            affiliation_map.get(key.strip())
+                        )
                 editor_record["affiliation"] = editor_affiliations
         return editor_records
 
@@ -344,7 +356,10 @@ class VolumeParser(Textparser):
             if element.name in ["br", "hr"]:
                 affiliations_elements.append(group_elements)
                 group_elements = []
-            elif isinstance(element, NavigableString) and element.text.strip() == "":
+            elif (
+                isinstance(element, NavigableString)
+                and element.text.strip() == ""
+            ):
                 pass
             elif element.name == "h3":
                 # elements inside the element are included through the nextGenerator
@@ -363,7 +378,9 @@ class VolumeParser(Textparser):
                 text_containing_key = elements[0].text.strip()
                 key = text_containing_key.split(" ")[0]
                 key_element = NavigableString(value=key)
-                text_element = NavigableString(value=text_containing_key[len(key) :])
+                text_element = NavigableString(
+                    value=text_containing_key[len(key) :]
+                )
                 elements = [key_element, text_element, *elements[1:]]
             key = elements[0].text.strip()
             text_elements = []
@@ -375,7 +392,9 @@ class VolumeParser(Textparser):
                     link_elements.append(element)
             affiliation = "".join([elem.text for elem in text_elements])
             affiliation = (
-                affiliation.replace("\n", "").replace("\t", "").replace("\r", "")
+                affiliation.replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", "")
             )
             if affiliation.startswith(key):
                 affiliation = affiliation[len(key) :]
@@ -389,7 +408,10 @@ class VolumeParser(Textparser):
                     homepages.append(homepage)
             if key is not None and key != "":
                 key = key.strip(".")
-                affiliation_map[key] = {"name": affiliation, "homepage": homepages}
+                affiliation_map[key] = {
+                    "name": affiliation,
+                    "homepage": homepages,
+                }
         return affiliation_map
 
     def parseRDFa(self, soup: BeautifulSoup) -> dict:
@@ -403,7 +425,10 @@ class VolumeParser(Textparser):
         """
         scrapeDescr = [
             ScrapeDescription(
-                key="volume_number", tag="span", attribute="class", value="CEURVOLNR"
+                key="volume_number",
+                tag="span",
+                attribute="class",
+                value="CEURVOLNR",
             ),
             ScrapeDescription(
                 key="urn", tag="span", attribute="class", value="CEURURN"
@@ -412,22 +437,40 @@ class VolumeParser(Textparser):
                 key="year", tag="span", attribute="class", value="CEURPUBYEAR"
             ),
             ScrapeDescription(
-                key="ceurpubdate", tag="span", attribute="class", value="CEURPUBDATE"
+                key="ceurpubdate",
+                tag="span",
+                attribute="class",
+                value="CEURPUBDATE",
             ),
             ScrapeDescription(
-                key="acronym", tag="span", attribute="class", value="CEURVOLACRONYM"
+                key="acronym",
+                tag="span",
+                attribute="class",
+                value="CEURVOLACRONYM",
             ),
             ScrapeDescription(
-                key="voltitle", tag="span", attribute="class", value="CEURVOLTITLE"
+                key="voltitle",
+                tag="span",
+                attribute="class",
+                value="CEURVOLTITLE",
             ),
             ScrapeDescription(
-                key="title", tag="span", attribute="class", value="CEURFULLTITLE"
+                key="title",
+                tag="span",
+                attribute="class",
+                value="CEURFULLTITLE",
             ),
             ScrapeDescription(
-                key="loctime", tag="span", attribute="class", value="CEURLOCTIME"
+                key="loctime",
+                tag="span",
+                attribute="class",
+                value="CEURLOCTIME",
             ),
             ScrapeDescription(
-                key="colocated", tag="span", attribute="class", value="CEURCOLOCATED"
+                key="colocated",
+                tag="span",
+                attribute="class",
+                value="CEURCOLOCATED",
             ),
         ]
         scrapedDict = self.scrape.parseWithScrapeDescription(soup, scrapeDescr)

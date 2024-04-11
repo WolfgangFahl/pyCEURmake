@@ -3,6 +3,7 @@ Created on 2023-07-15
 
 @author: wf
 """
+
 import sys
 
 from geograpy.locator import LocationContext
@@ -108,7 +109,11 @@ class LocationLookup:
                 return location
         lg = self.lookupGeograpy(locationText)
         ln = self.lookupNominatim(locationText)
-        if ln is not None and lg is not None and not ln.wikidataid == lg.wikidataid:
+        if (
+            ln is not None
+            and lg is not None
+            and not ln.wikidataid == lg.wikidataid
+        ):
             print(f"❌❌{locationText}→{lg}!={ln}", file=logFile)
             return None
         return lg

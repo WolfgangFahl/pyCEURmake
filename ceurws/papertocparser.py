@@ -3,6 +3,7 @@ Created on 2023-03-22
 
 @author: wf
 """
+
 import re
 
 from bs4 import BeautifulSoup
@@ -42,7 +43,7 @@ class PaperTocParser(Textparser):
             ),
             ScrapeDescription(
                 key="pages", tag="span", attribute="class", value="CEURPAGES"
-            )
+            ),
             # ScrapeDescription(key='submitted_papers', tag='span', attribute='class', value='CEURSUBMITTEDPAPERS'),
             # ScrapeDescription(key='accepted_papers', tag='span', attribute='class', value='CEURACCEPTEDPAPERS'),
         ]
@@ -103,7 +104,9 @@ class PaperTocParser(Textparser):
                             else:
                                 author_part = br.next_sibling
                                 if not author_part:
-                                    paper_record["fail"] = "authors br not found"
+                                    paper_record["fail"] = (
+                                        "authors br not found"
+                                    )
                                 else:
                                     authors = author_part.text
                             authors = Textparser.sanitize(authors)

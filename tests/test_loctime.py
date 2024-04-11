@@ -3,6 +3,7 @@ Created on 2023-12-22
 
 @author: wf
 """
+
 import json
 import os
 
@@ -39,7 +40,7 @@ class TestLoctimeParser(Basetest):
         """
         Test function to analyze loctime and count occurrences of parts.
         """
-        debug=self.debug
+        debug = self.debug
         ltp = self.loctime_parser
         for v in self.volumes:
             loctime = v["loctime"]
@@ -55,7 +56,9 @@ class TestLoctimeParser(Basetest):
         )
         for key, counter in ltp.counters.items():
             for part, count in counter.most_common(100):
-                percentage_table.add_value(row_title=f"{key}: {part}", value=count)
+                percentage_table.add_value(
+                    row_title=f"{key}: {part}", value=count
+                )
 
         if debug:
             print(percentage_table.generate_table())
@@ -81,10 +84,12 @@ class TestLoctimeParser(Basetest):
 
             # Create a percentage table for the current category
             percentage_table = PercentageTable(
-                column_title=f"{category} pareto", total=total_category_count, digits=2
+                column_title=f"{category} pareto",
+                total=total_category_count,
+                digits=2,
             )
 
             for threshold, count in pareto_range.items():
                 percentage_table.add_value(f"{threshold:.1f}%", count)
-            if debug:    
+            if debug:
                 print(percentage_table.generate_table())

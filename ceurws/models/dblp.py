@@ -6,7 +6,7 @@ refactored 2024-03-09 by wf
 """
 
 from dataclasses import field
-from typing import List, Optional
+from typing import Optional
 from lodstorage.yamlable import lod_storable
 
 
@@ -37,7 +37,7 @@ class DblpPaper:
     dblp_proceeding_id: str
     volume_number: int
     title: str
-    authors: Optional[List[DblpScholar]] = field(default_factory=list)
+    authors: Optional[list[DblpScholar]] = field(default_factory=list)
     pdf_id: Optional[str] = None
 
     def __post_init__(self):
@@ -56,8 +56,8 @@ class DblpProceeding:
     volume_number: int
     title: str
     dblp_event_id: Optional[str] = None
-    papers: Optional[List[DblpPaper]] = field(default_factory=list)
-    editors: Optional[List[DblpScholar]] = field(default_factory=list)
+    papers: Optional[list[DblpPaper]] = field(default_factory=list)
+    editors: Optional[list[DblpScholar]] = field(default_factory=list)
 
     def __post_init__(self):
         if self.editors:

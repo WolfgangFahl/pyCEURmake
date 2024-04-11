@@ -26,7 +26,7 @@ class Download:
 
     @staticmethod
     def getFileContent(path: str):
-        with open(path, "r") as file:
+        with open(path) as file:
             content = file.read()
             return content
 

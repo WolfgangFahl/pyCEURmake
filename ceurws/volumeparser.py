@@ -115,7 +115,7 @@ class VolumeParser(Textparser):
 
     def parse_volume(
         self, number: int, use_cache: bool = True
-    ) -> typing.Tuple[dict, BeautifulSoup]:
+    ) -> tuple[dict, BeautifulSoup]:
         """
         parse the given volume
         caches the volume pages at ~/.ceurws/volumes
@@ -253,7 +253,7 @@ class VolumeParser(Textparser):
             return None
         edited_by = start_elements[0]
         editor_h3 = edited_by.find_next("h3")
-        editor_records: typing.Dict[str, dict] = dict()
+        editor_records: dict[str, dict] = dict()
         if editor_h3 is None:
             return None
         editor_spans = editor_h3.find_all(attrs={"class": "CEURVOLEDITOR"})
@@ -538,7 +538,7 @@ class VolumePageCache:
         if cls.is_cached(number):
             filepath = cls._get_volume_cache_path(number)
             try:
-                with open(filepath, mode="r") as f:
+                with open(filepath) as f:
                     volume_page = f.read()
             except UnicodeDecodeError as _ex:
                 with open(filepath, mode="rb") as f:

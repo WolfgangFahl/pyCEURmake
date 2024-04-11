@@ -6,7 +6,6 @@ Created on 2024-02-22
 
 import os
 from pathlib import Path
-from typing import List
 
 from fastapi import HTTPException
 from fastapi.responses import ORJSONResponse
@@ -113,7 +112,7 @@ class CeurWsWebServer(InputWebserver):
         @app.get("/dblp/papers", tags=["dblp complete dataset"])
         async def dblp_papers(
             limit: int = 100, offset: int = 0
-        ) -> List[DblpPaper]:
+        ) -> list[DblpPaper]:
             """
             Get ceur-ws volumes form dblp
             Args:
@@ -128,7 +127,7 @@ class CeurWsWebServer(InputWebserver):
         @app.get("/dblp/editors", tags=["dblp complete dataset"])
         async def dblp_editors(
             limit: int = 100, offset: int = 0
-        ) -> List[DblpScholar]:
+        ) -> list[DblpScholar]:
             """
             Get ceur-ws volume editors form dblp
             Args:
@@ -143,7 +142,7 @@ class CeurWsWebServer(InputWebserver):
         @app.get("/dblp/volumes", tags=["dblp complete dataset"])
         async def dblp_volumes(
             limit: int = 100, offset: int = 0
-        ) -> List[DblpPaper]:
+        ) -> list[DblpPaper]:
             """
             Get ceur-ws volumes form dblp
             Args:
@@ -172,7 +171,7 @@ class CeurWsWebServer(InputWebserver):
                 raise HTTPException(status_code=404, detail="Volume not found")
 
         @app.get("/dblp/volume/{volume_number}/editor", tags=["dblp"])
-        async def dblp_volume_editors(volume_number: int) -> List[DblpScholar]:
+        async def dblp_volume_editors(volume_number: int) -> list[DblpScholar]:
             """
             Get ceur-ws volume editors form dblp
             """
@@ -188,7 +187,7 @@ class CeurWsWebServer(InputWebserver):
                 raise HTTPException(status_code=404, detail="Volume not found")
 
         @app.get("/dblp/volume/{volume_number}/paper", tags=["dblp"])
-        async def dblp_volume_papers(volume_number: int) -> List[DblpPaper]:
+        async def dblp_volume_papers(volume_number: int) -> list[DblpPaper]:
             """
             Get ceur-ws volume papers form dblp
             Args:
@@ -225,7 +224,7 @@ class CeurWsWebServer(InputWebserver):
         )
         async def dblp_paper_authors(
             volume_number: int, paper_id: str
-        ) -> List[DblpScholar]:
+        ) -> list[DblpScholar]:
             """
             Get ceur-ws volume paper form dblp
             """

@@ -25,7 +25,7 @@ class TestNamedQueries(Basetest):
         debug = True
         if debug:
             print(json.dumps(nq.q_records, indent=2, default=str))
-        qm = nq.toQueryManager()
+        nq.toQueryManager()
         yaml_str = nq.toYaml()
         if debug:
             print(yaml_str)

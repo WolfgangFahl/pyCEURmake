@@ -15,7 +15,6 @@ from lodstorage.lod import LOD
 from itertools import groupby
 from urllib.error import HTTPError
 from typing import Dict, List, Union
-from ngwidgets.progress import Progressbar
 
 class DblpManager:
     """
@@ -321,7 +320,7 @@ class DblpEndpoint:
         """
         try:
             qres = self.sparql.queryAsListOfDicts(query)
-        except HTTPError as ex:
+        except HTTPError:
             print("dblp sparql endpoint unavailable")
             qres = None
         qIds = []

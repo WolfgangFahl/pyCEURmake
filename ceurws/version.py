@@ -26,7 +26,7 @@ class Version(object):
     chat_url = "https://github.com/WolfgangFahl/pyCEURmake/discussions"
     cm_url = "https://github.com/WolfgangFahl/pyCEURmake"
 
-    license = f"""Copyright 2022 contributors. All rights reserved.
+    license = """Copyright 2022 contributors. All rights reserved.
 
   Licensed under the Apache License 2.0
   http://www.apache.org/licenses/LICENSE-2.0

@@ -1,13 +1,13 @@
-'''
+"""
 Created on 2024-02-23
 
 @author: wf
-'''
+"""
 from ceurws.view import View
 from ceurws.wikidatasync import DblpEndpoint
 from ngwidgets.lod_grid import ListOfDictsGrid
 from nicegui import ui
-from typing import Dict,List
+from typing import List
 from wd.query_view import QueryView
 
 class WikidataView(View):

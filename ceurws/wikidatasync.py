@@ -7,7 +7,7 @@ Created on 2022-08-14
 import datetime
 import os
 import sys
-from typing import Dict, List, Union
+from typing import Union
 
 from lodstorage.lod import LOD
 from lodstorage.query import EndpointManager, QueryManager
@@ -21,7 +21,7 @@ from ceurws.indexparser import ParserConfig
 from ceurws.dblp import DblpEndpoint, DblpAuthorIdentifier
 
 
-class WikidataSync(object):
+class WikidataSync:
     """
     synchronize with wikidata
     """
@@ -254,12 +254,12 @@ class WikidataSync(object):
         if self.debug:
             print(f"Querying proceedings from {self.baseurl} ...")
         # query proceedings
-        wd_proceedings_records: List[dict] = self.sparql.queryAsListOfDicts(
+        wd_proceedings_records: list[dict] = self.sparql.queryAsListOfDicts(
             self.wdQuery.query
         )
         # query events
         event_query = self.qm.queriesByName["EventsByProceeding"]
-        wd_event_records: List[dict] = self.sparql.queryAsListOfDicts(
+        wd_event_records: list[dict] = self.sparql.queryAsListOfDicts(
             event_query.query
         )
         # add events to proceeding records
@@ -328,7 +328,7 @@ class WikidataSync(object):
         volProcRecord = self.procsByVolnumber.get(searchVolnumber, None)
         return volProcRecord
 
-    def getProceedingWdItemsByUrn(self, urn: str) -> List[str]:
+    def getProceedingWdItemsByUrn(self, urn: str) -> list[str]:
         """
         queries the wikidata items that have the given urn for the property P4109
         Args:
@@ -344,7 +344,7 @@ class WikidataSync(object):
         wdItems = [record.get("proceeding") for record in qres]
         return wdItems
 
-    def getEventWdItemsByUrn(self, urn: str) -> List[str]:
+    def getEventWdItemsByUrn(self, urn: str) -> list[str]:
         """
         queries the wikidata proceedings that have the given urn assigned to P4109 and returns the assigned event
         Args:
@@ -358,7 +358,7 @@ class WikidataSync(object):
         wdItems = [record.get("event") for record in qres]
         return wdItems
 
-    def getEventsOfProceedings(self, itemId: str) -> List[str]:
+    def getEventsOfProceedings(self, itemId: str) -> list[str]:
         """
         get the item ids of the events the given proceedings ids is the proceedings from
         Args:
@@ -377,7 +377,7 @@ class WikidataSync(object):
 
     def getEventsOfProceedingsByVolnumber(
         self, volnumber: Union[int, str]
-    ) -> List[str]:
+    ) -> list[str]:
         """
         get the item ids of the events the given proceedings ids is the proceedings from
         Args:
@@ -871,7 +871,7 @@ class WikidataSync(object):
 
     def getWikidataIdByDblpEventId(
         self, entityId: str, volumeNumber: int = None
-    ) -> List[str]:
+    ) -> list[str]:
         """
         query wikidata for the qId of items that correspond to the given dblpEventId
         Args:
@@ -1024,7 +1024,7 @@ class WikidataSync(object):
         volume: Volume,
         proceedingsWikidataId: str = None,
         write: bool = False,
-    ) -> Dict[str, WikidataResult]:
+    ) -> dict[str, WikidataResult]:
         """
         Create event  wikidata item for given volume and link the proceedings with the event
         Args:
@@ -1107,7 +1107,7 @@ class WikidataSync(object):
                 value = value[len("http://www.wikidata.org/entity/") :]
         return value
 
-    def getAuthorByIds(self, identifiers: dict) -> Dict[str, str]:
+    def getAuthorByIds(self, identifiers: dict) -> dict[str, str]:
         """
         Based on the given identifiers get potential author items
         the names of the identifiers must be according to DblpAuthorIdentifier

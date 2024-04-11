@@ -5,7 +5,7 @@ import re
 import socket
 import sys
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 
 import requests
 from neo4j import GraphDatabase
@@ -50,7 +50,7 @@ class Neo4j:
         sock.settimeout(1)  # 1 Second Timeout
         try:
             sock.connect((host, port))
-        except socket.error:
+        except OSError:
             return False
         return True
 
@@ -68,7 +68,7 @@ class Volume:
     acronym: str
     title: str
     loctime: str
-    editors: List["Editor"] = field(default_factory=list)
+    editors: list["Editor"] = field(default_factory=list)
 
     @classmethod
     def from_json(cls, json_data):
@@ -121,7 +121,7 @@ class Volume:
             return None
 
     @staticmethod
-    def load_json_file(source: str) -> List["Volume"]:
+    def load_json_file(source: str) -> list["Volume"]:
         """
         Load volumes from the source JSON file.
 
@@ -131,7 +131,7 @@ class Volume:
         Returns:
             List[Volume]: The list of loaded volumes.
         """
-        with open(source, "r") as file:
+        with open(source) as file:
             json_data = json.load(file)
 
         volumes = [Volume.from_json(volume_data) for volume_data in json_data]

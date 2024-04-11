@@ -9,7 +9,7 @@ from urllib.request import urlopen
 import xmltodict
 
 
-class Workshop(object):
+class Workshop:
     """
     a single Workshop
     """

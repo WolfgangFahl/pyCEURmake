@@ -8,7 +8,6 @@ from ceurws.view import View
 from ceurws.wikidatasync import DblpEndpoint
 from ngwidgets.lod_grid import ListOfDictsGrid
 from nicegui import ui
-from typing import List
 from wd.query_view import QueryView
 
 
@@ -46,7 +45,7 @@ class WikidataView(View):
         except Exception as ex:
             self.solution.handle_exception(ex)
 
-    def reload_aggrid(self, olod: List):
+    def reload_aggrid(self, olod: list):
         """
         reload my aggrid with the list of Volumes
         """

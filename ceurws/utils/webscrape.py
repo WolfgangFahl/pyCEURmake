@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 import re
 
 
-class WebScrape(object):
+class WebScrape:
     """
     WebScraper
     with a rudimentary Parser for https://en.wikipedia.org/wiki/RDFa
@@ -153,7 +153,7 @@ class WebScrape(object):
         self,
         soup: BeautifulSoup,
         scrapeDescr: typing.Union[
-            typing.List["ScrapeDescription"], None
+            list["ScrapeDescription"], None
         ] = None,
     ) -> dict:
         """

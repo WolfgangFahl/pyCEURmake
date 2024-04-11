@@ -15,7 +15,7 @@ from lodstorage.query import QueryManager
 from lodstorage.lod import LOD
 from itertools import groupby
 from urllib.error import HTTPError
-from typing import Dict, List, Union
+from typing import Union
 
 
 class DblpManager:
@@ -266,7 +266,7 @@ class DblpEndpoint:
 
     def get_lod(
         self, cache_name: str, query_name: str, force_query: bool = False
-    ) -> List:
+    ) -> list:
         """
         Get the list of dictionaries for the given cache and query names,
         optionally forcing a query.
@@ -304,7 +304,7 @@ class DblpEndpoint:
             self.progress_bar.update(duration * 100 / 36)
         return lod
 
-    def get_ceur_volume_papers(self, volume_number: int) -> List[DblpPaper]:
+    def get_ceur_volume_papers(self, volume_number: int) -> list[DblpPaper]:
         """
         Get all papers published in CEUR-WS from dblp
         """
@@ -323,7 +323,7 @@ class DblpEndpoint:
         volume = self.cache_manager.load(cache_name, cls=DblpProceeding)
         return volume
 
-    def getDblpIdByVolumeNumber(self, number) -> List[str]:
+    def getDblpIdByVolumeNumber(self, number) -> list[str]:
         """
         Get the dblp entity id by given volume number
         Args:
@@ -410,7 +410,7 @@ class DblpEndpoint:
             url += postfix
         return url
 
-    def getEditorsOfVolume(self, number: Union[int, str, None]) -> List[dict]:
+    def getEditorsOfVolume(self, number: Union[int, str, None]) -> list[dict]:
         """
         Get the editors for the given volume number
         Args:
@@ -424,8 +424,8 @@ class DblpEndpoint:
         else:
             number_var = f'"{number}"'
         dblp_identifiers = DblpAuthorIdentifier.all()
-        optional_clauses: List[str] = []
-        id_vars: List[str] = []
+        optional_clauses: list[str] = []
+        id_vars: list[str] = []
         for identifier in dblp_identifiers:
             id_var = f"?{identifier.name}"
             optional_clauses.append(
@@ -482,7 +482,7 @@ class DblpAuthorIdentifier:
     wikidata_property: str
 
     @classmethod
-    def all(cls) -> List["DblpAuthorIdentifier"]:
+    def all(cls) -> list["DblpAuthorIdentifier"]:
         """
         returns all available identifiers
         """
@@ -516,7 +516,7 @@ class DblpAuthorIdentifier:
         return res
 
     @classmethod
-    def getAllAsMap(cls) -> Dict[str, "DblpAuthorIdentifier"]:
+    def getAllAsMap(cls) -> dict[str, "DblpAuthorIdentifier"]:
         """
         return all all available identifiers as map
         """

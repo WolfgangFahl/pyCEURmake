@@ -10,7 +10,7 @@ import ceurws
 
 
 @dataclass
-class Version(object):
+class Version:
     """
     Version handling for VolumeBrowser
     """

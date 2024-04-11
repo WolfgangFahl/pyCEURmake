@@ -17,7 +17,7 @@ class TestDblpEndpoint(Basetest):
 
     @classmethod
     def setUpClass(cls) -> None:
-        super(TestDblpEndpoint, cls).setUpClass()
+        super().setUpClass()
         cls.rm_dir("/tmp/.ceurws")
 
     @classmethod

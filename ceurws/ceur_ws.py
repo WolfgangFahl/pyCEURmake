@@ -266,7 +266,7 @@ class Volume(JSONAble):
         return resValue
 
     @staticmethod
-    def rankLocations(locationStr: str, locations: typing.List[Location]):
+    def rankLocations(locationStr: str, locations: list[Location]):
         """
         rank the given locations to find the best match to the given location string
         Args:
@@ -324,7 +324,7 @@ class Volume(JSONAble):
 
     def extractValuesFromVolumePage(
         self, timeout: float = 3
-    ) -> typing.Tuple[dict, BeautifulSoup]:
+    ) -> tuple[dict, BeautifulSoup]:
         """
         extract values from the given volume page
         """
@@ -357,7 +357,7 @@ class VolumeManager(EntityManager):
     """
 
     def __init__(self, tableName: str = "volumes"):
-        super(VolumeManager, self).__init__(
+        super().__init__(
             listName="volumes",
             clazz=Volume,
             tableName=tableName,
@@ -490,7 +490,7 @@ class VolumeManager(EntityManager):
         """
         cacheHtml = CEURWS.CACHE_HTML
         if os.path.isfile(cacheHtml) and not force:
-            with open(cacheHtml, "r") as file:
+            with open(cacheHtml) as file:
                 html_page = file.read()
         else:
             req = Request(CEURWS.URL, headers={"User-Agent": "pyCEURMake"})
@@ -507,7 +507,7 @@ class Paper(JSONAble):
     """
 
     @staticmethod
-    def getSamples() -> typing.List[dict]:
+    def getSamples() -> list[dict]:
         """
         get sample records of the entity
         """
@@ -571,7 +571,7 @@ class PaperManager(EntityManager):
     """
 
     def __init__(self):
-        super(PaperManager, self).__init__(
+        super().__init__(
             listName="papers",
             clazz=Paper,
             tableName="papers",
@@ -591,7 +591,7 @@ class Session(JSONAble):
     """
 
     @staticmethod
-    def getSamples() -> typing.List[dict]:
+    def getSamples() -> list[dict]:
         """
         get sample records of the entity
         """
@@ -649,7 +649,7 @@ class SessionManager(EntityManager):
     """
 
     def __init__(self):
-        super(SessionManager, self).__init__(
+        super().__init__(
             listName="sessions",
             clazz=Session,
             tableName="sessions",
@@ -667,7 +667,7 @@ class Editor(JSONAble):
     """
 
     @staticmethod
-    def getSamples() -> typing.List[dict]:
+    def getSamples() -> list[dict]:
         """
         get sample records of the entity
         """
@@ -698,7 +698,7 @@ class EditorManager(EntityManager):
     """
 
     def __init__(self):
-        super(EditorManager, self).__init__(
+        super().__init__(
             listName="editors",
             clazz=Editor,
             tableName="editors",
@@ -716,7 +716,7 @@ class Conference(JSONAble):
     """
 
     @staticmethod
-    def getSamples() -> typing.List[dict]:
+    def getSamples() -> list[dict]:
         """
         get sample records of the entity
         """
@@ -737,7 +737,7 @@ class ConferenceManager(EntityManager):
     """
 
     def __init__(self):
-        super(ConferenceManager, self).__init__(
+        super().__init__(
             listName="conferences",
             clazz=Conference,
             tableName="conferences",

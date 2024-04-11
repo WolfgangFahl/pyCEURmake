@@ -97,7 +97,7 @@ class LoctimeParser:
             os.path.isfile(self.filepath)
             and os.path.getsize(self.filepath) > 0
         ):
-            with open(self.filepath, "r") as yaml_file:
+            with open(self.filepath) as yaml_file:
                 data_dict = yaml.safe_load(yaml_file)
         return data_dict
 

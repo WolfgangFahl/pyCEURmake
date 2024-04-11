@@ -637,7 +637,7 @@ class TestWikidataSync(Basetest):
         @dataclasses.dataclass
         class TestParam:
             volumenumber: typing.Union[int, str]
-            expected_qids: typing.List[str]
+            expected_qids: list[str]
 
         test_params = [
             TestParam(3200, ["Q113729248"]),

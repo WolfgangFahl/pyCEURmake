@@ -237,7 +237,7 @@ class TestVolume(Basetest):
                 self.assertEqual(datetime.datetime.fromisoformat(expectedDateFrom).date(), vol.dateFrom)
                 self.assertEqual(datetime.datetime.fromisoformat(expectedDateTo).date(), vol.dateTo)
                 self.assertEqual(expectedCity, vol.cityWikidataId)
-                self.assertEqual(expectedCountry, vol.cityWikidataId)
+                self.assertEqual(expectedCountry, vol.countryWikidataId)
 
     def test_resolveLoctime_virtual_events(self):
         """

@@ -48,8 +48,10 @@ class Volume(JSONAble):
         lang: Optional[str] = None,
         location: Optional[str] = None,
         country: Optional[str] = None,
+        countryWikidataId: Optional[str] = None,
         region: Optional[str] = None,
         city: Optional[str] = None,
+        cityWikidataId: Optional[str] = None,
         ordinal: Optional[int] = None,
         date: Optional[datetime.datetime] = None,
         dateFrom: Optional[datetime.datetime] = None,
@@ -75,8 +77,10 @@ class Volume(JSONAble):
         self.lang = lang
         self.location = location
         self.country = country
+        self.countryWikidataId = countryWikidataId
         self.region = region
         self.city = city
+        self.cityWikidataId = cityWikidataId
         self.ordinal = ordinal
         self.date = date
         self.dateFrom = dateFrom

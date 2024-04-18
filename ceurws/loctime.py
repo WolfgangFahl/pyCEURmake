@@ -7,6 +7,8 @@ Created on 2023-12-22
 import os
 import re
 from collections import Counter
+from pathlib import Path
+from typing import Optional
 
 import yaml
 from tabulate import tabulate
@@ -27,25 +29,25 @@ class LoctimeParser:
         total_loctimes (int): The total count of processed loctimes.
     """
 
-    def __init__(self, filepath: str = None):
+    def __init__(self, filepath: Optional[str] = None):
         """
         Initializes the LoctimeParser object, setting up paths, loading lookups,
         and initializing counters and patterns.
 
         Args:
-            filepath (str, optional): The path to the loctime YAML file.
+            filepath (Path, optional): The path to the loctime YAML file.
                                       Defaults to a predefined path if None is provided.
         Raises:
             FileNotFoundError: Raises an error if the specified YAML file does not exist.
         """
         if filepath is None:
-            self.ceurws_path = os.path.expanduser("~/.ceurws")
-            self.filepath = os.path.join(self.ceurws_path, "loctime.yaml")
+            self.ceurws_path = Path(os.path.expanduser("~/.ceurws"))
+            self.filepath: Path = self.ceurws_path.joinpath("loctime.yaml")
         else:
-            self.file_path = filepath
+            self.file_path = Path(filepath)
         self.lookups = self.load()
         self.setup()
-        self.counters = {"4digit-year": Counter()}
+        self.counters: dict[str, Counter] = {"4digit-year": Counter()}
         for reverse_pos in range(1, 8):
             self.counters[str(reverse_pos)] = Counter()
         for key in self.lookups:
@@ -209,7 +211,7 @@ class LoctimeParser:
 
             # Calculate segment thresholds based on the diminishing series
             thresholds = []
-            threshold = 0
+            threshold = 0.0
             for _ in range(1, level + 1):
                 # current range to calculate out of for
                 trange = 100 - threshold  # 100/80/96/99.2 ...
@@ -224,7 +226,7 @@ class LoctimeParser:
             segment_cutoff = {threshold: 0 for threshold in thresholds}  # Initialize count dict for each segment
             tindex = 0
             current_threshold = thresholds[tindex]
-            total_pc = 0
+            total_pc = 0.0
             # Calculate cumulative counts for each segment
             for _, count in sorted_items:
                 item_percentage = count / total * 100

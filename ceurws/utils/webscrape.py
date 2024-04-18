@@ -44,7 +44,7 @@ class WebScrape:
             timeout(float): the default timeout
             agent(str): the agent to mimic
         """
-        self.err = None
+        self.err: typing.Optional[Exception] = None
         self.valid = False
         self.debug = debug
         self.showHtml = showHtml
@@ -75,8 +75,8 @@ class WebScrape:
         self,
         soup: BeautifulSoup,
         tag: str,
-        attr: str = None,
-        value: str = None,
+        attr: typing.Optional[str] = None,
+        value: typing.Optional[str] = None,
         multi: bool = False,
     ):
         """
@@ -106,7 +106,7 @@ class WebScrape:
         else:
             return None
 
-    def getSoup(self, url: str, showHtml: bool = False, debug: bool = False) -> BeautifulSoup:
+    def getSoup(self, url: str, showHtml: bool = False, debug: bool = False) -> typing.Optional[BeautifulSoup]:
         """
         get the beautiful Soup parser
 
@@ -118,9 +118,10 @@ class WebScrape:
             BeautifulSoup: the html parser
         """
         html = self.get_html_from_url(url, debug=debug)
-        return self.get_soup_from_string(html, show_html=showHtml)
+        soup = self.get_soup_from_string(html, show_html=showHtml) if html is not None else None
+        return soup
 
-    def get_soup_from_string(self, html: str, show_html: bool = False) -> BeautifulSoup:
+    def get_soup_from_string(self, html: typing.Union[str, bytes], show_html: bool = False) -> BeautifulSoup:
         """
         get the beautiful Soup parser for the given html string
 
@@ -161,15 +162,16 @@ class WebScrape:
              a dict with the results
         """
         scrapeDict = dict()
-        for scrapeItem in scrapeDescr:
-            value = self.fromTag(
-                soup,
-                scrapeItem.tag,
-                scrapeItem.attribute,
-                scrapeItem.value,
-                multi=scrapeItem.multi,
-            )
-            scrapeDict[scrapeItem.key] = value
+        if isinstance(scrapeDescr, list):
+            for scrapeItem in scrapeDescr:
+                value = self.fromTag(
+                    soup,
+                    scrapeItem.tag,
+                    scrapeItem.attribute,
+                    scrapeItem.value,
+                    multi=scrapeItem.multi,
+                )
+                scrapeDict[scrapeItem.key] = value
         self.valid = True
         return scrapeDict
 

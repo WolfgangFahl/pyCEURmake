@@ -4,6 +4,8 @@ Created on 2023-03-21
 @author: wf
 """
 
+from typing import Optional
+
 from lodstorage.query import Query, QueryManager
 from wikibot3rd.smw import SMWClient
 from wikibot3rd.wikiclient import WikiClient
@@ -21,7 +23,7 @@ class NamedQueries:
         if self.wikiClient.needsLogin():
             self.wikiClient.login()
         self.smw = SMWClient(self.wikiClient.getSite())
-        self.qm = None
+        self.qm: Optional[QueryManager] = None
 
     def query(self):
         """
@@ -61,9 +63,11 @@ class NamedQueries:
     def toYaml(self) -> str:
         if self.qm is None:
             self.query()
-            self.toQueryManager()
+            qm = self.toQueryManager()
+        else:
+            qm = self.qm
         yaml_str = "# named queries\n"
-        for query in self.qm.queriesByName.values():
+        for query in qm.queriesByName.values():
             yaml_str += f"""'{query.name}':
     sparql: |
 """

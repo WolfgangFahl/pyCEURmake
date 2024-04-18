@@ -154,7 +154,7 @@ class CeurWsWebServer(InputWebserver):
             try:
                 proceeding = self.wdSync.dblpEndpoint.get_ceur_proceeding(volume_number)
             except Exception as e:
-                raise HTTPException(status_code=404, detail=e.msg) from e
+                raise HTTPException(status_code=404, detail=str(e)) from e
             if proceeding:
                 return proceeding
             else:

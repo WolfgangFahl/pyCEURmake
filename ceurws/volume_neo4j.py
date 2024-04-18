@@ -19,7 +19,7 @@ class Neo4j:
 
     def __init__(
         self,
-        host: str = "localhost",
+        host: str = socket.gethostbyname(socket.gethostname()),
         bolt_port: int = 7687,
         auth=("neo4j", "password"),
         scheme: str = "bolt",
@@ -50,6 +50,8 @@ class Neo4j:
             sock.connect((host, port))
         except OSError:
             return False
+        finally:
+            sock.close()
         return True
 
     def close(self):
@@ -80,10 +82,7 @@ class Volume:
             Volume: The Volume instance created from the JSON data.
         """
         editor_names = json_data.get("editors")
-        if editor_names:
-            editor_names = editor_names.split(",")
-        else:
-            editor_names = []
+        editor_names = editor_names.split(",") if editor_names else []
         editors = [Editor(name=name.strip()) for name in editor_names]
         return cls(
             acronym=json_data.get("acronym"),

@@ -63,15 +63,14 @@ class TestVolumeEditorLocation(Basetest):
         volume_id_2023 = self.create_test_volume(2023)
         volume_id_2024 = self.create_test_volume(2024)
 
-        with self.neo4j.driver.session() as session:
-            with session.begin_transaction() as tx:
-                # Test creating one editor for multiple volumes
-                editor = Editor(name="John Doe", likelihood=0.8)
-                editor_id_2023 = editor.create_node(tx, volume_id_2023)
-                editor_id_2024 = editor.create_node(tx, volume_id_2024)
+        with self.neo4j.driver.session() as session, session.begin_transaction() as tx:
+            # Test creating one editor for multiple volumes
+            editor = Editor(name="John Doe", likelihood=0.8)
+            editor_id_2023 = editor.create_node(tx, volume_id_2023)
+            editor_id_2024 = editor.create_node(tx, volume_id_2024)
 
-                self.assertIsNotNone(editor_id_2023)
-                self.assertIsNotNone(editor_id_2024)
+            self.assertIsNotNone(editor_id_2023)
+            self.assertIsNotNone(editor_id_2024)
 
     def test_location_lookup(self):
         """

@@ -9,8 +9,8 @@ docker rm neo4j-instance
 # https://neo4j.com/developer/docker-run-neo4j/
 docker run -d --name neo4j-instance \
   --publish=7474:7474 --publish=7687:7687 \
-  --env NEO4J_AUTH=neo4j/password \
-  --volume=$HOME/neo4j/data:/data \
+  --env=NEO4J_AUTH=neo4j/password \
+  --volume=$HOME/.ceurws/neo4j/data:/data \
   neo4j:latest
 
 # Function to display a progress bar

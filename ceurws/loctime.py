@@ -63,7 +63,7 @@ class LoctimeParser:
         to facilitate the parsing process, especially for multi-word keys.
         """
         self.multi_word = {}
-        for category, lookup in self.lookups.items():
+        for lookup in self.lookups.values():
             for key in lookup:
                 if " " in key:
                     self.multi_word[key] = key.replace(" ", "_")
@@ -71,9 +71,7 @@ class LoctimeParser:
         # Initialize a dictionary derived from self.lookups with underscored keys
         self.multi_word_lookups = {}
         for category, lookup in self.lookups.items():
-            self.multi_word_lookups[category] = {
-                key.replace(" ", "_"): value for key, value in lookup.items()
-            }
+            self.multi_word_lookups[category] = {key.replace(" ", "_"): value for key, value in lookup.items()}
 
     def load(
         self,
@@ -93,10 +91,7 @@ class LoctimeParser:
             yaml.YAMLError: If there is an error parsing the YAML file.
         """
         data_dict = {}
-        if (
-            os.path.isfile(self.filepath)
-            and os.path.getsize(self.filepath) > 0
-        ):
+        if os.path.isfile(self.filepath) and os.path.getsize(self.filepath) > 0:
             with open(self.filepath) as yaml_file:
                 data_dict = yaml.safe_load(yaml_file)
         return data_dict
@@ -105,9 +100,7 @@ class LoctimeParser:
         """
         Saves the current lookup dictionary to a YAML file.
         """
-        os.makedirs(
-            os.path.dirname(self.filepath), exist_ok=True
-        )  # Ensure directory exists
+        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)  # Ensure directory exists
         with open(self.filepath, "w", encoding="utf-8") as yaml_file:
             yaml.dump(
                 self.lookups,
@@ -163,9 +156,7 @@ class LoctimeParser:
                 lookup_dict,
             ) in self.multi_word_lookups.items():
                 if part in lookup_dict:
-                    self.counters[lookup_key][part] += (
-                        1  # Increment the lookup counter
-                    )
+                    self.counters[lookup_key][part] += 1  # Increment the lookup counter
                     found_in_lookup = True
                     # set result dict
                     result[lookup_key] = part
@@ -206,9 +197,9 @@ class LoctimeParser:
         Args:
             level (int): The number of segments to divide the data into within the top "outof" parts.
             outof (int): 1 out of n value e.g. on level 1 we have 1:5 which leads to
-            the original pareto 80:20 percent rule, on level 2 we have 80:(20=16:4) percent which is equivalent to 80/96 tresholds
-            percent
-            on level 3 we have 80:(20=16:4=(3.2:0.8) percent which leads to 80%,96%,99.2% thresholds
+                the original pareto 80:20 percent rule, on level 2 we have 80:(20=16:4) percent
+                which is equivalent to 80/96 thresholds percent on level 3 we have 80:(20=16:4=(3.2:0.8)
+                percent which leads to 80%,96%,99.2% thresholds
         """
         pareto_dict = {}
         for category, counter in self.counters.items():
@@ -229,22 +220,15 @@ class LoctimeParser:
                 thresholds.append(threshold)
             thresholds.append(100)
 
-            segment_counts = {
-                threshold: 0 for threshold in thresholds
-            }  # Initialize count dict for each segment
-            segment_cutoff = {
-                threshold: 0 for threshold in thresholds
-            }  # Initialize count dict for each segment
+            segment_counts = {threshold: 0 for threshold in thresholds}  # Initialize count dict for each segment
+            segment_cutoff = {threshold: 0 for threshold in thresholds}  # Initialize count dict for each segment
             tindex = 0
             current_threshold = thresholds[tindex]
             total_pc = 0
             # Calculate cumulative counts for each segment
             for _, count in sorted_items:
                 item_percentage = count / total * 100
-                if (
-                    total_pc + item_percentage
-                    > current_threshold + 0.000000000001
-                ):
+                if total_pc + item_percentage > current_threshold + 0.000000000001:
                     segment_cutoff[current_threshold] = count
                     tindex += 1
                     if tindex >= len(thresholds):
@@ -270,7 +254,8 @@ class PercentageTable:
 
     def __init__(self, column_title: str, total: float, digits: int):
         """
-        Initializes the PercentageTable with a title for the column, a total value, and specified precision for percentages.
+        Initializes the PercentageTable with a title for the column,
+        a total value, and specified precision for percentages.
 
         Args:
             column_title (str): The title for the first column.
@@ -290,12 +275,8 @@ class PercentageTable:
             row_title (str): The title for the row.
             value (float): The value for the row, which is used to calculate its percentage of the total.
         """
-        percentage = (
-            round((value / self.total) * 100, self.digits) if self.total else 0
-        )
-        self.rows.append(
-            {self.column_title: row_title, "#": value, "%": percentage}
-        )
+        percentage = round((value / self.total) * 100, self.digits) if self.total else 0
+        self.rows.append({self.column_title: row_title, "#": value, "%": percentage})
 
     def generate_table(self, tablefmt="grid") -> str:
         """

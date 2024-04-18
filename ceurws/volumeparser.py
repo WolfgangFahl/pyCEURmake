@@ -66,13 +66,9 @@ class VolumeParser(Textparser):
         Returns:
             parsed webpage
         """
-        return self.scrape.getSoup(
-            url, showHtml=self.showHtml, debug=self.debug
-        )
+        return self.scrape.getSoup(url, showHtml=self.showHtml, debug=self.debug)
 
-    def get_volume_soup(
-        self, number: int, use_cache: bool = True
-    ) -> typing.Optional[BeautifulSoup]:
+    def get_volume_soup(self, number: int, use_cache: bool = True) -> typing.Optional[BeautifulSoup]:
         """
         Get Soup of the volume page for the given volume number
         Args:
@@ -91,9 +87,7 @@ class VolumeParser(Textparser):
         soup = self.scrape.get_soup_from_string(html, show_html=self.showHtml)
         return soup
 
-    def get_volume_page(
-        self, number: int, recache: bool = False
-    ) -> typing.Union[str, None]:
+    def get_volume_page(self, number: int, recache: bool = False) -> typing.Union[str, None]:
         """
         Get the html content of the given volume number.
         Retrieves the volume page from cache or from ceur-ws.org
@@ -113,9 +107,7 @@ class VolumeParser(Textparser):
             VolumePageCache.cache(number, volume_page)
         return volume_page
 
-    def parse_volume(
-        self, number: int, use_cache: bool = True
-    ) -> tuple[dict, BeautifulSoup]:
+    def parse_volume(self, number: int, use_cache: bool = True) -> tuple[dict, BeautifulSoup]:
         """
         parse the given volume
         caches the volume pages at ~/.ceurws/volumes
@@ -182,9 +174,7 @@ class VolumeParser(Textparser):
             firstDesc = soup.find("meta", {"name": descValue})
             if firstDesc is not None:
                 desc = firstDesc["content"]
-                desc = Textparser.sanitize(
-                    desc, ["CEUR Workshop Proceedings "]
-                )
+                desc = Textparser.sanitize(desc, ["CEUR Workshop Proceedings "])
                 scrapedDict["desc"] = desc
                 break
 
@@ -198,10 +188,7 @@ class VolumeParser(Textparser):
             if link is not None and len(link.text) < 20:
                 acronym = link.text.strip()
                 if not acronym:
-                    if len(h1) < 28:
-                        acronym = h1
-                    else:
-                        acronym = h1.split()[0]
+                    acronym = h1 if len(h1) < 28 else h1.split()[0]
 
                 eventHomepage = link.attrs.get("href")
                 scrapedDict["acronym"] = acronym
@@ -214,13 +201,9 @@ class VolumeParser(Textparser):
             h3 = Textparser.sanitize(h3)
             scrapedDict["h3"] = h3
 
-        if self.hasValue(scrapedDict, "desc") and not self.hasValue(
-            scrapedDict, "acronym"
-        ):
+        if self.hasValue(scrapedDict, "desc") and not self.hasValue(scrapedDict, "acronym"):
             scrapedDict["acronym"] = scrapedDict["desc"]
-        if self.hasValue(scrapedDict, "h1") and not self.hasValue(
-            scrapedDict, "title"
-        ):
+        if self.hasValue(scrapedDict, "h1") and not self.hasValue(scrapedDict, "title"):
             scrapedDict["title"] = scrapedDict["h1"]
         if (
             self.hasValue(scrapedDict, "h1")
@@ -265,16 +248,12 @@ class VolumeParser(Textparser):
                     homepage = editor_span.parent.attrs.get("href", None)
                     editor["homepage"] = homepage
                     if editor_span.parent.next_sibling is not None:
-                        affiliation_keys = (
-                            editor_span.parent.next_sibling.text.strip()
-                        )
+                        affiliation_keys = editor_span.parent.next_sibling.text.strip()
                     else:
                         affiliation_keys = None
                 else:
                     if editor_span.next_sibling is not None:
-                        affiliation_keys = (
-                            editor_span.next_sibling.text.strip()
-                        )
+                        affiliation_keys = editor_span.next_sibling.text.strip()
                     else:
                         affiliation_keys = None
                 if affiliation_keys is None or affiliation_keys == "":
@@ -291,10 +270,7 @@ class VolumeParser(Textparser):
                 and editor_h3.next_sibling.next_sibling
                 and editor_h3.next_sibling.next_sibling.name == "h3"
             ):
-                while (
-                    editor_h3.next_sibling.next_sibling.name == "h3"
-                    and editor_h3.text.strip() != ""
-                ):
+                while editor_h3.next_sibling.next_sibling.name == "h3" and editor_h3.text.strip() != "":
                     editor_elements.append(editor_h3.contents)
                     editor_h3 = editor_h3.next_sibling.next_sibling
             else:
@@ -309,10 +285,7 @@ class VolumeParser(Textparser):
                 affiliation_key = text.split(" ")[-1]
                 editor_name = text[: -len(affiliation_key)]
                 links = [e for e in elements if e.name == "a"]
-                if len(links) > 0:
-                    homepage = links[0].attrs.get("href", None)
-                else:
-                    homepage = None
+                homepage = links[0].attrs.get("href", None) if len(links) > 0 else None
                 editor = {
                     "name": editor_name,
                     "homepage": homepage,
@@ -332,9 +305,7 @@ class VolumeParser(Textparser):
                 editor_affiliations = []
                 for key in keys:
                     if key in affiliation_map:
-                        editor_affiliations.append(
-                            affiliation_map.get(key.strip())
-                        )
+                        editor_affiliations.append(affiliation_map.get(key.strip()))
                 editor_record["affiliation"] = editor_affiliations
         return editor_records
 
@@ -356,10 +327,7 @@ class VolumeParser(Textparser):
             if element.name in ["br", "hr"]:
                 affiliations_elements.append(group_elements)
                 group_elements = []
-            elif (
-                isinstance(element, NavigableString)
-                and element.text.strip() == ""
-            ):
+            elif isinstance(element, NavigableString) and element.text.strip() == "":
                 pass
             elif element.name == "h3":
                 # elements inside the element are included through the nextGenerator
@@ -371,16 +339,11 @@ class VolumeParser(Textparser):
         affiliations_elements = [x for x in affiliations_elements if x != []]
         affiliation_map = dict()
         for elements in affiliations_elements:
-            if (
-                isinstance(elements[0], NavigableString)
-                and " " in elements[0].text.strip()
-            ):
+            if isinstance(elements[0], NavigableString) and " " in elements[0].text.strip():
                 text_containing_key = elements[0].text.strip()
                 key = text_containing_key.split(" ")[0]
                 key_element = NavigableString(value=key)
-                text_element = NavigableString(
-                    value=text_containing_key[len(key) :]
-                )
+                text_element = NavigableString(value=text_containing_key[len(key) :])
                 elements = [key_element, text_element, *elements[1:]]
             key = elements[0].text.strip()
             text_elements = []
@@ -391,19 +354,12 @@ class VolumeParser(Textparser):
                 elif element.name == "a":
                     link_elements.append(element)
             affiliation = "".join([elem.text for elem in text_elements])
-            affiliation = (
-                affiliation.replace("\n", "")
-                .replace("\t", "")
-                .replace("\r", "")
-            )
+            affiliation = affiliation.replace("\n", "").replace("\t", "").replace("\r", "")
             if affiliation.startswith(key):
                 affiliation = affiliation[len(key) :]
             homepages = []
             for element in link_elements:
-                if (
-                    hasattr(element, "attrs")
-                    and element.attrs.get("href", None) is not None
-                ):
+                if hasattr(element, "attrs") and element.attrs.get("href", None) is not None:
                     homepage = element.attrs.get("href", None)
                     homepages.append(homepage)
             if key is not None and key != "":
@@ -430,12 +386,8 @@ class VolumeParser(Textparser):
                 attribute="class",
                 value="CEURVOLNR",
             ),
-            ScrapeDescription(
-                key="urn", tag="span", attribute="class", value="CEURURN"
-            ),
-            ScrapeDescription(
-                key="year", tag="span", attribute="class", value="CEURPUBYEAR"
-            ),
+            ScrapeDescription(key="urn", tag="span", attribute="class", value="CEURURN"),
+            ScrapeDescription(key="year", tag="span", attribute="class", value="CEURPUBYEAR"),
             ScrapeDescription(
                 key="ceurpubdate",
                 tag="span",

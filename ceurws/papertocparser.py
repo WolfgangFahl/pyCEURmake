@@ -31,9 +31,7 @@ class PaperTocParser(Textparser):
         self.soup = soup
         self.scrape = WebScrape()
         self.scrapeDescr = [
-            ScrapeDescription(
-                key="title", tag="span", attribute="class", value="CEURTITLE"
-            ),
+            ScrapeDescription(key="title", tag="span", attribute="class", value="CEURTITLE"),
             ScrapeDescription(
                 key="authors",
                 tag="span",
@@ -41,9 +39,7 @@ class PaperTocParser(Textparser):
                 value="CEURAUTHOR",
                 multi=True,
             ),
-            ScrapeDescription(
-                key="pages", tag="span", attribute="class", value="CEURPAGES"
-            ),
+            ScrapeDescription(key="pages", tag="span", attribute="class", value="CEURPAGES"),
             # ScrapeDescription(key='submitted_papers', tag='span', attribute='class', value='CEURSUBMITTEDPAPERS'),
             # ScrapeDescription(key='accepted_papers', tag='span', attribute='class', value='CEURACCEPTEDPAPERS'),
         ]
@@ -55,13 +51,9 @@ class PaperTocParser(Textparser):
         paper_records = []
         toc = self.soup.find(attrs={"class": "CEURTOC"})
         if toc:
-            index = 0
             paper_ids = []
-            for paper_li in toc.findAll("li"):
-                index += 1
-                paper_record = self.scrape.parseWithScrapeDescription(
-                    paper_li, self.scrapeDescr
-                )
+            for index, paper_li in enumerate(toc.findAll("li")):
+                paper_record = self.scrape.parseWithScrapeDescription(paper_li, self.scrapeDescr)
                 paper_record["vol_number"] = self.number
                 href_node = paper_li.find("a", href=True)
                 if href_node:
@@ -104,16 +96,14 @@ class PaperTocParser(Textparser):
                             else:
                                 author_part = br.next_sibling
                                 if not author_part:
-                                    paper_record["fail"] = (
-                                        "authors br not found"
-                                    )
+                                    paper_record["fail"] = "authors br not found"
                                 else:
                                     authors = author_part.text
                             authors = Textparser.sanitize(authors)
                             author_list = authors.split(",")
                             for i, author in enumerate(author_list):
                                 author_list[i] = author.strip()
-                            paper_record["authors"]: author_list
+                            paper_record["authors"] = author_list
                             paper_records.append(paper_record)
             else:
                 if self.debug:

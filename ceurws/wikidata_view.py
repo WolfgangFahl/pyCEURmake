@@ -35,13 +35,9 @@ class WikidataView(View):
         update the cached proceedings
         """
         try:
-            self.proceedings_records = (
-                self.solution.wdSync.loadProceedingsFromCache()
-            )
+            self.proceedings_records = self.solution.wdSync.loadProceedingsFromCache()
             with self.parent:
-                ui.notify(
-                    f"found {len(self.proceedings_records)} cached wikidata proceedings records"
-                )
+                ui.notify(f"found {len(self.proceedings_records)} cached wikidata proceedings records")
                 self.reload_aggrid(self.proceedings_records)
         except Exception as ex:
             self.solution.handle_exception(ex)
@@ -74,12 +70,8 @@ class WikidataView(View):
                 volumeLink = self.noneValue
             itemLink = self.createItemLink(row, "item")
             eventLink = self.createItemLink(row, "event", separator="|")
-            eventSeriesLink = self.createItemLink(
-                row, "eventSeries", separator="|"
-            )
-            dblpLink = self.createExternalLink(
-                row, "dblpProceedingsId", "dblp", DblpEndpoint.DBLP_REC_PREFIX
-            )
+            eventSeriesLink = self.createItemLink(row, "eventSeries", separator="|")
+            dblpLink = self.createExternalLink(row, "dblpProceedingsId", "dblp", DblpEndpoint.DBLP_REC_PREFIX)
             k10PlusLink = self.createExternalLink(
                 row,
                 "ppnId",

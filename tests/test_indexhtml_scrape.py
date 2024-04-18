@@ -45,10 +45,7 @@ class TestIndexHtml(Basetest):
         show the given range of volumes in CSV format
         """
         for volume in volumes:
-            if (
-                volume.number >= minVolumeNumber
-                and volume.number <= maxVolumeNumber
-            ):
+            if minVolumeNumber <= volume.number <= maxVolumeNumber:
                 print(
                     f"{volume.number}\t{volume.acronym}\t{volume.desc}\t{volume.h1}\t{volume.title}\tQ1860\t{volume.published}\t{volume.urn}\t{volume.url}"
                 )
@@ -108,18 +105,12 @@ class TestIndexHtml(Basetest):
         vm.loadFromIndexHtml()
         volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), "number")
         debug = self.debug or withStore
-        if self.inPublicCI():
-            limit = 10
-        else:
-            # limit = len(volumesByNumber) + 1
-            limit = 10
+        limit = 10 if self.inPublicCI() else 10  # len(volumesByNumber) + 1
         for number in range(1, limit):
             volume = volumesByNumber[number]
             volume.extractValuesFromVolumePage(timeout=self.timeout)
             if debug and volume.valid:
-                print(
-                    f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}"
-                )
+                print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
         if withStore:
             vm.store()
 
@@ -177,8 +168,6 @@ class TestIndexHtml(Basetest):
         }
         for volume_number, see_also in expected_see_also.items():
             with self.subTest(volume_number=volume_number, see_also=see_also):
-                actual_see_also = volumes.get(volume_number).get(
-                    "seealso", None
-                )
+                actual_see_also = volumes.get(volume_number).get("seealso", None)
                 see_also = [f"Vol-{vn}" for vn in see_also]
                 self.assertListEqual(see_also, actual_see_also)

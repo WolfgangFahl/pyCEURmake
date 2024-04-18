@@ -51,14 +51,10 @@ class TestLoctimeParser(Basetest):
         ltp.save()
 
         # Generate and print the percentage table
-        percentage_table = PercentageTable(
-            column_title="Parts", total=ltp.total_loctimes, digits=2
-        )
+        percentage_table = PercentageTable(column_title="Parts", total=ltp.total_loctimes, digits=2)
         for key, counter in ltp.counters.items():
             for part, count in counter.most_common(100):
-                percentage_table.add_value(
-                    row_title=f"{key}: {part}", value=count
-                )
+                percentage_table.add_value(row_title=f"{key}: {part}", value=count)
 
         if debug:
             print(percentage_table.generate_table())
@@ -68,9 +64,7 @@ class TestLoctimeParser(Basetest):
             if debug:
                 print(f"== {reverse_pos} ({len(counter)}) ==")
             # Sorting the counter items by count in descending order
-            for part, count in sorted(
-                counter.items(), key=lambda item: item[1], reverse=True
-            ):
+            for part, count in sorted(counter.items(), key=lambda item: item[1], reverse=True):
                 if debug:
                     print(f"  {part}: {count}")
 

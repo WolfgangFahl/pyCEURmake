@@ -51,9 +51,7 @@ class View:
         data_list = [[key, value] for key, value in data_dict.items()]
 
         # Generate the HTML table
-        html_table = tabulate(
-            data_list, tablefmt="html", headers=["Key", "Value"]
-        )
+        html_table = tabulate(data_list, tablefmt="html", headers=["Key", "Value"])
         return html_table
 
     def createExternalLink(
@@ -90,9 +88,7 @@ class View:
         link = self.createLink(url, text)
         return link
 
-    def createItemLink(
-        self, row: dict, key: str, separator: str = None
-    ) -> str:
+    def createItemLink(self, row: dict, key: str, separator: str = None) -> str:
         """
         create an item link
         Args:

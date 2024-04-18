@@ -106,9 +106,7 @@ class WebScrape:
         else:
             return None
 
-    def getSoup(
-        self, url: str, showHtml: bool = False, debug: bool = False
-    ) -> BeautifulSoup:
+    def getSoup(self, url: str, showHtml: bool = False, debug: bool = False) -> BeautifulSoup:
         """
         get the beautiful Soup parser
 
@@ -122,9 +120,7 @@ class WebScrape:
         html = self.get_html_from_url(url, debug=debug)
         return self.get_soup_from_string(html, show_html=showHtml)
 
-    def get_soup_from_string(
-        self, html: str, show_html: bool = False
-    ) -> BeautifulSoup:
+    def get_soup_from_string(self, html: str, show_html: bool = False) -> BeautifulSoup:
         """
         get the beautiful Soup parser for the given html string
 
@@ -153,9 +149,7 @@ class WebScrape:
     def parseWithScrapeDescription(
         self,
         soup: BeautifulSoup,
-        scrapeDescr: typing.Union[
-            list["ScrapeDescription"], None
-        ] = None,
+        scrapeDescr: typing.Union[list["ScrapeDescription"], None] = None,
     ) -> dict:
         """
         parse the given url with the given encoding
@@ -209,9 +203,7 @@ class WebScrape:
             self.err = terr
         return triples
 
-    def get_html_from_url(
-        self, url: str, debug: bool = False
-    ) -> typing.Union[str, bytes, None]:
+    def get_html_from_url(self, url: str, debug: bool = False) -> typing.Union[str, bytes, None]:
         """
         Get the html response from the given url
         Args:
@@ -223,9 +215,7 @@ class WebScrape:
             bytes: If the content of the url contains encoding errors
             None: If the url is not reachable
         """
-        req = urllib.request.Request(
-            url, headers={"User-Agent": f"{self.agent}"}
-        )
+        req = urllib.request.Request(url, headers={"User-Agent": f"{self.agent}"})
         # handle cookies
         opener = build_opener(HTTPCookieProcessor())
         try:

@@ -2,8 +2,8 @@ import calendar
 import datetime
 import os
 import re
-import typing
 from pathlib import Path
+from typing import Optional, Union
 from urllib.request import Request, urlopen
 
 import dateutil.parser
@@ -37,6 +37,59 @@ class Volume(JSONAble):
     """
     Represents a volume in ceur-ws
     """
+
+    def __init__(
+        self,
+        number: Optional[int] = None,
+        url: Optional[str] = None,
+        title: Optional[str] = None,
+        fullTitle: Optional[str] = None,
+        acronym: Optional[str] = None,
+        lang: Optional[str] = None,
+        location: Optional[str] = None,
+        country: Optional[str] = None,
+        region: Optional[str] = None,
+        city: Optional[str] = None,
+        ordinal: Optional[int] = None,
+        date: Optional[datetime.datetime] = None,
+        dateFrom: Optional[datetime.datetime] = None,
+        dateTo: Optional[datetime.datetime] = None,
+        pubYear: Optional[str] = None,
+        pubDate: Optional[datetime.datetime] = None,
+        submitDate: Optional[datetime.datetime] = None,
+        valid: bool = True,
+        conference: Optional["Conference"] = None,
+        editors: Optional[list["Editor"]] = None,
+        sessions: Optional[list["Session"]] = None,
+        virtualEvent: bool = False,
+        submittedBy: Optional[str] = None,
+    ):
+        """
+        constructor
+        """
+        self.number = number
+        self.url = url
+        self.title = title
+        self.fullTitle = fullTitle
+        self.acronym = acronym
+        self.lang = lang
+        self.location = location
+        self.country = country
+        self.region = region
+        self.city = city
+        self.ordinal = ordinal
+        self.date = date
+        self.dateFrom = dateFrom
+        self.dateTo = dateTo
+        self.pubYear = pubYear
+        self.pubDate = pubDate
+        self.submitDate = submitDate
+        self.valid = valid
+        self.conference = conference
+        self.editors = editors
+        self.sessions = sessions
+        self.virtualEvent = virtualEvent
+        self.submittedBy = submittedBy
 
     def getSamples(self):
         samples = [
@@ -74,18 +127,18 @@ class Volume(JSONAble):
         number = getattr(self, "number", "Volume has no number")
         return number
 
-    def getVolumeUrl(self) -> typing.Union[str, None]:
+    def getVolumeUrl(self) -> Union[str, None]:
         """
         get the url of the volume page
         """
-        number = getattr(self, "number")
+        number = getattr(self, "number", None)
         url = self.getVolumeUrlOf(number)
         return url
 
     @staticmethod
     def getVolumeUrlOf(
-        number: typing.Union[str, int],
-    ) -> typing.Union[str, None]:
+        number: Union[str, int],
+    ) -> Union[str, None]:
         """
         get the volume url of the given volume number
         Args:
@@ -121,7 +174,7 @@ class Volume(JSONAble):
                 del title_parts[0]
                 loctime = ",".join(title_parts)
                 loctime = loctime.strip(".")
-                setattr(self, "loctime", loctime)
+                self.loctime = loctime
             else:
                 pass
         return loctime
@@ -135,9 +188,9 @@ class Volume(JSONAble):
             return None
         dateFrom, dateTo = self.extractDates(loctime)
         if dateFrom is not None:
-            setattr(self, "dateFrom", dateFrom)
+            self.dateFrom = dateFrom
         if dateTo is not None:
-            setattr(self, "dateTo", dateTo)
+            self.dateTo = dateTo
         self.extractAndSetLocation(locationStr=loctime)
 
     def extractAndSetLocation(self, locationStr: str) -> (str, str):
@@ -177,17 +230,15 @@ class Volume(JSONAble):
         virtualEventKeywords = ["virtual", "online"]
         for keyword in virtualEventKeywords:
             if keyword in locationStr.lower():
-                setattr(self, "virtualEvent", True)
+                self.virtualEvent = True
         if city is not None:
-            setattr(self, "city", city)
-            setattr(self, "cityWikidataId", cityWikidataId)
+            self.city = city
+            self.cityWikidataId = cityWikidataId
         if countryWikidataId is not None:
-            setattr(self, "country", country)
-            setattr(self, "countryWikidataId", countryWikidataId)
+            self.country = country
+            self.countryWikidataId = countryWikidataId
 
-    def extractDates(
-        self, dateStr: str, durationThreshold: int = 11
-    ) -> (datetime.date, datetime.date):
+    def extractDates(self, dateStr: str, durationThreshold: int = 11) -> (datetime.date, datetime.date):
         """ "
         Extracts the start and end time from the given string
         optimized for the format of the loctime property
@@ -206,11 +257,10 @@ class Volume(JSONAble):
         if re.fullmatch("\d{4}", loctimeParts[-1].strip()):
             year = loctimeParts[-1].strip()
             rawDate = loctimeParts[-2].strip()
-            if len(loctimeParts) >= 3:
-                if loctimeParts[-3].lower().strip() in [
-                    cn.lower() for cn in calendar.month_name
-                ]:
-                    rawDate = f"{loctimeParts[-3]} {rawDate}"
+            if len(loctimeParts) >= 3 and loctimeParts[-3].lower().strip() in [
+                cn.lower() for cn in calendar.month_name
+            ]:
+                rawDate = f"{loctimeParts[-3]} {rawDate}"
             dateParts: list = re.split("[-–‐&]| to | and ", rawDate)
             try:
                 if len(dateParts) == 1:
@@ -225,9 +275,7 @@ class Volume(JSONAble):
                         endDate = dayMonthParts[0] + dateParts[1]
                         dateTwo = dateutil.parser.parse(f"{endDate} {year}")
                     else:
-                        dateTwo = dateutil.parser.parse(
-                            f"{dateParts[1]} {year}"
-                        )
+                        dateTwo = dateutil.parser.parse(f"{dateParts[1]} {year}")
                     dates = [dateOne, dateTwo]
                     dates.sort()
                     dateFrom = dates[0]
@@ -291,9 +339,7 @@ class Volume(JSONAble):
                 if ltc.name in locationStr:
                     score += 1
             rankedLocations.append((score, location))
-        rankedLocations.sort(
-            key=lambda scoreTuple: scoreTuple[0], reverse=True
-        )
+        rankedLocations.sort(key=lambda scoreTuple: scoreTuple[0], reverse=True)
         return [location for score, location in rankedLocations]
 
     def __str__(self):
@@ -313,7 +359,7 @@ class Volume(JSONAble):
         if hasattr(self, "_sessions") and isinstance(self._sessions, list):
             self._sessions.append(session)
         else:
-            setattr(self, "_sessions", session)
+            self._sessions = session
 
     @property
     def papers(self):
@@ -322,9 +368,7 @@ class Volume(JSONAble):
         """
         return
 
-    def extractValuesFromVolumePage(
-        self, timeout: float = 3
-    ) -> tuple[dict, BeautifulSoup]:
+    def extractValuesFromVolumePage(self, timeout: float = 3) -> tuple[dict, BeautifulSoup]:
         """
         extract values from the given volume page
         """
@@ -344,10 +388,9 @@ class Volume(JSONAble):
         submitter = None
         if hasattr(self, "editors"):
             for editor in self.editors:
-                if isinstance(editor, Editor):
-                    if getattr(editor, "submitted", False):
-                        submitter = editor
-                        break
+                if isinstance(editor, Editor) and getattr(editor, "submitted", False):
+                    submitter = editor
+                    break
         return submitter
 
 
@@ -430,9 +473,7 @@ class VolumeManager(EntityManager):
                 break
             _volume_record, soup = volume.extractValuesFromVolumePage()
             if soup:
-                ptp = PaperTocParser(
-                    number=volume.number, soup=soup, debug=self.debug
-                )
+                ptp = PaperTocParser(number=volume.number, soup=soup, debug=self.debug)
                 paper_records = ptp.parsePapers()
                 for paper_record in paper_records:
                     paper = Paper()
@@ -452,15 +493,10 @@ class VolumeManager(EntityManager):
             if progress_bar:
                 if volume.valid:
                     # print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
-                    if volume.acronym:
-                        description = volume.acronym[:20]
-                    else:
-                        description = "?"
+                    description = volume.acronym[:20] if volume.acronym else "?"
                     progress_bar.set_description(f"{description}")
                 progress_bar.update()
-        print(
-            f"storing recreated volume table for {len(self.volumes)} volumes ({invalid} invalid)"
-        )
+        print(f"storing recreated volume table for {len(self.volumes)} volumes ({invalid} invalid)")
         self.store()
         print(f"storing {len(paper_list)} papers")
         pm.store()
@@ -513,10 +549,13 @@ class Paper(JSONAble):
         """
         samples = [
             {
-                "id": "Vol-2436/s1/summary",  # id is constructed with volume and position → <volNumber>/s<position>/<type>_<position_relative_to_type>
+                # id is constructed with volume and position
+                # → <volNumber>/s<position>/<type>_<position_relative_to_type>
+                "id": "Vol-2436/s1/summary",
                 "type": "summary",
                 "position": 0,
-                "title": "1st Workshop on Evaluation and Experimental Design in Data Mining and Machine Learning (EDML 2019)",
+                "title": "1st Workshop on Evaluation and Experimental Design in Data Mining and "
+                "Machine Learning (EDML 2019)",
                 "pdf": "http://ceur-ws.org/Vol-2436/summary.pdf",
                 "pagesFrom": 1,
                 "pagesTo": 3,
@@ -598,9 +637,7 @@ class Session(JSONAble):
         samples = [
             {
                 "id": "Vol-2436/s1",  # id is constructed with volume and position → <volNumber>/s<position>
-                "volume": {
-                    "Vol-2436": Volume
-                },  # n:1 relation / reporting chain
+                "volume": {"Vol-2436": Volume},  # n:1 relation / reporting chain
                 "title": "Information Technologies and Intelligent Decision Making Systems II",
                 "position": 1,
                 "papers": {  # 1:n relation / command chain
@@ -640,7 +677,7 @@ class Session(JSONAble):
         if hasattr(self, "_papers") and isinstance(self._papers, dict):
             self._papers.update(paper.id, paper)
         else:
-            setattr(self, "_papers", paper)
+            self._papers = paper
 
 
 class SessionManager(EntityManager):

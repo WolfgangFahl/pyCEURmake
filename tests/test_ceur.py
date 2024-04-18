@@ -38,6 +38,4 @@ class TestCEUR(Basetest):
                 f"Failed to retrieve {entity_plural_name} from the database",
             )
             if self.debug:
-                print(
-                    f"Retrieved {len(instances)} {entity_plural_name} from the database"
-                )
+                print(f"Retrieved {len(instances)} {entity_plural_name} from the database")

@@ -82,9 +82,8 @@ class Download:
             profiler = Profiler(msg=msg, profile=profile)
             urllib.request.urlretrieve(url, zipped)
             profiler.time(extraMsg=f" unzipping {extractTo} from {zipped}")
-            with gzip.open(zipped, "rb") as gzipped:
-                with open(extractTo, "wb") as unzipped:
-                    shutil.copyfileobj(gzipped, unzipped)
+            with gzip.open(zipped, "rb") as gzipped, open(extractTo, "wb") as unzipped:
+                shutil.copyfileobj(gzipped, unzipped)
             if not os.path.isfile(extractTo):
                 raise (f"could not extract {fileName} from {zipped}")
         return extractTo

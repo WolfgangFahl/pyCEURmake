@@ -3,10 +3,10 @@ Created on 2023-12-28
 
 @author: wf / ChatGPT-4 as instructed
 
-Class URN is designed to verify and calculate check digits for URNs (Uniform Resource Names) as used in the DNB URN service.
-The class provides methods for both verifying a full URN's check digit (check_urn_checksum) and calculating the check digit for a given URN (calc_urn_checksum).
-It's adapted from PHP and JavaScript sources, following the guidelines and methods outlined by the DNB (German National Library) URN service.
-
+Class URN is designed to verify and calculate check digits for URNs (Uniform Resource Names)
+as used in the DNB URN service. The class provides methods for both verifying a full URN's check digit
+(check_urn_checksum) and calculating the check digit for a given URN (calc_urn_checksum). It's adapted from PHP and
+JavaScript sources, following the guidelines and methods outlined by the DNB (German National Library) URN service.
 """
 
 
@@ -59,7 +59,8 @@ class URN:
                 _sum += v2 * pos
                 pos += 1  # post-increment equivalent in Python
             else:
-                # If v1 is not 0, use pos for the first term, increment pos, then use the new value of pos for the second term
+                # If v1 is not 0, use pos for the first term, increment pos,
+                # then use the new value of pos for the second term
                 # This effectively increases pos by 2 in this branch
                 _sum += pos * v1
                 pos += 1  # increment for the first term
@@ -67,13 +68,9 @@ class URN:
                 pos += 1  # increment for the second term
 
             if debug:
-                print(
-                    f"i: {i:2} pos: {pos:2} x: {x:2} v1: {v1:2} v2: {v2:2} sum: {_sum:4}"
-                )
+                print(f"i: {i:2} pos: {pos:2} x: {x:2} v1: {v1:2} v2: {v2:2} sum: {_sum:4}")
 
         # Assuming v2 is not 0 at the end of your URN calculations
-        check_digit = (
-            _sum // v2
-        ) % 10  # Using integer division for floor behavior
+        check_digit = (_sum // v2) % 10  # Using integer division for floor behavior
 
         return check_digit

@@ -49,12 +49,8 @@ class Editorship(SQLModel, table=True):
     Represents the relationship between a scholar and a proceeding, indicating the scholar's role as an editor.
     """
 
-    volume_number: int = Field(
-        foreign_key="proceeding.volume_number", primary_key=True
-    )
-    dblp_author_id: str = Field(
-        foreign_key="scholar.dblp_author_id", primary_key=True
-    )
+    volume_number: int = Field(foreign_key="proceeding.volume_number", primary_key=True)
+    dblp_author_id: str = Field(foreign_key="scholar.dblp_author_id", primary_key=True)
 
 
 class Authorship(SQLModel, table=True):
@@ -63,6 +59,4 @@ class Authorship(SQLModel, table=True):
     """
 
     paper: str = Field(foreign_key="paper.paper", primary_key=True)
-    dblp_author_id: str = Field(
-        foreign_key="scholar.dblp_author_id", primary_key=True
-    )
+    dblp_author_id: str = Field(foreign_key="scholar.dblp_author_id", primary_key=True)

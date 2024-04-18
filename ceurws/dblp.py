@@ -30,9 +30,7 @@ class DblpManager:
         query_name (str): The name of the query to execute.
     """
 
-    def __init__(
-        self, endpoint: "DblpEndpoint", cache_name: str, query_name: str
-    ):
+    def __init__(self, endpoint: "DblpEndpoint", cache_name: str, query_name: str):
         """
         Initializes the DBLP Manager with the given endpoint, cache name, and query name.
 
@@ -52,9 +50,7 @@ class DblpManager:
         Args:
             force_query (bool): If True, forces a new query to the endpoint. Defaults to False.
         """
-        self.lod = self.endpoint.get_lod(
-            self.cache_name, self.query_name, force_query=force_query
-        )
+        self.lod = self.endpoint.get_lod(self.cache_name, self.query_name, force_query=force_query)
 
 
 class DblpAuthors(DblpManager):
@@ -129,10 +125,7 @@ class DblpPapers(DblpManager):
                 # get the authors string
                 authors_str = d.get("author", "")
                 # >;<  qlever quirk until 2023-12
-                if ">;<" in authors_str:
-                    delim = ">;<"
-                else:
-                    delim = ";"
+                delim = ">;<" if ">;<" in authors_str else ";"
                 for dblp_author_id in authors_str.split(delim):  #
                     author = dblp_authors.authorsById.get(dblp_author_id, None)
                     if author:
@@ -146,23 +139,14 @@ class DblpPapers(DblpManager):
                     authors=authors,
                 )
                 self.papers.append(paper)
-            self.papers_by_volume = LOD.getLookup(
-                self.papers, "volume_number", withDuplicates=True
-            )
+            self.papers_by_volume = LOD.getLookup(self.papers, "volume_number", withDuplicates=True)
             self.papersByProceeding = {
-                key: list(group)
-                for key, group in groupby(
-                    self.papers, lambda paper: paper.dblp_proceeding_id
-                )
+                key: list(group) for key, group in groupby(self.papers, lambda paper: paper.dblp_proceeding_id)
             }
             self.papersById = {p.dblp_publication_id: p for p in self.papers}
             # papers per volume
-            for volume_number, vol_papers in sorted(
-                self.papers_by_volume.items()
-            ):
-                vol_paper_lod = [
-                    dataclasses.asdict(paper) for paper in vol_papers
-                ]
+            for volume_number, vol_papers in sorted(self.papers_by_volume.items()):
+                vol_paper_lod = [dataclasses.asdict(paper) for paper in vol_papers]
                 cache_name = f"dblp/Vol-{volume_number}/papers"
                 if self.endpoint.progress_bar:
                     self.endpoint.progress_bar.update(30 / 3650)
@@ -199,10 +183,7 @@ class DblpVolumes(DblpManager):
                 vol_editors = []
                 editor_str = d.get("editor", "")
                 # >;<  qlever quirk until 2023-12
-                if ">;<" in editor_str:
-                    delim = ">;<"
-                else:
-                    delim = ";"
+                delim = ">;<" if ">;<" in editor_str else ";"
                 for dblp_author_id in editor_str.split(delim):
                     editor = dblp_editors.editorsById.get(dblp_author_id, None)
                     if editor:
@@ -213,9 +194,7 @@ class DblpVolumes(DblpManager):
                     dblp_event_id=d.get("dblp_event_id"),
                     title=d.get("title"),
                     editors=vol_editors,
-                    papers=dblp_papers.papersByProceeding.get(
-                        d.get("proceeding")
-                    ),
+                    papers=dblp_papers.papersByProceeding.get(d.get("proceeding")),
                 )
                 volumes.append(volume)
             volume_by_number, _errors = LOD.getLookup(volumes, "volume_number")
@@ -266,9 +245,7 @@ class DblpEndpoint:
         for _key, manager in self.dblp_managers.items():
             manager.load(force_query=force_query)
 
-    def get_lod(
-        self, cache_name: str, query_name: str, force_query: bool = False
-    ) -> list:
+    def get_lod(self, cache_name: str, query_name: str, force_query: bool = False) -> list:
         """
         Get the list of dictionaries for the given cache and query names,
         optionally forcing a query.
@@ -294,14 +271,10 @@ class DblpEndpoint:
             lod = self.sparql.queryAsListOfDicts(query.query)
             self.cache_manager.store(cache_name, lod)
         end_time = time.time()  # Record the end time of the operation
-        duration = (
-            end_time - start_time
-        )  # Calculate the duration of the loading process
+        duration = end_time - start_time  # Calculate the duration of the loading process
 
         if self.debug:
-            print(
-                f"loaded {len(lod)} records for {cache_name} in {duration:.2f} seconds"
-            )
+            print(f"loaded {len(lod)} records for {cache_name} in {duration:.2f} seconds")
         if self.progress_bar:
             self.progress_bar.update(duration * 100 / 36)
         return lod
@@ -345,10 +318,7 @@ class DblpEndpoint:
             qres = None
         qIds = []
         if qres is not None and qres != []:
-            qIds = [
-                record.get("proceeding")[len(self.DBLP_REC_PREFIX) :]
-                for record in qres
-            ]
+            qIds = [record.get("proceeding")[len(self.DBLP_REC_PREFIX) :] for record in qres]
         return qIds
 
     def getDblpUrlByDblpId(self, entityId) -> Union[str, None]:
@@ -369,10 +339,7 @@ class DblpEndpoint:
         qres = self.sparql.queryAsListOfDicts(query)
         qIds = []
         if qres is not None and qres != []:
-            qIds = [
-                record.get("url")[len(self.DBLP_EVENT_PREFIX) :]
-                for record in qres
-            ]
+            qIds = [record.get("url")[len(self.DBLP_EVENT_PREFIX) :] for record in qres]
         qId = qIds[0] if qIds is not None and len(qIds) > 0 else None
         return qId
 
@@ -391,9 +358,7 @@ class DblpEndpoint:
         """
         return self.getDblpUrlByDblpId(entityId)
 
-    def toDblpUrl(
-        self, entityId: str, withPostfix: bool = False
-    ) -> Union[str, None]:
+    def toDblpUrl(self, entityId: str, withPostfix: bool = False) -> Union[str, None]:
         """
         Convert the given id to the corresponding dblp url
         Args:
@@ -421,10 +386,7 @@ class DblpEndpoint:
         Returns:
             list of dictionaries where a dict represents one editor containing all identifiers of the editor
         """
-        if number is None:
-            number_var = "?volumeNumber"
-        else:
-            number_var = f'"{number}"'
+        number_var = "?volumeNumber" if number is None else f'"{number}"'
         dblp_identifiers = DblpAuthorIdentifier.all()
         optional_clauses: list[str] = []
         id_vars: list[str] = []
@@ -438,10 +400,7 @@ class DblpEndpoint:
             )
             id_vars.append(id_var)
         id_selects = "\n".join(
-            [
-                f"(group_concat(DISTINCT {id_var}Var;separator='|') as {id_var})"
-                for id_var in id_vars
-            ]
+            [f"(group_concat(DISTINCT {id_var}Var;separator='|') as {id_var})" for id_var in id_vars]
         )
         id_queries = "\n".join(optional_clauses)
         query = f"""PREFIX datacite: <http://purl.org/spar/datacite/>
@@ -492,21 +451,15 @@ class DblpAuthorIdentifier:
             DblpAuthorIdentifier("dblp", "datacite:dblp", "P2456"),
             DblpAuthorIdentifier("wikidata", "datacite:wikidata", None),
             DblpAuthorIdentifier("orcid", "datacite:orcid", "P496"),
-            DblpAuthorIdentifier(
-                "googleScholar", "datacite:google-scholar", "P1960"
-            ),
+            DblpAuthorIdentifier("googleScholar", "datacite:google-scholar", "P1960"),
             DblpAuthorIdentifier("acm", "datacite:acm", "P864"),
             DblpAuthorIdentifier("twitter", "datacite:twitter", "P2002"),
             DblpAuthorIdentifier("github", "datacite:github", "P2037"),
             DblpAuthorIdentifier("viaf", "datacite:viaf", "P214"),
             DblpAuthorIdentifier("scigraph", "datacite:scigraph", "P10861"),
             DblpAuthorIdentifier("zbmath", "datacite:zbmath", "P1556"),
-            DblpAuthorIdentifier(
-                "researchGate", "datacite:research-gate", "P6023"
-            ),
-            DblpAuthorIdentifier(
-                "mathGenealogy", "datacite:math-genealogy", "P549"
-            ),
+            DblpAuthorIdentifier("researchGate", "datacite:research-gate", "P6023"),
+            DblpAuthorIdentifier("mathGenealogy", "datacite:math-genealogy", "P549"),
             DblpAuthorIdentifier("loc", "datacite:loc", "P244"),
             DblpAuthorIdentifier("linkedin", "datacite:linkedin", "P6634"),
             DblpAuthorIdentifier("lattes", "datacite:lattes", "P1007"),
@@ -554,9 +507,7 @@ class DblpAuthorIdentifier:
                             {var} wdt:{wd_prop} ?{id_name}.}} 
                             }}  # {id_name}"""
             else:
-                query = (
-                    f"""{{ {var} wdt:{wd_prop} "{value}". }}  # {id_name}"""
-                )
+                query = f"""{{ {var} wdt:{wd_prop} "{value}". }}  # {id_name}"""
         else:
             pass
         return query

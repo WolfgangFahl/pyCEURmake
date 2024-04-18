@@ -5,6 +5,7 @@ Created on 2024-02-23
 """
 
 import time
+from typing import Optional
 
 from ngwidgets.lod_grid import GridConfig, ListOfDictsGrid
 from ngwidgets.progress import NiceguiProgressbar
@@ -428,7 +429,7 @@ class VolumeListView(View):
             self.solution.handle_exception(ex)
         return qId
 
-    async def createEventItemAndLinkProceedings(self, volume: Volume, proceedingsWikidataId: str = None):
+    async def createEventItemAndLinkProceedings(self, volume: Volume, proceedingsWikidataId: Optional[str] = None):
         """
         Create event  wikidata item for given volume and link
         the proceedings with the event

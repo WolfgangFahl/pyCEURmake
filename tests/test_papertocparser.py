@@ -7,6 +7,7 @@ Created on 2023-03-22
 import json
 import unittest
 from collections import Counter
+from typing import Union
 
 from lodstorage.lod import LOD
 from tqdm import tqdm
@@ -36,7 +37,7 @@ class TestPaperTocParser(Basetest):
 
     def check_paper_toc_parser(
         self,
-        vol_number: str,
+        vol_number: Union[int, str],
         counter: Counter,
         debug: bool = False,
         show_failure: bool = True,
@@ -88,8 +89,9 @@ class TestPaperTocParser(Basetest):
         debug = self.debug
         # debug=True
         for vol_number, expected_papers in vol_examples:
-            paper_records = self.check_paper_toc_parser(vol_number, counter, debug)
-            self.assertEqual(expected_papers, len(paper_records), vol_number)
+            with self.subTest(vol_number=vol_number):
+                paper_records = self.check_paper_toc_parser(vol_number, counter, debug)
+                self.assertEqual(expected_papers, len(paper_records), vol_number)
         if debug:
             print(counter.most_common())
         self.assertTrue(counter["pages"] >= 60)

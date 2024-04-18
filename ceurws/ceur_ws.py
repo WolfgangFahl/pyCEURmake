@@ -135,7 +135,9 @@ class Volume(JSONAble):
         """
         get the url of the volume page
         """
-        number = getattr(self, "number", None)
+        number = self.number
+        if number is None:
+            return None
         url = self.getVolumeUrlOf(number)
         return url
 
@@ -166,7 +168,7 @@ class Volume(JSONAble):
         """
         pass
 
-    def get_loctime(self) -> str:
+    def get_loctime(self) -> Optional[str]:
         """
         get the loctime
         """
@@ -181,6 +183,8 @@ class Volume(JSONAble):
                 self.loctime = loctime
             else:
                 pass
+        elif not isinstance(loctime, str):
+            loctime = None
         return loctime
 
     def resolveLoctime(self):
@@ -197,15 +201,12 @@ class Volume(JSONAble):
             self.dateTo = dateTo
         self.extractAndSetLocation(locationStr=loctime)
 
-    def extractAndSetLocation(self, locationStr: str) -> (str, str):
+    def extractAndSetLocation(self, locationStr: str):
         """
         Extracts the location from the given string and returns the found city and country
         ToDo: Once the EventReferenceParser from cc is updated to support city country combinations switch to it
         Args:
             locationStr: string to extract the locations from
-
-        Returns:
-            city wikidata id, country wikidata id
         """
         parser = self.__class__.__dict__.get("locationparser")
         if parser is None:
@@ -242,7 +243,9 @@ class Volume(JSONAble):
             self.country = country
             self.countryWikidataId = countryWikidataId
 
-    def extractDates(self, dateStr: str, durationThreshold: int = 11) -> (datetime.date, datetime.date):
+    def extractDates(
+        self, dateStr: str, durationThreshold: int = 11
+    ) -> tuple[Optional[datetime.date], Optional[datetime.date]]:
         """ "
         Extracts the start and end time from the given string
         optimized for the format of the loctime property
@@ -372,7 +375,7 @@ class Volume(JSONAble):
         """
         return
 
-    def extractValuesFromVolumePage(self, timeout: float = 3) -> tuple[dict, BeautifulSoup]:
+    def extractValuesFromVolumePage(self, timeout: float = 3) -> Union[tuple[Optional[dict], Optional[BeautifulSoup]]]:
         """
         extract values from the given volume page
         """
@@ -450,6 +453,9 @@ class VolumeManager(EntityManager):
     def recreate(self, parser_config: ParserConfig):
         """
         recreate me by a full parse of all volume files
+
+        Args:
+            parser_config: parser configuration
         """
 
         self.update_or_recreate(parser_config)
@@ -459,8 +465,7 @@ class VolumeManager(EntityManager):
         recreate or update me by parsing the index.html file
 
         Args:
-            progress(bool): if True show progress
-            down_to_volume(int): the volume number to parse down to
+            parser_config: parser configuration
         """
         progress_bar = parser_config.progress_bar
         loctime_parser = LoctimeParser()
@@ -505,7 +510,7 @@ class VolumeManager(EntityManager):
         print(f"storing {len(paper_list)} papers")
         pm.store()
 
-    def loadFromIndexHtml(self, parser_config: ParserConfig = None):
+    def loadFromIndexHtml(self, parser_config: Optional[ParserConfig] = None):
         """
         load my content from the index.html file
 
@@ -545,6 +550,25 @@ class Paper(JSONAble):
     """
     Represents a paper
     """
+
+    def __init__(
+        self,
+        id: Optional[str] = None,
+        title: Optional[str] = None,
+        type: Optional[str] = None,
+        position: Optional[int] = None,
+        pagesFrom: Optional[int] = None,
+        pagesTo: Optional[int] = None,
+        authors: Optional[dict] = None,
+    ):
+        super().__init__()
+        self.id = id
+        self.title = title
+        self.type = type
+        self.position = position
+        self.pagesFrom = pagesFrom
+        self.pagesTo = pagesTo
+        self.authors = authors
 
     @staticmethod
     def getSamples() -> list[dict]:
@@ -633,6 +657,18 @@ class Session(JSONAble):
     Represents a session in ceur-ws
     """
 
+    def __init__(
+        self, id: Optional[str], title: Optional[str], position: Optional[int], papers: Optional[dict[str, "Paper"]]
+    ):
+        """
+        constructor
+        """
+        super().__init__()
+        self.id = id
+        self.title = title
+        self.position = position
+        self._papers = papers
+
     @staticmethod
     def getSamples() -> list[dict]:
         """
@@ -641,7 +677,6 @@ class Session(JSONAble):
         samples = [
             {
                 "id": "Vol-2436/s1",  # id is constructed with volume and position → <volNumber>/s<position>
-                "volume": {"Vol-2436": Volume},  # n:1 relation / reporting chain
                 "title": "Information Technologies and Intelligent Decision Making Systems II",
                 "position": 1,
                 "papers": {  # 1:n relation / command chain
@@ -651,17 +686,6 @@ class Session(JSONAble):
             }
         ]
         return samples
-
-    @property
-    def volume(self) -> Volume:
-        if self._volume is None and self._volumeKey is not None:
-            # load volume
-            lVolume = "ToDo:"
-            # set volume
-            self._volume = lVolume
-            pass
-        else:
-            return self._volume
 
     @property
     def papers(self, cached: bool = False):  # dict: str→Paper
@@ -678,8 +702,8 @@ class Session(JSONAble):
     @papers.setter
     def papers(self, paper: Paper):
         # ToDo: Adjust to proper 1:n handling
-        if hasattr(self, "_papers") and isinstance(self._papers, dict):
-            self._papers.update(paper.id, paper)
+        if hasattr(self, "_papers") and isinstance(self._papers, dict) and paper.id:
+            self._papers[paper.id] = paper
         else:
             self._papers = paper
 

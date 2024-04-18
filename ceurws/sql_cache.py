@@ -3,7 +3,7 @@ Created on 2024-03-16
 @author: wf
 """
 
-from typing import Any
+from typing import Any, Optional
 
 from lodstorage.query import QueryManager
 from lodstorage.sparql import SPARQL
@@ -38,7 +38,7 @@ class Cached:
     """
 
     def __init__(
-        self, clazz: type[Any], sparql: SPARQL, sql_db: str, query_name: str, max_errors: int = 0, debug: bool = False
+        self, clazz: type[Any], sparql: SPARQL, sql_db: SqlDB, query_name: str, max_errors: int = 0, debug: bool = False
     ):
         """
         Initializes the Manager with class reference, SPARQL endpoint URL, SQL database connection string,
@@ -46,7 +46,7 @@ class Cached:
         Args:
             clazz (type[Any]): The class reference for the type of objects managed by this manager.
             sparql (SPARQL): a SPARQL endpoint.
-            sql_db (str): The connection string for the SQL database.
+            sql_db (SqlDB): SQL database object
             query_name (str): The name of the query to be executed.
             debug (bool, optional): Flag to enable debug mode. Defaults to False.
         """
@@ -56,8 +56,8 @@ class Cached:
         self.query_name = query_name
         self.max_errors = max_errors
         self.debug = debug
-        self.entities = []
-        self.errors = []
+        self.entities: list[object] = []
+        self.errors: list[Exception] = []
         # Ensure the table for the class exists
         clazz.metadata.create_all(self.sql_db.engine)
 
@@ -118,7 +118,7 @@ class Cached:
             print(f"Found {len(self.lod)} records for {self.query_name}")
         return self.lod
 
-    def to_entities(self, max_errors: int = None) -> list[Any]:
+    def to_entities(self, max_errors: Optional[int] = None) -> list[Any]:
         """
         Converts records fetched from the LOD into entity instances, applying validation.
         Args:
@@ -143,12 +143,12 @@ class Cached:
             msg = f"found {error_count} errors > maximum allowed {max_errors} errors"
             if self.debug:
                 print(msg)
-                for i, e in enumerate(self.errors):
-                    print(f"{i}:{str(e)} for \n{error_records[i]}")
+                for i, error in enumerate(self.errors):
+                    print(f"{i}:{error} for \n{error_records[i]}")
             raise Exception(msg)
         return self.entities
 
-    def store(self, max_errors: int = None) -> list[Any]:
+    def store(self, max_errors: Optional[int] = None) -> list[Any]:
         """
         Stores the fetched data into the local SQL database.
 

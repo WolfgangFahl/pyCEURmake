@@ -91,7 +91,7 @@ class Volume:
             editors=editors,
         )
 
-    def create_node(self, tx) -> int:
+    def create_node(self, tx) -> Optional[int]:
         """
         Create a Volume node in Neo4j.
 
@@ -100,6 +100,7 @@ class Volume:
 
         Returns:
             int: The ID of the created node.
+            None: if the node was not created
         """
         query = """
         CREATE (v:Volume {acronym: $acronym, title: $title, loctime: $loctime})
@@ -190,8 +191,8 @@ class Editor:
     """
 
     name: str
-    orcid: str = None
-    likelihood: float = None
+    orcid: Optional[str] = None
+    likelihood: Optional[float] = None
 
     @classmethod
     def from_json(cls, json_data):
@@ -219,7 +220,7 @@ class Editor:
                 num_results = data.get("num-found", 0)
                 self.likelihood = num_results / 10  # Arbitrary calculation, adjust as needed
 
-    def create_node(self, tx, volume_node_id: int) -> int:
+    def create_node(self, tx, volume_node_id: int) -> Optional[int]:
         """
         Create an Editor node in Neo4j and establish a relationship with a Volume node.
 
@@ -229,6 +230,7 @@ class Editor:
 
         Returns:
             int: The ID of the created Editor node.
+            None: if the editor could not be created
         """
         query = """
         MATCH (v:Volume)

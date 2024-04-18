@@ -5,6 +5,7 @@ Created on 2023-07-15
 """
 
 import sys
+from typing import Optional
 
 from geograpy.locator import LocationContext
 from geograpy.nominatim import NominatimWrapper
@@ -15,7 +16,7 @@ class LocationLookup:
     Class for location lookup.
     """
 
-    predefinedLocations = {}
+    predefinedLocations: dict[str, Optional[str]] = {}
 
     @classmethod
     def initPredefinedLocations(cls):

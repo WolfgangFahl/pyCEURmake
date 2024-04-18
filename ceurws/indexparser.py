@@ -7,8 +7,10 @@ Created on 11.08.2022
 import datetime
 import html
 import re
+from typing import Optional
 
 from ngwidgets.progress import Progressbar
+from tqdm import tqdm
 
 from ceurws.textparser import Textparser
 
@@ -20,7 +22,7 @@ class ParserConfig:
 
     def __init__(
         self,
-        progress_bar: Progressbar = None,
+        progress_bar: Optional[tqdm] = None,
         down_to_volume: int = 1,
         force_download: bool = False,
         verbose: bool = False,
@@ -51,7 +53,7 @@ class IndexHtmlParser(Textparser):
     CEUR-WS Index.html parser
     """
 
-    def __init__(self, htmlText, config: ParserConfig = None):
+    def __init__(self, htmlText: str, config: Optional[ParserConfig] = None):
         """
         Constructor
 
@@ -82,7 +84,7 @@ class IndexHtmlParser(Textparser):
         self.editedByPattern = re.compile("Edited by:")
         self.tdBgColorPattern = re.compile("<td bgcolor", re.I)
 
-    def find(self, startLine: int, compiledPattern, step: int = 1) -> int:
+    def find(self, startLine: int, compiledPattern, step: int = 1) -> Optional[int]:
         """
         find the next line with the given compiled regular expression pattern
 
@@ -108,7 +110,7 @@ class IndexHtmlParser(Textparser):
         startLine: int,
         expectedTr: int = 3,
         progress: int = 10,
-    ) -> int:
+    ) -> tuple[Optional[int], Optional[int]]:
         """
         find Volume lines from the given startLine
 
@@ -268,14 +270,15 @@ class IndexHtmlParser(Textparser):
         parse a volume from the given line range
         """
         lineCount = toLine - fromLine
-        volume = {}
-        volume["fromLine"] = fromLine
-        volume["toLine"] = toLine
-        volume["valid"] = False
-        volume["url"] = None
-        volume["acronym"] = None
-        volume["title"] = None
-        volume["loctime"] = None
+        volume = {
+            "fromLine": fromLine,
+            "toLine": toLine,
+            "valid": None,
+            "url": None,
+            "acronym": None,
+            "title": None,
+            "loctime": None,
+        }
         self.setVolumeTitle(volume, fromLine)
         self.setSeeAlsoVolumes(volume, fromLine, toLine)
 

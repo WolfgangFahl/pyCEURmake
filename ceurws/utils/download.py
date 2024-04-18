@@ -11,6 +11,7 @@ import os
 import shutil
 import time
 import urllib
+from typing import Optional
 
 
 class Download:
@@ -85,7 +86,7 @@ class Download:
             with gzip.open(zipped, "rb") as gzipped, open(extractTo, "wb") as unzipped:
                 shutil.copyfileobj(gzipped, unzipped)
             if not os.path.isfile(extractTo):
-                raise (f"could not extract {fileName} from {zipped}")
+                raise Exception(f"could not extract {fileName} from {zipped}")
         return extractTo
 
 
@@ -94,7 +95,7 @@ class Profiler:
     simple profiler
     """
 
-    def __init__(self, msg: str = None, profile=True):
+    def __init__(self, msg: Optional[str] = None, profile: bool = True):
         """
         construct me with the given msg and profile active flag
 

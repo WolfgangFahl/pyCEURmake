@@ -56,13 +56,12 @@ class WikidataView(View):
             volume = self.getRowValue(row, "sVolume")
             if volume == self.noneValue:
                 volume = self.getRowValue(row, "Volume")
-            volNumber = self.noneValue
             if volume != self.noneValue:
                 try:
-                    volNumber = int(volume)
+                    vol_no = int(volume)
                     volumeLink = self.createLink(
                         f"http://ceur-ws.org/Vol-{volume}",
-                        f"Vol-{volNumber:04}",
+                        f"Vol-{vol_no:04}",
                     )
                 except Exception as _ex:
                     volumeLink = self.noneValue

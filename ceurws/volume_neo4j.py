@@ -143,7 +143,7 @@ class Volume:
         return default_source
 
     @classmethod
-    def parse_args(cls, argv: list = None):
+    def parse_args(cls, argv: Optional[list] = None):
         """
         Parse command line arguments.
 

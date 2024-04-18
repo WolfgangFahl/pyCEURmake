@@ -62,14 +62,9 @@ jobs:
         path: ~/.ceurws
         key: ceurws
 
-    - name: start neo4j
-      run: |
-        scripts/neo4j
-
     - name: Run tests
-      run: |
-        scripts/getVolumes
-        scripts/test
+      # Run tox using the version of Python in `PATH`
+      run: tox -e py
 
     - name: Run Ruff
       run: ruff check --output-format=github .

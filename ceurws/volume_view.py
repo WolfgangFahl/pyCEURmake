@@ -59,9 +59,7 @@ class VolumeView(View):
                     .tooltip("Export to Wikidata")
                 )
             self.header_view = ui.html()
-            self.iframe_view = (
-                ui.html().classes("w-full").style("height: 80vh;")
-            )
+            self.iframe_view = ui.html().classes("w-full").style("height: 80vh;")
 
     def updateWikidataSpan(self, qId: str, volume: Volume):
         """
@@ -74,14 +72,12 @@ class VolumeView(View):
         """
         if self.wdSpan is None:
             self.wdSpan = ui.html()
-        volume_link = Link.create(
-            url=self.volume.url, text=f"{volume.number}:{volume.acronym}"
-        )
+        volume_link = Link.create(url=self.volume.url, text=f"{volume.number}:{volume.acronym}")
         wd_url = self.wdSync.itemUrl(qId)
         wd_link = Link.create(url=wd_url, text=f"{qId} ")
         self.wdSpan.content = f"{volume_link}{wd_link}"
 
-    def showVolume(self, volume):
+    def showVolume(self, volume: Volume):
         """
         show the given volume
 
@@ -153,7 +149,8 @@ class VolumeView(View):
                         links += delim + link
                         delim = "&nbsp;"
 
-            headerHtml = f"""{links}<h3 style='font-size: 24px; font-weight: normal; margin-top: 20px; margin-bottom: 10px;'>{volume.h1}</h3>
+            headerHtml = f"""
+    {links}<h3 style='font-size: 24px; font-weight: normal; margin-top: 20px; margin-bottom: 10px;'>{volume.h1}</h3>
     <a href='{volume.url}'>{volume.acronym}<a>
     {volume.title}<br>
     {volume.desc}
@@ -183,9 +180,7 @@ class VolumeView(View):
         """
         try:
             wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
-            result = self.wdSync.addProceedingsToWikidata(
-                wdRecord, write=True, ignoreErrors=False
-            )
+            result = self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
             qId = result.qid
             if qId is not None:
                 msg = f"wikidata export of {self.volume.number} to {qId} done"
@@ -242,29 +237,21 @@ class VolumeListView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("Export to Wikidata")
                 )
-                self.dry_run_switch = ui.switch("dry run").bind_value(
-                    self, "dry_run"
+                self.dry_run_switch = ui.switch("dry run").bind_value(self, "dry_run")
+                self.ignore_errors_check_box = ui.checkbox("ignore_errors", value=self.ignore_errors).bind_value(
+                    self, "ignore_errors"
                 )
-                self.ignore_errors_check_box = ui.checkbox(
-                    "ignore_errors", value=self.ignore_errors
-                ).bind_value(self, "ignore_errors")
 
                 pass
-            self.progress_bar = NiceguiProgressbar(
-                total=100, desc="added", unit="volume"
-            )
+            self.progress_bar = NiceguiProgressbar(total=100, desc="added", unit="volume")
             with ui.row() as self.log_row:
                 self.log_view = ui.html()
             with ui.row() as self.grid_row:
                 grid_config = GridConfig(key_col="Vol", multiselect=True)
-                self.lod_grid = ListOfDictsGrid(
-                    lod=self.lod, config=grid_config
-                )
+                self.lod_grid = ListOfDictsGrid(lod=self.lod, config=grid_config)
                 # Modify the columnDefs for the "Title" column after grid initialization
                 for col_def in self.lod_grid.ag_grid.options["columnDefs"]:
-                    if (
-                        col_def["field"] == "Title"
-                    ):  # Identify the "Title" column
+                    if col_def["field"] == "Title":  # Identify the "Title" column
                         col_def["maxWidth"] = 400  # width in pixels
                 self.lod_grid.sizeColumnsToFit()
         except Exception as ex:
@@ -356,17 +343,13 @@ class VolumeListView(View):
         """
         self.lod = []
         volumeList = self.wdSync.vm.getList()
-        reverseVolumeList = sorted(
-            volumeList, key=lambda volume: volume.number, reverse=True
-        )
+        reverseVolumeList = sorted(volumeList, key=lambda volume: volume.number, reverse=True)
         for volume in reverseVolumeList:
             validMark = "✅" if volume.valid else "❌"
             self.lod.append(
                 {
                     "#": volume.number,
-                    "Vol": self.createLink(
-                        volume.url, f"Vol-{volume.number:04}"
-                    ),
+                    "Vol": self.createLink(volume.url, f"Vol-{volume.number:04}"),
                     "Acronym": self.getValue(volume, "acronym"),
                     "Title": self.getValue(volume, "title"),
                     "Loctime": self.getValue(volume, "loctime"),
@@ -381,13 +364,9 @@ class VolumeListView(View):
             msg = f"trying to add Volume {volume.number} to wikidata"
             ui.notify(msg)
             self.add_msg(msg + "<br>")
-            proceedingsWikidataId = await self.createProceedingsItemFromVolume(
-                volume
-            )
+            proceedingsWikidataId = await self.createProceedingsItemFromVolume(volume)
             if proceedingsWikidataId is not None:
-                await self.createEventItemAndLinkProceedings(
-                    volume, proceedingsWikidataId
-                )
+                await self.createEventItemAndLinkProceedings(volume, proceedingsWikidataId)
             else:
                 msg = f"<br>adding Volume {volume.number} proceedings to wikidata failed"
                 self.add_msg(msg)
@@ -415,7 +394,7 @@ class VolumeListView(View):
         try:
             write = self.optional_login()
             # check if already in wikidata → use URN
-            urn = getattr(volume, "urn")
+            urn = volume.urn
             wdItems = self.wdSync.getProceedingWdItemsByUrn(urn)
             if len(wdItems) > 0:
                 html = f"Volume {volume.number} already in Wikidata see "
@@ -432,9 +411,7 @@ class VolumeListView(View):
                 if self.dry_run:
                     markup = self.get_dict_as_html_table(wdRecord)
                     self.add_msg(markup)
-                result = self.wdSync.addProceedingsToWikidata(
-                    wdRecord, write=write, ignoreErrors=self.ignore_errors
-                )
+                result = self.wdSync.addProceedingsToWikidata(wdRecord, write=write, ignoreErrors=self.ignore_errors)
                 qId = result.qid
                 if qId is not None:
                     proc_link = self.createWdLink(
@@ -443,9 +420,7 @@ class VolumeListView(View):
                     )
                     self.add_msg(proc_link)
                 else:
-                    self.add_msg(
-                        f"Creating wikidata Proceedings entry for Vol {volume.number} failed"
-                    )
+                    self.add_msg(f"Creating wikidata Proceedings entry for Vol {volume.number} failed")
                     for key, value in result.errors.items():
                         msg = f"{key}:{value}"
                         self.add_msg(msg)
@@ -453,9 +428,7 @@ class VolumeListView(View):
             self.solution.handle_exception(ex)
         return qId
 
-    async def createEventItemAndLinkProceedings(
-        self, volume: Volume, proceedingsWikidataId: str = None
-    ):
+    async def createEventItemAndLinkProceedings(self, volume: Volume, proceedingsWikidataId: str = None):
         """
         Create event  wikidata item for given volume and link
         the proceedings with the event
@@ -466,9 +439,7 @@ class VolumeListView(View):
         """
         try:
             write = self.optional_login()
-            results = self.wdSync.doCreateEventItemAndLinkProceedings(
-                volume, proceedingsWikidataId, write=write
-            )
+            results = self.wdSync.doCreateEventItemAndLinkProceedings(volume, proceedingsWikidataId, write=write)
             if write:
                 self.wdSync.logout()
             for key, result in results.items():

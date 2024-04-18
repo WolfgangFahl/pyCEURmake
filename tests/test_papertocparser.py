@@ -32,9 +32,7 @@ class TestPaperTocParser(Basetest):
         self.volumeParser = VolumeParser(self.url, showHtml=False)
         self.vm.load()
         self.volumeList = self.vm.getList()
-        self.volumesByNumber, _duplicates = LOD.getLookup(
-            self.volumeList, "number"
-        )
+        self.volumesByNumber, _duplicates = LOD.getLookup(self.volumeList, "number")
 
     def check_paper_toc_parser(
         self,
@@ -90,17 +88,13 @@ class TestPaperTocParser(Basetest):
         debug = self.debug
         # debug=True
         for vol_number, expected_papers in vol_examples:
-            paper_records = self.check_paper_toc_parser(
-                vol_number, counter, debug
-            )
+            paper_records = self.check_paper_toc_parser(vol_number, counter, debug)
             self.assertEqual(expected_papers, len(paper_records), vol_number)
         if debug:
             print(counter.most_common())
         self.assertTrue(counter["pages"] >= 60)
 
-    @unittest.skipIf(
-        True, "Only for manual testing or if github cache is implemented"
-    )
+    @unittest.skipIf(True, "Only for manual testing or if github cache is implemented")
     def test_parse_all_papertocs(self):
         """
         test parsing all paper table of contents

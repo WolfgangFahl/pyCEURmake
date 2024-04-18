@@ -38,9 +38,7 @@ class Neo4j:
             uri = f"{scheme}://{host}:{bolt_port}"
             if not Neo4j.is_port_available(host, bolt_port):
                 raise ValueError(f"port at {uri} not available")
-            self.driver = GraphDatabase.driver(
-                uri, auth=auth, encrypted=encrypted
-            )
+            self.driver = GraphDatabase.driver(uri, auth=auth, encrypted=encrypted)
         except (ServiceUnavailable, AuthError, ConfigurationError) as e:
             self.error = e
 
@@ -158,12 +156,8 @@ class Volume:
         """
 
         default_source = cls.default_source()
-        parser = argparse.ArgumentParser(
-            description="Volume/Editor/Location Information"
-        )
-        parser.add_argument(
-            "--source", default=default_source, help="Source JSON file path"
-        )
+        parser = argparse.ArgumentParser(description="Volume/Editor/Location Information")
+        parser.add_argument("--source", default=default_source, help="Source JSON file path")
         # Add progress option
         parser.add_argument(
             "--progress",
@@ -181,9 +175,7 @@ class Volume:
         volumes = Volume.load_json_file(args.source)
 
         # Connect to Neo4j
-        driver = GraphDatabase.driver(
-            "bolt://localhost:7687", auth=("neo4j", "password")
-        )
+        driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
         with driver.session() as session:
             for volume in volumes:
                 volume_node_id = volume.create_node(session)
@@ -226,9 +218,7 @@ class Editor:
             if response.status_code == 200:
                 data = response.json()
                 num_results = data.get("num-found", 0)
-                self.likelihood = (
-                    num_results / 10
-                )  # Arbitrary calculation, adjust as needed
+                self.likelihood = num_results / 10  # Arbitrary calculation, adjust as needed
 
     def create_node(self, tx, volume_node_id: int) -> int:
         """

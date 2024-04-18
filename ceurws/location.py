@@ -58,9 +58,7 @@ class LocationLookup:
         Returns:
             City: The city with the given wikidataID.
         """
-        citiesGen = self.locationContext.cityManager.getLocationsByWikidataId(
-            wikidataID
-        )
+        citiesGen = self.locationContext.cityManager.getLocationsByWikidataId(wikidataID)
         if citiesGen is not None:
             cities = list(citiesGen)
             if len(cities) > 0:
@@ -109,11 +107,7 @@ class LocationLookup:
                 return location
         lg = self.lookupGeograpy(locationText)
         ln = self.lookupNominatim(locationText)
-        if (
-            ln is not None
-            and lg is not None
-            and not ln.wikidataid == lg.wikidataid
-        ):
+        if ln is not None and lg is not None and ln.wikidataid != lg.wikidataid:
             print(f"❌❌{locationText}→{lg}!={ln}", file=logFile)
             return None
         return lg

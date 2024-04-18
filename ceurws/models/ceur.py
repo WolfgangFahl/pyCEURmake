@@ -33,9 +33,7 @@ class Volume(SQLModel, table=True):
     pubDate: Optional[datetime] = Field(default=None)
     number: int = Field(primary_key=True)
     archive: Optional[str] = Field(default=None)
-    desc: Optional[str] = Field(
-        alias="description", default=None
-    )  # 'desc' is a SQL keyword, so it's aliased
+    desc: Optional[str] = Field(alias="description", default=None)  # 'desc' is a SQL keyword, so it's aliased
     h1: Optional[str] = Field(default=None)
     h3: Optional[str] = Field(default=None)
     volname: Optional[str] = Field(default=None)

@@ -21,7 +21,19 @@ class Textparser:
         self.debug = debug
 
     @classmethod
-    def sanitize(cls, text, replaceList=[]):
+    def sanitize(cls, text, replaceList=None) -> str:
+        """
+        sanitize given text
+
+        Args:
+            text: text to sanitize
+            replaceList: list of strings to remove from the given text
+
+        Returns:
+            str: sanitized string
+        """
+        if replaceList is None:
+            replaceList = []
         if text is not None:
             sanitizeChars = "\n\t\r., "
             text = text.strip(sanitizeChars)

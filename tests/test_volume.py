@@ -61,9 +61,7 @@ class TestVolume(Basetest):
                 "id": "Vol-2436/s1",  # id is constructed with volume and position → <volNumber>/s<position>
                 "title": "Information Technologies and Intelligent Decision Making Systems II",
                 "position": 1,
-                "papers": {
-                    "VOL-2436/s1/p1": paper1
-                },  # 1:n relation / command chain
+                "papers": {"VOL-2436/s1/p1": paper1},  # 1:n relation / command chain
             }
         )
         volume = Volume()
@@ -219,8 +217,10 @@ class TestVolume(Basetest):
                 "Q159273",
                 "Q419",
             ),
-            # ("Seattle, USA, 18th-23rd September 2022", "2022-09-18", "2022-09-23", "Q5083", "Q30")  # corner case of date definition
-            # ("Windsor, United Kingdom, September 20-30th, 2022", "2022-09-20", "2022-09-30", "Q464955", "Q145")  # City missing in geograpy3
+            # corner case of date definition
+            # ("Seattle, USA, 18th-23rd September 2022", "2022-09-18", "2022-09-23", "Q5083", "Q30"),
+            # City missing in geograpy3
+            # ("Windsor, United Kingdom, September 20-30th, 2022", "2022-09-20", "2022-09-30", "Q464955", "Q145"),
         ]
         for param in test_params:
             with self.subTest("Tests resolveLoctime on", param=param):
@@ -234,24 +234,15 @@ class TestVolume(Basetest):
                 vol = Volume()
                 vol.fromDict({"number": 1, "loctime": loctime})
                 vol.resolveLoctime()
-                self.assertEqual(
-                    datetime.datetime.fromisoformat(expectedDateFrom).date(),
-                    getattr(vol, "dateFrom"),
-                )
-                self.assertEqual(
-                    datetime.datetime.fromisoformat(expectedDateTo).date(),
-                    getattr(vol, "dateTo"),
-                )
-                self.assertEqual(
-                    expectedCity, getattr(vol, "cityWikidataId", None)
-                )
-                self.assertEqual(
-                    expectedCountry, getattr(vol, "countryWikidataId", None)
-                )
+                self.assertEqual(datetime.datetime.fromisoformat(expectedDateFrom).date(), vol.dateFrom)
+                self.assertEqual(datetime.datetime.fromisoformat(expectedDateTo).date(), vol.dateTo)
+                self.assertEqual(expectedCity, vol.cityWikidataId)
+                self.assertEqual(expectedCountry, vol.cityWikidataId)
 
     def test_resolveLoctime_virtual_events(self):
         """
         test extraction of virtual event information
+        # ToDo: tests virtual event detection
         """
         test_params = []
         for param in test_params:
@@ -285,18 +276,16 @@ class TestVolume(Basetest):
         tests removePartsMatching
         """
         test_params = [  # input, pattern, expected
-            ("Moscow, Russia, July 18, 2016", "\d", "Moscow, Russia"),
+            ("Moscow, Russia, July 18, 2016", r"\d", "Moscow, Russia"),
             ("Berlin, Germany, June 30 & July 1, 2011", "[a-zA-Z]", " 2011"),
             (
                 "Berlin, Germany, June 30 & July 1, 2011",
-                "\d",
+                r"\d",
                 "Berlin, Germany",
             ),
         ]
         for param in test_params:
             with self.subTest("Tests removePartsMatching on", param=param):
                 value, pattern, expectedResult = param
-                actualResult = Volume.removePartsMatching(
-                    value, pattern=pattern
-                )
+                actualResult = Volume.removePartsMatching(value, pattern=pattern)
                 self.assertEqual(expectedResult, actualResult)

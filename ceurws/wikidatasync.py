@@ -67,9 +67,7 @@ class WikidataSync:
         return wd_sync
 
     @classmethod
-    def from_endpoint_names(
-        cls, wd_en: str, dblp_en: str, debug: bool = False
-    ) -> "WikidataSync":
+    def from_endpoint_names(cls, wd_en: str, dblp_en: str, debug: bool = False) -> "WikidataSync":
         """
         create a WikidataSync object from the given endpoint names
 
@@ -79,13 +77,9 @@ class WikidataSync:
         """
         endpoints = EndpointManager.getEndpoints()
         if wd_en not in endpoints:
-            raise Exception(
-                f"invalid wikidata endpoint name {wd_en}\nsee sparqlquery -le "
-            )
+            raise Exception(f"invalid wikidata endpoint name {wd_en}\nsee sparqlquery -le ")
         if dblp_en not in endpoints:
-            raise Exception(
-                f"invalid dblp endpoint name {dblp_en}\nsee sparqlquery -le "
-            )
+            raise Exception(f"invalid dblp endpoint name {dblp_en}\nsee sparqlquery -le ")
         dblp_ep = endpoints[dblp_en]
         wd_ep = endpoints[wd_en]
         wd_sync = cls(
@@ -135,18 +129,14 @@ class WikidataSync:
         """
         self.vm = VolumeManager()
         self.vm.load()
-        self.volumesByNumber, _duplicates = LOD.getLookup(
-            self.vm.getList(), "number"
-        )
+        self.volumesByNumber, _duplicates = LOD.getLookup(self.vm.getList(), "number")
         self.volumeList = self.vm.getList()
         self.volumeCount = len(self.volumeList)
         self.volumeOptions = {}
         reverse_keys = sorted(self.volumesByNumber.keys(), reverse=True)
         for volume_number in reverse_keys:
             volume = self.volumesByNumber[volume_number]
-            self.volumeOptions[volume.number] = (
-                f"Vol-{volume.number}:{volume.title}"
-            )
+            self.volumeOptions[volume.number] = f"Vol-{volume.number}:{volume.title}"
 
     def addVolume(self, volume: Volume):
         """
@@ -174,14 +164,9 @@ class WikidataSync:
         parser_config.force_download = True
         self.vm.set_down_to_volume(parser_config)
         refreshVm.loadFromIndexHtml(parser_config=parser_config)
-        refreshVolumesByNumber, _duplicates = LOD.getLookup(
-            refreshVm.getList(), "number"
-        )
+        refreshVolumesByNumber, _duplicates = LOD.getLookup(refreshVm.getList(), "number")
         # https://stackoverflow.com/questions/3462143/get-difference-between-two-lists
-        newVolumes = list(
-            set(list(refreshVolumesByNumber.keys()))
-            - set(list(self.volumesByNumber.keys()))
-        )
+        newVolumes = list(set(list(refreshVolumesByNumber.keys())) - set(list(self.volumesByNumber.keys())))
         return refreshVolumesByNumber, newVolumes
 
     def storeVolumes(self):
@@ -195,16 +180,16 @@ class WikidataSync:
         get the wikidata Record for the given volume
         """
         record = {
-            "title": getattr(volume, "title"),
-            "label": getattr(volume, "title"),
-            "description": f"Proceedings of {getattr(volume, 'acronym')} workshop",
-            "urn": getattr(volume, "urn"),
-            "short name": getattr(volume, "acronym"),
-            "volume": getattr(volume, "number"),
-            "pubDate": getattr(volume, "pubDate"),
-            "ceurwsUrl": getattr(volume, "url"),
+            "title": getattr(volume, "title", None),
+            "label": getattr(volume, "title", None),
+            "description": f"Proceedings of {getattr(volume, 'acronym', None)} workshop",
+            "urn": getattr(volume, "urn", None),
+            "short name": getattr(volume, "acronym", None),
+            "volume": getattr(volume, "number", None),
+            "pubDate": getattr(volume, "pubDate", None),
+            "ceurwsUrl": getattr(volume, "url", None),
             "language of work or name": "Q1860",
-            "fullWorkUrl": getattr(volume, "url"),
+            "fullWorkUrl": getattr(volume, "url", None),
         }
         if isinstance(record.get("pubDate"), datetime.datetime):
             record["pubDate"] = record["pubDate"].isoformat()
@@ -216,10 +201,10 @@ class WikidataSync:
         """
         volumeTitle = getattr(volume, "title", None)
         volumeNumber = getattr(volume, "number", None)
-        dblpEntityIds = self.dblpEndpoint.getDblpIdByVolumeNumber(
-            number=volumeNumber
-        )
+        dblpEntityIds = self.dblpEndpoint.getDblpIdByVolumeNumber(number=volumeNumber)
         instanceOf, description = self.getEventTypeFromTitle(volumeTitle)
+        start_time = getattr(volume, "dateFrom", None)
+        end_time = getattr(volume, "dateTo", None)
         record = {
             "title": self.getEventNameFromTitle(volumeTitle),
             "label": self.getEventNameFromTitle(volumeTitle),
@@ -228,21 +213,15 @@ class WikidataSync:
             "short name": getattr(volume, "acronym", None),
             "locationWikidataId": getattr(volume, "cityWikidataId", None),
             "countryWikidataId": getattr(volume, "countryWikidataId", None),
-            "start time": getattr(volume, "dateFrom").isoformat()
-            if getattr(volume, "dateFrom", None) is not None
-            else None,
-            "end time": getattr(volume, "dateTo").isoformat()
-            if getattr(volume, "dateTo", None) is not None
-            else None,
+            "start time": start_time.isoformat() if start_time is not None else start_time,
+            "end time": end_time.isoformat() if end_time is not None else end_time,
             "referenceUrl": volume.getVolumeUrl(),
         }
         if dblpEntityIds is not None and len(dblpEntityIds) > 0:
             dblpEntityId = dblpEntityIds[0]
             record["describedAt"] = self.dblpEndpoint.toDblpUrl(dblpEntityId)
             record["language of work or name"] = "Q1860"
-            record["dblpEventId"] = self.dblpEndpoint.convertEntityIdToUrlId(
-                entityId=dblpEntityId
-            )
+            record["dblpEventId"] = self.dblpEndpoint.convertEntityIdToUrlId(entityId=dblpEntityId)
         if volume.isVirtualEvent():
             record["instanceOf"] = [instanceOf, "Q7935096"]
         return record
@@ -254,18 +233,12 @@ class WikidataSync:
         if self.debug:
             print(f"Querying proceedings from {self.baseurl} ...")
         # query proceedings
-        wd_proceedings_records: list[dict] = self.sparql.queryAsListOfDicts(
-            self.wdQuery.query
-        )
+        wd_proceedings_records: list[dict] = self.sparql.queryAsListOfDicts(self.wdQuery.query)
         # query events
         event_query = self.qm.queriesByName["EventsByProceeding"]
-        wd_event_records: list[dict] = self.sparql.queryAsListOfDicts(
-            event_query.query
-        )
+        wd_event_records: list[dict] = self.sparql.queryAsListOfDicts(event_query.query)
         # add events to proceeding records
-        proceedings_event_map, _duplicates = LOD.getLookup(
-            wd_event_records, "item"
-        )
+        proceedings_event_map, _duplicates = LOD.getLookup(wd_event_records, "item")
         for proceedings_record in wd_proceedings_records:
             item = proceedings_record.get("item")
             if item in proceedings_event_map:
@@ -283,13 +256,9 @@ class WikidataSync:
             sampleRecordCount=5000,
             failIfTooFew=False,
         )
-        procsByURN, duplicates = LOD.getLookup(
-            wd_proceedings_records, "URN_NBN"
-        )
+        procsByURN, duplicates = LOD.getLookup(wd_proceedings_records, "URN_NBN")
         if withStore:
-            self.sqldb.store(
-                procsByURN.values(), entityInfo, executeMany=True, fixNone=True
-            )
+            self.sqldb.store(procsByURN.values(), entityInfo, executeMany=True, fixNone=True)
         if self.debug:
             print(f"stored {len(procsByURN.values())} proceedings records")
         if len(duplicates) > 0:
@@ -337,9 +306,7 @@ class WikidataSync:
         Returns:
             List of corresponding wikidata item ids or empty list of no matching item is found
         """
-        query = (
-            f"""SELECT ?proceeding WHERE{{ ?proceeding wdt:P4109 "{urn}"}}"""
-        )
+        query = f"""SELECT ?proceeding WHERE{{ ?proceeding wdt:P4109 "{urn}"}}"""
         qres = self.sparql.queryAsListOfDicts(query)
         wdItems = [record.get("proceeding") for record in qres]
         return wdItems
@@ -369,15 +336,10 @@ class WikidataSync:
         """
         query = f"""SELECT ?event WHERE {{ wd:{itemId} wdt:P4745 ?event.}}"""
         qres = self.sparql.queryAsListOfDicts(query)
-        wdItems = [
-            record.get("event")[len("http://www.wikidata.org/entity/") :]
-            for record in qres
-        ]
+        wdItems = [record.get("event")[len("http://www.wikidata.org/entity/") :] for record in qres]
         return wdItems
 
-    def getEventsOfProceedingsByVolnumber(
-        self, volnumber: Union[int, str]
-    ) -> list[str]:
+    def getEventsOfProceedingsByVolnumber(self, volnumber: Union[int, str]) -> list[str]:
         """
         get the item ids of the events the given proceedings ids is the proceedings from
         Args:
@@ -393,15 +355,10 @@ class WikidataSync:
                                 wdt:P4745 ?event.}}
         """
         qres = self.sparql.queryAsListOfDicts(query)
-        wdItems = [
-            record.get("event")[len("http://www.wikidata.org/entity/") :]
-            for record in qres
-        ]
+        wdItems = [record.get("event")[len("http://www.wikidata.org/entity/") :] for record in qres]
         return wdItems
 
-    def addProceedingsToWikidata(
-        self, record: dict, write: bool = True, ignoreErrors: bool = False
-    ):
+    def addProceedingsToWikidata(self, record: dict, write: bool = True, ignoreErrors: bool = False):
         """
         Creates a wikidata entry for the given record
 
@@ -515,16 +472,12 @@ class WikidataSync:
             print(ex)
             return False
 
-    def checkIfProceedingsFromExists(
-        self, volumeNumber: int, eventItemQid: Union[str, None]
-    ) -> bool:
+    def checkIfProceedingsFromExists(self, volumeNumber: int, eventItemQid: Union[str, None]) -> bool:
         """Returns True if the is proceedings from relation already exists between the given proceedings and event"""
         eventVar = "?event"
         if eventItemQid is not None:
             eventVar = f"wd:{eventItemQid}"
-        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(
-            number=volumeNumber
-        )
+        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
         query = f"""ASK{{ wd:{proceedingsWikidataId} wdt:P4745 {eventVar}.}}"""
         proceedingExists = self.askWikidata(query)
         return proceedingExists
@@ -562,9 +515,7 @@ class WikidataSync:
             WikidataResult: the result of the add operation
         """
         if proceedingsWikidataId is None:
-            proceedingsWikidataId = self.getWikidataIdByVolumeNumber(
-                number=volumeNumber
-            )
+            proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
         if proceedingsWikidataId is None:
             return (
                 None,
@@ -591,9 +542,7 @@ class WikidataSync:
         )
         return result
 
-    def doAddEventToWikidata(
-        self, record: dict, write: bool = True, ignoreErrors: bool = False
-    ):
+    def doAddEventToWikidata(self, record: dict, write: bool = True, ignoreErrors: bool = False):
         """
         Creates a wikidata event entry for the given record
         Args:
@@ -706,22 +655,16 @@ class WikidataSync:
         Returns:
             WikidataResult: the result of the add operation
         """
-        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(
-            number=volumeNumber
-        )
+        proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volumeNumber)
         if proceedingsWikidataId is None:
             return False, "Proceedings item can not be determined"
-        if self.hasItemPropertyValueFor(
-            item=proceedingsWikidataId, propertyId="P8978"
-        ):
+        if self.hasItemPropertyValueFor(item=proceedingsWikidataId, propertyId="P8978"):
             return (
                 False,
                 "dblp publication id is already assigned to the proceedings item",
             )
         if dblpRecordId is None:
-            dblpRecordIds = self.dblpEndpoint.getDblpIdByVolumeNumber(
-                volumeNumber
-            )
+            dblpRecordIds = self.dblpEndpoint.getDblpIdByVolumeNumber(volumeNumber)
             if len(dblpRecordIds) == 1:
                 dblpRecordId = dblpRecordIds[0]
             elif len(dblpRecordIds) > 1:
@@ -869,9 +812,7 @@ class WikidataSync:
                 qId = qIds[0]
         return qId
 
-    def getWikidataIdByDblpEventId(
-        self, entityId: str, volumeNumber: int = None
-    ) -> list[str]:
+    def getWikidataIdByDblpEventId(self, entityId: str, volumeNumber: int = None) -> list[str]:
         """
         query wikidata for the qId of items that correspond to the given dblpEventId
         Args:
@@ -880,9 +821,7 @@ class WikidataSync:
         Returns:
             list of matching wikidata items
         """
-        dblpEventId = self.dblpEndpoint.convertEntityIdToUrlId(
-            entityId=entityId
-        )
+        dblpEventId = self.dblpEndpoint.convertEntityIdToUrlId(entityId=entityId)
         dblpIds = [entityId, dblpEventId]
         dblpIdsStr = " ".join([f'"{dblpId}"' for dblpId in dblpIds])
         urls = " ".join(
@@ -1012,9 +951,7 @@ class WikidataSync:
         academicWorkshop = ("Q40444998", "academic workshop")
         if "workshop" in title.lower():
             return academicWorkshop
-        elif "conference" in title.lower():
-            return academicConference
-        elif "symposium" in title.lower():
+        elif "conference" in title.lower() or "symposium" in title.lower():
             return academicConference
         else:
             return academicWorkshop
@@ -1036,14 +973,10 @@ class WikidataSync:
             proceedingsQId, eventQId, msg
         """
         results = {}
-        volNumber = getattr(volume, "number")
-        if proceedingsWikidataId is None and self.checkIfProceedingsFromExists(
-            volNumber, eventItemQid=None
-        ):
+        volNumber = getattr(volume, "number", None)
+        if proceedingsWikidataId is None and self.checkIfProceedingsFromExists(volNumber, eventItemQid=None):
             # link between proceedings and event already exists
-            proceedingsWikidataId = self.getWikidataIdByVolumeNumber(
-                number=volNumber
-            )
+            proceedingsWikidataId = self.getWikidataIdByVolumeNumber(number=volNumber)
             results["Proceedings"] = WikidataResult(
                 qid=proceedingsWikidataId,
                 msg=f"Proceedings for Vol-{volNumber} already exists",
@@ -1052,9 +985,7 @@ class WikidataSync:
         dblpEntityId = None
         msg = None
         if len(dblpEntityIds) > 1:
-            msg = (
-                f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}",
-            )
+            msg = (f"Multiple dblpEventIds found for Vol-{volNumber}: {','.join(dblpEntityIds)}",)
         elif len(dblpEntityIds) == 1:
             dblpEntityId = dblpEntityIds[0]
         else:
@@ -1067,9 +998,7 @@ class WikidataSync:
             # event item does not exist → create a new one
             volume.resolveLoctime()
             eventRecord = self.getWikidataEventRecord(volume)
-            event_result = self.doAddEventToWikidata(
-                record=eventRecord, write=write
-            )
+            event_result = self.doAddEventToWikidata(record=eventRecord, write=write)
             eventQid = event_result.qid
             results["Event"] = event_result
         elif len(wdItems) == 1:
@@ -1079,9 +1008,7 @@ class WikidataSync:
                 msg="Event item already exists;",
             )
         else:
-            results["Event"] = WikidataResult(
-                msg=f"Multiple event entries exist: {','.join(wdItems)}"
-            )
+            results["Event"] = WikidataResult(msg=f"Multiple event entries exist: {','.join(wdItems)}")
         if eventQid is not None:
             # add link between Proceedings and the event item
             link_result = self.addLinkBetweenProceedingsAndEvent(
@@ -1102,9 +1029,8 @@ class WikidataSync:
             value: wikidata entity url
         """
         wd_prefix = "http://www.wikidata.org/entity/"
-        if value is not None and isinstance(value, str):
-            if value.startswith(wd_prefix):
-                value = value[len("http://www.wikidata.org/entity/") :]
+        if value is not None and isinstance(value, str) and value.startswith(wd_prefix):
+            value = value[len("http://www.wikidata.org/entity/") :]
         return value
 
     def getAuthorByIds(self, identifiers: dict) -> dict[str, str]:
@@ -1122,9 +1048,7 @@ class WikidataSync:
             if id_value is not None and id_value != "":
                 id_query = None
                 if id_name in id_map:
-                    id_query = DblpAuthorIdentifier.getWikidataIdQueryPart(
-                        id_name, id_value, "?person"
-                    )
+                    id_query = DblpAuthorIdentifier.getWikidataIdQueryPart(id_name, id_value, "?person")
                 else:
                     if id_name == "homepage":
                         id_query = f"{{ ?person wdt:P856 <{id_value}>. }}"

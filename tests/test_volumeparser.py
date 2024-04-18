@@ -31,9 +31,7 @@ class TestVolumeParser(Basetest):
         self.vm = VolumeManager()
         self.vm.load()
         self.volumeList = self.vm.getList()
-        self.volumesByNumber, _duplicates = LOD.getLookup(
-            self.volumeList, "number"
-        )
+        self.volumesByNumber, _duplicates = LOD.getLookup(self.volumeList, "number")
 
     def testVolumeParser(self):
         """
@@ -52,9 +50,7 @@ class TestVolumeParser(Basetest):
             start = 1
             limit = len(self.volumeList) + 1
         for volnumber in range(start, limit):
-            scrapedDict, _soup = self.volumeParser.parse_volume(
-                volnumber, use_cache=True
-            )
+            scrapedDict, _soup = self.volumeParser.parse_volume(volnumber, use_cache=True)
             if debug:
                 scraped_str = json.dumps(scrapedDict, indent=2)
                 print(f"Vol-{volnumber}:{scraped_str}")
@@ -68,9 +64,7 @@ class TestVolumeParser(Basetest):
         testcases = [(49, "DL-2001"), (40, "Semantic Web Workshop 2001")]
         debug = True
         for volnumber, expected_acronym in testcases:
-            scrapedDict, _soup = self.volumeParser.parse_volume(
-                volnumber, use_cache=False
-            )
+            scrapedDict, _soup = self.volumeParser.parse_volume(volnumber, use_cache=False)
             if debug:
                 print(scrapedDict)
             self.assertEqual(expected_acronym, scrapedDict["acronym"])
@@ -90,13 +84,9 @@ class TestVolumeParser(Basetest):
         tests why the extraction of the acronym fails for some volumes
         """
         volumeWithKnownIssue = 435
-        scrapedDict, _soup = self.volumeParser.parse_volume(
-            volumeWithKnownIssue
-        )
+        scrapedDict, _soup = self.volumeParser.parse_volume(volumeWithKnownIssue)
         self.assertEqual("SWAT4LS 2008", scrapedDict.get("acronym"))
-        self.assertEqual(
-            "http://www.swat4ls.org/", scrapedDict.get("homepage")
-        )
+        self.assertEqual("http://www.swat4ls.org/", scrapedDict.get("homepage"))
         if self.debug:
             print(scrapedDict)
 
@@ -142,9 +132,7 @@ class TestVolumeParser(Basetest):
             (2196, 10, 10, 10),
         ]
         for param in test_params[0:]:
-            with self.subTest(
-                f"test editor parsing for Vol-{param[0]}", param=param
-            ):
+            with self.subTest(f"test editor parsing for Vol-{param[0]}", param=param):
                 number, exp_editors, exp_homepages, exp_affiliations = param
                 url = self.volumeParser.volumeUrl(number)
                 soup = self.volumeParser.getSoup(url)
@@ -152,20 +140,17 @@ class TestVolumeParser(Basetest):
                 # pprint.pprint(res)
                 number_of_editors = len(res)
                 number_of_homepages = len(
-                    [
-                        e.get("homepage")
-                        for e in res.values()
-                        if e.get("homepage", None) is not None
-                    ]
+                    [e.get("homepage") for e in res.values() if e.get("homepage", None) is not None]
                 )
                 affiliations = []
                 for e in res.values():
-                    affiliations.extend(
-                        [a.get("name") for a in e.get("affiliation")]
-                    )
+                    affiliations.extend([a.get("name") for a in e.get("affiliation")])
                 number_of_affiliations = len(set(affiliations))
                 print(
-                    f"Vol-{number}:#editors={number_of_editors} #homepages={number_of_homepages} #affiliations={number_of_affiliations} ({url})"
+                    f"Vol-{number}:"
+                    f"#editors={number_of_editors} "
+                    f"#homepages={number_of_homepages} "
+                    f"#affiliations={number_of_affiliations} ({url})"
                 )
                 self.assertEqual(exp_editors, number_of_editors)
                 self.assertEqual(exp_homepages, number_of_homepages)
@@ -191,9 +176,7 @@ class TestVolumeParser(Basetest):
                 msg = f"({i:04}/{total})"
                 try:
                     res = self.volumeParser.parseEditors(soup)
-                    with open(
-                        "/tmp/editors.json", mode="a", encoding="utf8"
-                    ) as f:
+                    with open("/tmp/editors.json", mode="a", encoding="utf8") as f:
                         json.dump(res, fp=f, ensure_ascii=False)
                         f.write("\n")
                 except Exception as ex:
@@ -203,33 +186,26 @@ class TestVolumeParser(Basetest):
                 if res is not None:
                     number_of_editors = len(res)
                     number_of_hompages = len(
-                        [
-                            e.get("homepage")
-                            for e in res.values()
-                            if e.get("homepage", None) is not None
-                        ]
+                        [e.get("homepage") for e in res.values() if e.get("homepage", None) is not None]
                     )
                     affiliations = []
                     for e in res.values():
-                        affiliations.extend(
-                            [a.get("name") for a in e.get("affiliation")]
-                        )
+                        affiliations.extend([a.get("name") for a in e.get("affiliation")])
                     number_of_affiliation = len(set(affiliations))
                     number_of_editors_with_affiliations = len(
                         [
                             True
                             for e in res.values()
-                            if e.get("affiliation", None) is not None
-                            and e.get("affiliation", "") != ""
+                            if e.get("affiliation", None) is not None and e.get("affiliation", "") != ""
                         ]
                     )
-                    error_msg = (
-                        "❌"
-                        if number_of_editors
-                        != number_of_editors_with_affiliations
-                        else ""
+                    error_msg = "❌" if number_of_editors != number_of_editors_with_affiliations else ""
+                    msg += (
+                        f"{error_msg} "
+                        f"#editors={number_of_editors} "
+                        f"#affiliations={number_of_affiliation} "
+                        f"#hompages={number_of_hompages} ({url})"
                     )
-                    msg += f"{error_msg} #editors={number_of_editors} #affiliations={number_of_affiliation} #hompages={number_of_hompages} ({url})"
                     count_editors += int(number_of_editors)
                     count_homepages += int(number_of_hompages)
                     count_affiliations += int(number_of_affiliation)
@@ -258,9 +234,7 @@ class TestVolumeParser(Basetest):
         with open(log_file, mode="w") as fp:
             json.dump(volume_editors, fp, indent=4)
 
-    @unittest.skipIf(
-        True, "Analyses how often rdfa is used on the volume pages"
-    )
+    @unittest.skipIf(True, "Analyses how often rdfa is used on the volume pages")
     def test_rdfa(self):
         count = 0
         for i in range(3231, 1, -1):
@@ -272,13 +246,11 @@ class TestVolumeParser(Basetest):
             if resp.status_code != 200:
                 print("error", end="")
             pageStatement = 'prefix="'
-            if pageStatement in resp.text:
-                count += 1
-                print(url, end="")
-            elif pageStatement in f'<link rel="foaf:page" href="{url}">':
-                count += 1
-                print(url, end="")
-            elif pageStatement in "foaf:name":
+            if (
+                pageStatement in resp.text
+                or pageStatement in f'<link rel="foaf:page" href="{url}">'
+                or pageStatement in "foaf:name"
+            ):
                 count += 1
                 print(url, end="")
             print("")
@@ -306,7 +278,8 @@ class TestVolumeParser(Basetest):
             "colocated": "Petri Nets 2022",
             "h1": "HEDA 2022 The International Health Data Workshop HEDA 2022",
             "homepage": "",
-            "h3": "Proceedings of The International Health Data Workshop co-located with 10th International Conference on Petrinets (Petri Nets 2022)",
+            "h3": "Proceedings of The International Health Data Workshop co-located with 10th International "
+            "Conference on Petrinets (Petri Nets 2022)",
             "urn_check_digit": 7,
             "urn_ok": True,
         }
@@ -332,9 +305,7 @@ class TestVolumeParser(Basetest):
         limit = 3200
         homepages = []
         for volnumber in range(start, limit):
-            scrapedDict, _soup = self.volumeParser.parse_volume(
-                volnumber, use_cache=True
-            )
+            scrapedDict, _soup = self.volumeParser.parse_volume(volnumber, use_cache=True)
             homepage = scrapedDict.get("homepage", None)
             if homepage is not None and homepage.startswith("http"):
                 homepages.append(scrapedDict["homepage"].strip())

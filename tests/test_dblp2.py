@@ -5,6 +5,7 @@ Created on 2024-03-16
 """
 
 import os
+from pathlib import Path
 
 from lodstorage.query import QueryManager
 from lodstorage.sparql import SPARQL
@@ -23,9 +24,7 @@ class TestDblpCache(Basetest):
         self.sparql = SPARQL(self.endpoint_url)
         self.force_query = True
         path = os.path.dirname(__file__)
-        self.qYamlFile = os.path.join(
-            os.path.dirname(path), "ceurws/resources/queries/dblp.yaml"
-        )
+        self.qYamlFile = Path(os.path.dirname(path)).joinpath(Path("ceurws/resources/queries/dblp.yaml"))
         if os.path.isfile(self.qYamlFile):
             self.qm = QueryManager(lang="sparql", queriesPath=self.qYamlFile)
         self.db_path = "/tmp/ceurws.db"

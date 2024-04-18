@@ -47,9 +47,7 @@ class TestDblpEndpoint(Basetest):
         # force cache refresh
         self.dblpEndpoint.cache_manager.base_dir = "/tmp"
         if not self.inPublicCI():
-            self.dblpEndpoint.progress_bar = tqdm(
-                total=100
-            )  # expected 36 secs = 100%
+            self.dblpEndpoint.progress_bar = tqdm(total=100)  # expected 36 secs = 100%
 
     # @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable dblp endpoint")
     def test_getWikidataIdByVolumeNumber(self):
@@ -61,9 +59,7 @@ class TestDblpEndpoint(Basetest):
             (3100, ["conf/psychobit/2021"]),
         ]
         for param in test_params:
-            with self.subTest(
-                "test wikidata id query by volume number", param=param
-            ):
+            with self.subTest("test wikidata id query by volume number", param=param):
                 number, expected = param
                 actual = self.dblpEndpoint.getDblpIdByVolumeNumber(number)
                 self.assertListEqual(expected, actual)
@@ -126,9 +122,7 @@ class TestDblpEndpoint(Basetest):
             (None, 4600),
         ]
         for param in test_params:
-            with self.subTest(
-                "test querying of ceurws volume editors", param=param
-            ):
+            with self.subTest("test querying of ceurws volume editors", param=param):
                 number, expectedEditors = param
                 res = self.dblpEndpoint.getEditorsOfVolume(number)
                 if number is not None:
@@ -136,9 +130,7 @@ class TestDblpEndpoint(Basetest):
                         editorName = editor_record.get("name")
                         firstName = editorName.split(" ")[0]
                         self.assertIn(firstName, expectedEditors)
-                        self.assertGreaterEqual(
-                            len(editor_record), expectedEditors[firstName]
-                        )
+                        self.assertGreaterEqual(len(editor_record), expectedEditors[firstName])
                 else:
                     self.assertGreaterEqual(len(res), expectedEditors)
 
@@ -161,9 +153,7 @@ class TestDblpEndpoint(Basetest):
             orcid_id="0000-0001-6324-7164",
             # gnd_id="173443443",
         )
-        decker = dblp_authors.authorsById.get(
-            "https://dblp.org/pid/d/StefanDecker"
-        )
+        decker = dblp_authors.authorsById.get("https://dblp.org/pid/d/StefanDecker")
         self.assertEqual(expected_decker, decker)
 
     def test_get_all_ceur_editors(self):
@@ -186,9 +176,7 @@ class TestDblpEndpoint(Basetest):
         dblp_papers = self.dblpEndpoint.dblp_papers
         dblp_papers.load()
         self.assertGreaterEqual(len(dblp_papers.papers), 40000)
-        paper = dblp_papers.papersById.get(
-            "https://dblp.org/rec/conf/semweb/FahlHW0D22"
-        )
+        paper = dblp_papers.papersById.get("https://dblp.org/rec/conf/semweb/FahlHW0D22")
         self.assertIn(
             "https://dblp.org/pid/d/StefanDecker",
             [a.dblp_author_id for a in paper.authors],

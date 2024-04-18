@@ -30,11 +30,14 @@ class ParserConfig:
         Initializes the ParserConfig with a progress bar, volume threshold, and debug mode setting.
 
         Args:
-            progress_bar (Progressbar): An instance of a Progressbar class to be used for showing progress during parsing.
-            down_to_volume (int, optional): The volume threshold for parsing. Only volumes equal to or less than this value will be considered. Defaults to 1.
+            progress_bar (Progressbar): An instance of a Progressbar class to be used for showing progress
+                during parsing.
+            down_to_volume (int, optional): The volume threshold for parsing.
+                Only volumes equal to or less than this value will be considered. Defaults to 1.
             force_download(bool): if True download the file to parse
             verbose(bool): if True give verbose feedback
-            debug (bool, optional): Indicates whether debugging mode is enabled. If True, additional debug information will be provided during parsing. Defaults to False.
+            debug (bool, optional): Indicates whether debugging mode is enabled.
+                If True, additional debug information will be provided during parsing. Defaults to False.
         """
         self.progress_bar = progress_bar
         self.down_to_volume = down_to_volume
@@ -131,11 +134,8 @@ class IndexHtmlParser(Textparser):
                     trCount += 1
                     if trCount == expectedTr:
                         trEndLine = self.find(lineNo + 1, self.trEndPattern)
-                        if volCount % progress == 0:
-                            if self.config.verbose:
-                                print(
-                                    f"volume count {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}"
-                                )
+                        if volCount % progress == 0 and self.config.verbose:
+                            print(f"volume count {volCount+1:4}: lines {trStartLine:6}-{trEndLine:6}")
                         return trStartLine, trEndLine
         return None, None
 
@@ -215,9 +215,7 @@ class IndexHtmlParser(Textparser):
         see_also = ""
         for line in range(firstLine, lastLine):
             see_also += self.lines[line]
-        see_also_section = re.search(
-            r"see also:(.*?)</font>", see_also, re.DOTALL | re.IGNORECASE
-        )
+        see_also_section = re.search(r"see also:(.*?)</font>", see_also, re.DOTALL | re.IGNORECASE)
 
         if see_also_section:
             # Extract the volumes using regex from the see also section
@@ -248,9 +246,7 @@ class IndexHtmlParser(Textparser):
                 infoValue = html.unescape(infoValue)
             if info == "pubDate":
                 try:
-                    infoValue = datetime.datetime.strptime(
-                        infoValue, "%d-%b-%Y"
-                    )
+                    infoValue = datetime.datetime.strptime(infoValue, "%d-%b-%Y")
                     published = infoValue.strftime("%Y-%m-%d")
                     volume["published"] = published
                     volume["year"] = infoValue.year
@@ -264,14 +260,10 @@ class IndexHtmlParser(Textparser):
                     if info == "url":
                         self.setVolumeNumber(volume, href)
                     if info == "urn":
-                        infoValue = href.replace(
-                            "https://nbn-resolving.org/", ""
-                        )
+                        infoValue = href.replace("https://nbn-resolving.org/", "")
             volume[info] = infoValue
 
-    def parseVolume(
-        self, volCount: int, fromLine: int, toLine: int, verbose: bool
-    ):
+    def parseVolume(self, volCount: int, fromLine: int, toLine: int, verbose: bool):
         """
         parse a volume from the given line range
         """
@@ -307,9 +299,7 @@ class IndexHtmlParser(Textparser):
                 print(line)
         volumeNumber = volume.get("number", "?")
         acronym = volume.get("acronym", "?")
-        self.log(
-            f"{volumeNumber:4}-{volCount:4}:{fromLine}+{lineCount} {acronym}"
-        )
+        self.log(f"{volumeNumber:4}-{volCount:4}:{fromLine}+{lineCount} {acronym}")
         return volume
 
     def parse(self):
@@ -323,9 +313,7 @@ class IndexHtmlParser(Textparser):
         volumes = {}
         while lineNo < len(self.lines):
             expectedTr = 3
-            volStartLine, volEndLine = self.findVolume(
-                volCount, lineNo, expectedTr=expectedTr
-            )
+            volStartLine, volEndLine = self.findVolume(volCount, lineNo, expectedTr=expectedTr)
             if volStartLine is None:
                 break
             else:

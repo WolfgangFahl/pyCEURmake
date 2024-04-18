@@ -52,6 +52,7 @@ jobs:
     - name: fill sqlite
       if: steps.cache-sqlite.outputs.cache-hit != 'true'
       run: |
+        scripts/getVolumeIndexPages
         ceur-ws --recreate
 
     - name: save Sqlite

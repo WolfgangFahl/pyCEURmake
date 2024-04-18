@@ -1,0 +1,4 @@
+echo "Downloading volume index pages"
+wget https://github.com/WolfgangFahl/pyCEURmake/releases/download/v0.4.0/volume_index_pages.zip -P ~/.ceurws
+cd ~/.ceurws
+unzip volume_index_pages.zip

@@ -57,10 +57,9 @@ classifiers=[
     "Development Status :: 4 - Beta",
     "Environment :: Web Environment",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Intended Audience :: Developers",
@@ -88,3 +87,74 @@ packages = [
 ]
 [project.scripts]
 ceur-ws = "ceurws.ceur_ws_web_cmd:main"
+
+
+[tool.ruff]
+# Set the maximum line length to 79.
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore = [
+    # if-else-block-instead-of-if-exp
+    "SIM108"
+]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+#fixable = ["ALL"]
+
+[tool.ruff.format]
+# Like Black, automatically detect the appropriate line ending
+line-ending = "auto"
+
+[tool.tox]
+legacy_tox_ini = """
+    [tox]
+    env_list = lint, type, py{310,311,312}
+    minversion = 4.12.1
+
+    [testenv]
+    description = run the tests with pytest
+    package = wheel
+    wheel_build_env = .pkg
+    allowlist_externals = scripts/*
+    deps =
+        pytest>=6
+        pytest-cov
+        httpx
+    commands =
+        scripts/neo4j
+        scripts/getVolumes
+        pytest --cov --cov-append {tty:--color=yes} {posargs}
+
+    [testenv:lint]
+    description = run linters
+    skip_install = true
+    deps =
+        ruff
+    commands =
+        ruff check
+
+#    [testenv:type]
+#    description = run type checks
+#    deps =
+#        mypy>=0.991
+#    commands =
+#        mypy {posargs:ceurws tests}
+"""
+
+[[tool.mypy.overrides]]
+module = "yaml,dateutil.parser"
+ignore_missing_imports = true

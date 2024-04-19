@@ -40,7 +40,7 @@ class Volume(SQLModel, table=True):
     homepage: Optional[str] = Field(default=None)
     year: Optional[str] = Field(default=None)
     urn: Optional[str] = Field(default=None)
-    vol_number: Optional[int] = Field(default=None)
+    # vol_number: Optional[int] = Field(default=None)
     loctime: Optional[str] = Field(default=None)
     volume_number: Optional[str] = Field(default=None)
     voltitle: Optional[str] = Field(default=None)

@@ -9,7 +9,6 @@ import html
 import re
 from typing import Optional
 
-from ngwidgets.progress import Progressbar
 from tqdm import tqdm
 
 from ceurws.textparser import Textparser
@@ -32,7 +31,7 @@ class ParserConfig:
         Initializes the ParserConfig with a progress bar, volume threshold, and debug mode setting.
 
         Args:
-            progress_bar (Progressbar): An instance of a Progressbar class to be used for showing progress
+            progress_bar : An instance of a Progressbar class to be used for showing progress
                 during parsing.
             down_to_volume (int, optional): The volume threshold for parsing.
                 Only volumes equal to or less than this value will be considered. Defaults to 1.

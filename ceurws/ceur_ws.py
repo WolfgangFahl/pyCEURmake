@@ -506,9 +506,9 @@ class VolumeManager(EntityManager):
                     progress_bar.set_description(f"{description}")
                 progress_bar.update()
         print(f"storing recreated volume table for {len(self.volumes)} volumes ({invalid} invalid)")
-        self.store()
+        self.store(replace=True)
         print(f"storing {len(paper_list)} papers")
-        pm.store()
+        pm.store(replace=True)
 
     def loadFromIndexHtml(self, parser_config: Optional[ParserConfig] = None):
         """

@@ -23,28 +23,28 @@
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     SELECT DISTINCT
       ?item 
-      ?itemLabel 
-      ?itemDescription 
-      ?ceurwspart 
-      ?sVolume 
-      ?Volume 
-      ?short_name 
-      ?dblpProceedingsId 
-      ?ppnId 
-      ?event 
-      ?eventLabel 
-      ?dblpEventId 
-      ?eventSeries 
-      ?eventSeriesLabel 
-      ?eventSeriesOrdinal 
-      ?title 
-      ?language_of_work_or_name 
-      ?language_of_work_or_nameLabel 
+      (SAMPLE(?itemLabel) as ?itemLabel) 
+      (SAMPLE(?itemDescription) as ?itemDescription) 
+      (SAMPLE(?ceurwspart) as ?ceurwspart) 
+      (SAMPLE(?sVolume) as ?sVolume) 
+      (SAMPLE(?Volume) as ?Volume) 
+      (SAMPLE(?short_name) as ?short_name) 
+      (SAMPLE(?dblpProceedingsId) as ?dblpProceedingsId) 
+      (SAMPLE(?ppnId) as ?ppnId) 
+      (SAMPLE(?event) as ?event) 
+      (SAMPLE(?eventLabel) as ?eventLabel) 
+      (SAMPLE(?dblpEventId) as ?dblpEventId) 
+      (SAMPLE(?eventSeries) as ?eventSeries) 
+      (SAMPLE(?eventSeriesLabel) as ?eventSeriesLabel) 
+      (SAMPLE(?eventSeriesOrdinal) as ?eventSeriesOrdinal) 
+      (SAMPLE(?title) as ?title) 
+      (SAMPLE(?language_of_work_or_name) as ?language_of_work_or_name) 
+      (SAMPLE(?language_of_work_or_nameLabel) as ?language_of_work_or_nameLabel) 
       ?URN_NBN 
-      ?publication_date 
-      ?fullWorkUrl 
-      ?described_at_URL 
-      ?homePage 
+      (SAMPLE(?publication_date) as ?publication_date) 
+      (SAMPLE(?fullWorkUrl) as ?fullWorkUrl) 
+      (SAMPLE(?described_at_URL)  as ?described_at_URL)
+      (SAMPLE(?homePage) as ?homePage)
     WHERE {
       ?item wdt:P31 wd:Q1143604;
         wdt:P179 wd:Q27230297;
@@ -71,6 +71,7 @@
         FILTER((LANG(?language_of_work_or_nameLabel)) = "en")
       }
     }
+    GROUP BY ?URN_NBN ?item
     ORDER BY ?sVolume
 'EventsByProceeding':
   'sparql': |

@@ -246,8 +246,8 @@ class CeurWsSolution(InputWebSolution):
 
     def configure_menu(self):
         InputWebSolution.configure_menu(self)
-        self.link_button(name="volumes", icon_name="table", target="/volumes")
-        self.link_button(name="wikidata", icon_name="cloud_sync", target="/wikidatasync")
+        self.link_button(name="volumes", icon_name="table", target="/volumes", new_tab=False)
+        self.link_button(name="wikidata", icon_name="cloud_sync", target="/wikidatasync", new_tab=False)
 
     def prepare_ui(self):
         """

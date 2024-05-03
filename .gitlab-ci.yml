@@ -1,0 +1,29 @@
+image: python:latest
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+cache:
+  paths:
+  - ".cache/pip"
+  - venv/
+before_script:
+- python --version
+- pip install virtualenv
+- virtualenv venv
+- source venv/bin/activate
+- pip install .
+test:
+  script:
+    - pip install tox
+    - tox
+    - coverage xml 
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    paths:
+      - coverage.xml
+    when: always
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml

@@ -4,7 +4,7 @@ import unittest
 
 from ceurws.location import LocationLookup
 from ceurws.volume_neo4j import Editor, Neo4j, Volume
-from tests.basetest import Basetest
+from tests.basetest import Basetest, requires_neo4j
 
 
 class TestVolumeEditorLocation(Basetest):
@@ -20,6 +20,7 @@ class TestVolumeEditorLocation(Basetest):
         Basetest.tearDown(self)
         self.neo4j.close()
 
+    @requires_neo4j
     def test_neo4j_available(self):
         """
         test the port availability
@@ -47,6 +48,7 @@ class TestVolumeEditorLocation(Basetest):
                 volume_id = volume.create_node(tx)
             return volume_id
 
+    @requires_neo4j
     @unittest.skipIf(os.getenv("JENKINS_URL"), "Skipping this test in Jenkins")
     def test_volume_create_node(self):
         """
@@ -55,6 +57,7 @@ class TestVolumeEditorLocation(Basetest):
         volume_id = self.create_test_volume()
         self.assertIsNotNone(volume_id)
 
+    @requires_neo4j
     @unittest.skipIf(os.getenv("JENKINS_URL"), "Skipping this test in Jenkins")
     def test_editor_create_editor_node(self):
         """
@@ -72,6 +75,7 @@ class TestVolumeEditorLocation(Basetest):
             self.assertIsNotNone(editor_id_2023)
             self.assertIsNotNone(editor_id_2024)
 
+    @requires_neo4j
     def test_location_lookup(self):
         """
         Test the lookup method of the LocationLookup class.
@@ -83,6 +87,7 @@ class TestVolumeEditorLocation(Basetest):
             self.assertEqual(location.name, "Amsterdam")
             self.assertEqual(location.country.iso, "NL")
 
+    @requires_neo4j
     def test_parse_args(self):
         """
         Test the parse_args function.
@@ -91,6 +96,7 @@ class TestVolumeEditorLocation(Basetest):
         args = Volume.parse_args(["--source", source])
         self.assertEqual(args.source, source)
 
+    @requires_neo4j
     def test_json_loading(self):
         """
         Test the JSON loading from a file.

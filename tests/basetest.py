@@ -6,8 +6,12 @@ Created on 2021-08-19
 
 import getpass
 import os
+import socket
 import time
 from unittest import TestCase
+
+import pytest
+import requests
 
 
 class Basetest(TestCase):
@@ -66,3 +70,19 @@ class Profiler:
         if self.profile:
             print(f"{self.msg}{extraMsg} took {elapsed:5.1f} s")
         return elapsed
+
+
+def _requires_neo4j():
+    has_neo4j = False
+    try:
+        port = 7474
+        host = socket.gethostbyname(socket.gethostname())
+        url = f"http://{host}:{port}"
+        requests.get(url)
+        has_neo4j = True
+    except requests.exceptions.ConnectionError:
+        pass
+    return pytest.mark.skipif(not has_neo4j, reason="neo4j instance is required")
+
+
+requires_neo4j = _requires_neo4j()

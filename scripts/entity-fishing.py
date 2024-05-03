@@ -55,6 +55,13 @@ def data_directory() -> Path:
     return base_directory().joinpath("data", "db")
 
 
+def config_directory() -> Path:
+    """
+    Get the default location for configuration files
+    """
+    return base_directory().joinpath("config")
+
+
 def directory_size(directory: Path) -> Optional[int]:
     """
     Calculate directory size
@@ -154,7 +161,12 @@ def remove_docker_container(container_name: str):
 
 
 def start_docker_container(
-    container_name: str, datasets: list[str], console_port: int = 8090, service_port: int = 8091, detached: bool = True
+    container_name: str,
+    datasets: list[str],
+    console_port: int = 8090,
+    service_port: int = 8091,
+    detached: bool = True,
+    use_config: bool = False,
 ):
     """
     start the entity-fishing docker container and map the dataset volumes
@@ -177,8 +189,21 @@ def start_docker_container(
         name = Path(dataset).stem
         volume_map = f"{storage_path}/{name}:/opt/entity-fishing/data/db/{name}"
         cmd.extend(["-v", volume_map])
+    if use_config:
+        config_files = ["kb.yaml"]
+        config_dir = config_directory()
+        for config_file in config_files:
+            config_path = config_dir.joinpath(config_file)
+            if config_path.exists():
+                logger.info(f"Using config file {config_path}")
+                config_map = f"{config_path}:/opt/entity-fishing/data/config/{config_file}"
+                cmd.extend(["-v", config_map])
+            else:
+                logger.info(f"Config file {config_path} not found. Default version of {config_file} will be used")
     cmd.extend(["grobid/entity-fishing:0.0.6"])
     try:
+        logger.info("Starting docker container")
+        logger.debug(f"Executing ${cmd}")
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
         logger.error("Unable to start the docker container")
@@ -192,8 +217,6 @@ def main(argv=None):
 
     if argv is None:
         argv = sys.argv
-    log_format = "[%(asctime)s] [%(levelname)s] %(message)s"
-    logging.basicConfig(format=log_format, datefmt="%Y-%m-%d %H:%M:%S", level=logging.DEBUG)
 
     def download_cmd(args: argparse.Namespace):
         """
@@ -210,6 +233,7 @@ def main(argv=None):
         console_port = args.console_port
         service_port = args.service_port
         detached = not args.attached
+        use_config = args.use_config
         datasets = get_datasets()
         stop_docker_container(container_name)
         start_docker_container(
@@ -218,6 +242,7 @@ def main(argv=None):
             console_port=console_port,
             service_port=service_port,
             detached=detached,
+            use_config=use_config,
         )
 
     def docker_stop_cmd(args: argparse.Namespace):
@@ -228,12 +253,16 @@ def main(argv=None):
         stop_docker_container(container_name)
 
     parser = argparse.ArgumentParser(prog="PROG")
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--debug", dest="debug", action="store_true", help="enable debug log output")
     subparsers = parser.add_subparsers(help="sub-command help")
     # handle dataset downloads
-    parser_download = subparsers.add_parser("download", help="download entity-fishing datasets")
+    parser_download = subparsers.add_parser("download", help="download entity-fishing datasets", parents=[common])
     parser_download.set_defaults(func=download_cmd)
     # handle docker start
-    parser_docker_start = subparsers.add_parser("container-start", help="import moodle submissions to nbgrader ")
+    parser_docker_start = subparsers.add_parser(
+        "container-start", help="start entity-fishing docker container", parents=[common]
+    )
     parser_docker_start.set_defaults(func=docker_start_cmd)
     parser_docker_start.add_argument(
         "-n",
@@ -247,8 +276,17 @@ def main(argv=None):
     parser_docker_start.add_argument(
         "-a", "--attached", dest="attached", help="start the container attached to the console", action="store_true"
     )
+    parser_docker_start.add_argument(
+        "-c",
+        "--config",
+        dest="use_config",
+        help=f"use the provided config files from {config_directory()}",
+        action="store_true",
+    )
     # handle docker stop
-    parser_docker_stop = subparsers.add_parser("container-stop", help="import moodle submissions to nbgrader ")
+    parser_docker_stop = subparsers.add_parser(
+        "container-stop", help="stop entity-fishing docker container", parents=[common]
+    )
     parser_docker_stop.set_defaults(func=docker_stop_cmd)
     parser_docker_stop.add_argument(
         "-n",
@@ -259,6 +297,13 @@ def main(argv=None):
     )
 
     args = parser.parse_args(argv[1:])
+    # configure logger
+    log_format = "[%(asctime)s] [%(levelname)s] %(message)s"
+    level = logging.INFO
+    if args.debug:
+        level = logging.DEBUG
+    logging.basicConfig(format=log_format, datefmt="%Y-%m-%d %H:%M:%S", level=level)
+    # handle cmd
     args.func(args)
 
 

@@ -12,6 +12,8 @@ before_script:
 - virtualenv venv
 - source venv/bin/activate
 - pip install .
+- scripts/getVolumeIndexPages
+- ceur-ws --recreate
 test:
   script:
     - pip install tox

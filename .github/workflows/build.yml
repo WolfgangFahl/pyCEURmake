@@ -36,6 +36,10 @@ jobs:
         pip install tox
         pip install ruff
 
+    - name: start neo4j
+      run: |
+        scripts/neo4j
+
     - name: install
       run: |
         scripts/install

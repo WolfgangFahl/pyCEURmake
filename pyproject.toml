@@ -79,7 +79,8 @@ Source = "https://github.com/WolfgangFahl/py-sidif"
 
 [project.optional-dependencies]
 test = [
-  "green",
+    "tox",
+    "pytest"
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -136,7 +137,6 @@ legacy_tox_ini = """
         pytest-cov
         httpx
     commands =
-        scripts/neo4j
         scripts/getVolumes
         pytest --cov --cov-append {tty:--color=yes} {posargs}
 

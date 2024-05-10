@@ -47,28 +47,24 @@ jobs:
 #       pip install sphinx_rtd_theme
 #       scripts/doc
 
-#    - name: Cache Sqlite
-#      id: cache-sqlite
-#      uses: actions/cache@v4
-#      with:
-#        path: ~/.ceurws
-#        key: ceurws
+    - name: Cache Sqlite
+      id: cache-sqlite
+      uses: actions/cache@v4
+      with:
+        path: ~/.ceurws
+        key: ceurws
 
     - name: fill sqlite
-#      if: steps.cache-sqlite.outputs.cache-hit != 'true'
+      if: steps.cache-sqlite.outputs.cache-hit != 'true'
       run: |
-        mkdir -p $HOME/.ceurws
-        wget https://github.com/WolfgangFahl/pyCEURmake/releases/download/v0.4.0/volume_index_pages.zip -P $HOME/.ceurws
-        cd $HOME/.ceurws
-        unzip volume_index_pages.zip
         ceur-ws --recreate
 
-#    - name: save Sqlite
-#      id: saveSqlite
-#      uses: actions/cache/save@v4
-#      with:
-#        path: ~/.ceurws
-#        key: ceurws
+    - name: save Sqlite
+      id: saveSqlite
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.ceurws
+        key: ceurws
 
     - name: Run tests
       # Run tox using the version of Python in `PATH`

@@ -159,3 +159,5 @@ legacy_tox_ini = """
 [[tool.mypy.overrides]]
 module = "yaml,dateutil.parser"
 ignore_missing_imports = true
+follow-imports = "skip"
+strict-optional = true

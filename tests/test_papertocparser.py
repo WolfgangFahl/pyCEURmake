@@ -54,24 +54,25 @@ class TestPaperTocParser(Basetest):
         Returns:
             list: a list paper records
         """
+        paper_records = []
         try:
             record, soup = self.volumeParser.parse_volume(vol_number)
             if debug:
                 print(json.dumps(record, indent=2))
             if soup:
-                ptp = PaperTocParser(number=vol_number, soup=soup, debug=debug)
+                ptp = PaperTocParser(number=str(vol_number), soup=soup, debug=debug)
                 paper_records = ptp.parsePapers()
                 if debug:
                     print(json.dumps(paper_records, indent=2))
                 for paper_record in paper_records:
                     for key in paper_record:
                         counter[key] += 1
-                return paper_records
         except Exception as ex:
             counter["failure"] += 1
             if show_failure:
                 print(f"{vol_number} paper toc parsing fails with {str(ex)})")
-            return []
+        finally:
+            return paper_records
 
     def test_volExamples(self):
         """

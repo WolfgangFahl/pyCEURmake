@@ -1,6 +1,5 @@
 import calendar
 import datetime
-import os
 import re
 from pathlib import Path
 from typing import Optional, Union
@@ -26,11 +25,11 @@ class CEURWS:
     """
 
     URL = "http://ceur-ws.org"
-    home = str(Path.home())
-    CACHE_DIR = "%s/.ceurws" % home
-    CACHE_FILE = f"{CACHE_DIR}/ceurws.db"
-    CACHE_HTML = f"{CACHE_DIR}/index.html"
-    CONFIG = StorageConfig(cacheFile=CACHE_FILE)
+    home = Path.home()
+    CACHE_DIR = home.joinpath(".ceurws")
+    CACHE_FILE = CACHE_DIR.joinpath("ceurws.db")
+    CACHE_HTML = CACHE_DIR.joinpath("index.html")
+    CONFIG = StorageConfig(cacheFile=str(CACHE_FILE))
 
 
 class Volume(JSONAble):
@@ -534,13 +533,13 @@ class VolumeManager(EntityManager):
         get the index html
         """
         cacheHtml = CEURWS.CACHE_HTML
-        if os.path.isfile(cacheHtml) and not force:
+        if cacheHtml.is_file() and not force:
             with open(cacheHtml) as file:
                 html_page = file.read()
         else:
             req = Request(CEURWS.URL, headers={"User-Agent": "pyCEURMake"})
             html_page = urlopen(req).read().decode()
-            Path(CEURWS.CACHE_DIR).mkdir(parents=True, exist_ok=True)
+            CEURWS.CACHE_DIR.mkdir(parents=True, exist_ok=True)
             with open(cacheHtml, "w") as htmlFile:
                 print(html_page, file=htmlFile)
         return html_page

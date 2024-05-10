@@ -8,7 +8,7 @@ import csv
 import dataclasses
 import pprint
 import time
-import typing
+from typing import Union
 import unittest
 
 from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
@@ -599,7 +599,7 @@ class TestWikidataSync(Basetest):
 
         @dataclasses.dataclass
         class TestParam:
-            volumenumber: typing.Union[int, str]
+            volumenumber: Union[int, str]
             expected_qids: list[str]
 
         test_params = [

@@ -47,12 +47,12 @@ jobs:
 #       pip install sphinx_rtd_theme
 #       scripts/doc
 
-    - name: Cache Sqlite
-      id: cache-sqlite
-      uses: actions/cache@v4
-      with:
-        path: ~/.ceurws
-        key: ceurws
+#    - name: Cache Sqlite
+#      id: cache-sqlite
+#      uses: actions/cache@v4
+#      with:
+#        path: ~/.ceurws
+#        key: ceurws
 
     - name: fill sqlite
       if: steps.cache-sqlite.outputs.cache-hit != 'true'
@@ -60,12 +60,12 @@ jobs:
         scripts/getVolumeIndexPages
         ceur-ws --recreate
 
-    - name: save Sqlite
-      id: saveSqlite
-      uses: actions/cache/save@v4
-      with:
-        path: ~/.ceurws
-        key: ceurws
+#    - name: save Sqlite
+#      id: saveSqlite
+#      uses: actions/cache/save@v4
+#      with:
+#        path: ~/.ceurws
+#        key: ceurws
 
     - name: Run tests
       # Run tox using the version of Python in `PATH`

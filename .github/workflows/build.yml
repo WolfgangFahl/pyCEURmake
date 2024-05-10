@@ -15,7 +15,7 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20240414.1.0
     strategy:
       matrix:
         #os: [ubuntu-latest, macos-latest, windows-latest]
@@ -57,6 +57,7 @@ jobs:
     - name: fill sqlite
       if: steps.cache-sqlite.outputs.cache-hit != 'true'
       run: |
+        scripts/getVolumeIndexPages
         ceur-ws --recreate
 
     - name: save Sqlite

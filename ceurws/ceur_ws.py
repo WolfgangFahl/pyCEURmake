@@ -534,13 +534,13 @@ class VolumeManager(EntityManager):
         """
         cacheHtml = CEURWS.CACHE_HTML
         if cacheHtml.is_file() and not force:
-            with open(cacheHtml) as file:
+            with open(cacheHtml, encoding="utf-8") as file:
                 html_page = file.read()
         else:
             req = Request(CEURWS.URL, headers={"User-Agent": "pyCEURMake"})
             html_page = urlopen(req).read().decode()
             CEURWS.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            with open(cacheHtml, "w") as htmlFile:
+            with open(cacheHtml, mode="w", encoding="utf-8") as htmlFile:
                 print(html_page, file=htmlFile)
         return html_page
 

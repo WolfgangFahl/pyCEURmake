@@ -15,7 +15,7 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-20240414.1
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         #os: [ubuntu-latest, macos-latest, windows-latest]

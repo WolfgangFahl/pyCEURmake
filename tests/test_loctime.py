@@ -32,7 +32,7 @@ class TestLoctimeParser(Basetest):
         if not os.path.exists(self.volumes_path):
             return None
         # Read the JSON data
-        with open(self.volumes_path) as file:
+        with open(self.volumes_path, encoding="utf-8") as file:
             volumes_data = json.load(file)
         return volumes_data
 

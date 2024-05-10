@@ -80,7 +80,9 @@ Source = "https://github.com/WolfgangFahl/py-sidif"
 [project.optional-dependencies]
 test = [
     "tox",
-    "pytest"
+    "pytest",
+    "pytest-cov",
+    "ruff"
 ]
 
 [tool.hatch.build.targets.wheel]

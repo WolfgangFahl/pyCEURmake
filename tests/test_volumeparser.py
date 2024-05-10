@@ -220,7 +220,7 @@ class TestVolumeParser(Basetest):
             count_homepages,
         )
 
-    @unittest.skip
+    @unittest.skip("Only for manual editor extraction and debugging")
     def test_parseEditor(self):
         total = 3354
         end = 0

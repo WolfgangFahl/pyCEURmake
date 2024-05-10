@@ -13,7 +13,7 @@ from typing import Optional
 from sqlmodel import Field, SQLModel
 
 
-class Volume(SQLModel, table=True):
+class Volume(SQLModel, table=True): # type: ignore
     """
     a single CEUR-WS Volume
     """
@@ -58,7 +58,7 @@ class Volume(SQLModel, table=True):
     tdtitle: Optional[str] = Field(default=None)
 
 
-class Paper(SQLModel, table=True):
+class Paper(SQLModel, table=True): # type: ignore
     """
     Represents a paper with details such as authors, volume number, and title.
     """

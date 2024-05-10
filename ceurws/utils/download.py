@@ -7,10 +7,10 @@ this is a redundant copy see e.g. https://github.com/WolfgangFahl/ConferenceCorp
 """
 
 import gzip
-import os
 import shutil
 import time
-import urllib
+import urllib.request
+from pathlib import Path
 from typing import Optional
 
 
@@ -32,7 +32,7 @@ class Download:
             return content
 
     @staticmethod
-    def needsDownload(filePath: str, force: bool = False) -> bool:
+    def needsDownload(filePath: Path, force: bool = False) -> bool:
         """
         check if a download of the given filePath is necessary that is the file
         does not exist has a size of zero or the download should be forced
@@ -44,10 +44,10 @@ class Download:
         Return:
             bool: True if  a download for this file needed
         """
-        if not os.path.isfile(filePath):
+        if not filePath.is_file():
             result = True
         else:
-            stats = os.stat(filePath)
+            stats = filePath.stat()
             size = stats.st_size
             result = force or size == 0
         return result
@@ -56,7 +56,7 @@ class Download:
     def downloadBackupFile(
         url: str,
         fileName: str,
-        targetDirectory: str,
+        targetDirectory: Path,
         force: bool = False,
         profile: bool = True,
     ):
@@ -73,19 +73,19 @@ class Download:
         Returns:
             Name of the extracted file with path to the backup directory
         """
-        extractTo = f"{targetDirectory}/{fileName}"
+        extractTo = targetDirectory.joinpath(fileName)
+        zipped = targetDirectory.joinpath(f"{fileName}.gz")
         # we might want to check whether a new version is available
         if Download.needsDownload(extractTo, force=force):
-            if not os.path.isdir(targetDirectory):
-                os.makedirs(targetDirectory)
-            zipped = f"{extractTo}.gz"
+            if not targetDirectory.is_dir():
+                targetDirectory.parent.mkdir(parents=True, exist_ok=True)
             msg = f"Downloading {zipped} from {url} ... this might take a few seconds ..."
             profiler = Profiler(msg=msg, profile=profile)
             urllib.request.urlretrieve(url, zipped)
             profiler.time(extraMsg=f" unzipping {extractTo} from {zipped}")
             with gzip.open(zipped, "rb") as gzipped, open(extractTo, "wb") as unzipped:
                 shutil.copyfileobj(gzipped, unzipped)
-            if not os.path.isfile(extractTo):
+            if not extractTo.is_file():
                 raise Exception(f"could not extract {fileName} from {zipped}")
         return extractTo
 

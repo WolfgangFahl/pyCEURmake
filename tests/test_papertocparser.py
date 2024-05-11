@@ -71,8 +71,7 @@ class TestPaperTocParser(Basetest):
             counter["failure"] += 1
             if show_failure:
                 print(f"{vol_number} paper toc parsing fails with {str(ex)})")
-        finally:
-            return paper_records
+        return paper_records
 
     def test_volExamples(self):
         """

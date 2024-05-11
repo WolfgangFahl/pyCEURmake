@@ -8,8 +8,8 @@ import csv
 import dataclasses
 import pprint
 import time
-from typing import Union
 import unittest
+from typing import Union
 
 from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 from ez_wikidata.wikidata import UrlReference

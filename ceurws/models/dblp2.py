@@ -9,7 +9,7 @@ from typing import Optional
 from sqlmodel import Field, SQLModel
 
 
-class Scholar(SQLModel, table=True): # type: ignore
+class Scholar(SQLModel, table=True):  # type: ignore
     """
     Represents a scholar with information fetched from DBLP and possibly other sources.
     """
@@ -21,7 +21,7 @@ class Scholar(SQLModel, table=True): # type: ignore
     gnd_id: Optional[str] = None
 
 
-class Paper(SQLModel, table=True): # type: ignore
+class Paper(SQLModel, table=True):  # type: ignore
     """
     A paper indexed in DBLP with additional details. The paper URL is used as the unique identifier.
     """
@@ -33,7 +33,7 @@ class Paper(SQLModel, table=True): # type: ignore
     pdf_url: Optional[str] = None
 
 
-class Proceeding(SQLModel, table=True): # type: ignore
+class Proceeding(SQLModel, table=True):  # type: ignore
     """
     A proceeding indexed in DBLP with additional details.
     """
@@ -44,7 +44,7 @@ class Proceeding(SQLModel, table=True): # type: ignore
     dblp_event_id: Optional[str] = None
 
 
-class Editorship(SQLModel, table=True): # type: ignore
+class Editorship(SQLModel, table=True):  # type: ignore
     """
     Represents the relationship between a scholar and a proceeding, indicating the scholar's role as an editor.
     """
@@ -53,7 +53,7 @@ class Editorship(SQLModel, table=True): # type: ignore
     dblp_author_id: str = Field(foreign_key="scholar.dblp_author_id", primary_key=True)
 
 
-class Authorship(SQLModel, table=True): # type: ignore
+class Authorship(SQLModel, table=True):  # type: ignore
     """
     Represents the relationship between a scholar and a paper, capturing the authorship details.
     """

@@ -26,7 +26,7 @@ dependencies = [
     #https://github.com/martinblech/xmltodict
     'xmltodict>=0.13.0',
     # https://pypi.org/project/pylodstorage/
-    'pylodstorage>=0.11.4',
+    'pylodstorage>=0.11.5',
     # https://github.com/pyparsing/pyparsing
     'pyparsing>=3.0.9',
     # https://pypi.org/project/beautifulsoup4/

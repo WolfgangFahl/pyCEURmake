@@ -57,9 +57,7 @@ jobs:
     - name: fill sqlite
       if: steps.cache-sqlite.outputs.cache-hit != 'true'
       run: |
-        python scripts/getVolumeIndexPages.py
-        ceur-ws --recreate
-
+        python scripts/getData.py
     - name: save Sqlite
       id: saveSqlite
       uses: actions/cache/save@v4

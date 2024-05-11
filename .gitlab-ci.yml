@@ -12,8 +12,7 @@ before_script:
 - virtualenv venv
 - source venv/bin/activate
 - pip install .[test]
-- python scripts/getVolumeIndexPages.py
-- ceur-ws --recreate
+- python scripts/getData.py
 test:
   script:
     - tox -e py

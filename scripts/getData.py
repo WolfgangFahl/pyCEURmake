@@ -34,6 +34,24 @@ def download_volumes_json():
         print("❌")
         print(e)
 
+def download_db():
+    db_file = Path.home().joinpath(".ceurws", "ceurws.db")
+    if db_file.is_file() and db_file.exists():
+        print("ceurws.db already exists")
+    else:
+        print("ceurws.db missing → start download", end="", flush=True)
+        url = "https://github.com/WolfgangFahl/pyCEURmake/releases/download/v0.4.0/ceurws.db.zip"
+        try:
+            with urlopen(url) as resp:
+                zip_file = ZipFile(BytesIO(resp.read()))
+            target_location = Path.home().joinpath(".ceurws")
+            target_location.mkdir(parents=True, exist_ok=True)
+            zip_file.extractall(target_location)
+            print("✅")
+        except Exception as e:
+            print("❌")
+            print(e)
 
 download_index_pages()
 download_volumes_json()
+download_db()

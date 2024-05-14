@@ -19,6 +19,7 @@ def download_index_pages():
         print("❌")
         print(e)
 
+
 def download_volumes_json():
     print("Downloading ceur-ws volumes json... ", end="", flush=True)
     try:
@@ -33,6 +34,7 @@ def download_volumes_json():
     except Exception as e:
         print("❌")
         print(e)
+
 
 def download_db():
     db_file = Path.home().joinpath(".ceurws", "ceurws.db")
@@ -51,6 +53,7 @@ def download_db():
         except Exception as e:
             print("❌")
             print(e)
+
 
 download_index_pages()
 download_volumes_json()

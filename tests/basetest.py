@@ -12,6 +12,8 @@ from unittest import TestCase
 
 import pytest
 import requests
+from lodstorage.query import Endpoint
+from lodstorage.sparql import SPARQL
 
 
 class Basetest(TestCase):
@@ -83,6 +85,18 @@ def _requires_neo4j():
     except requests.exceptions.ConnectionError:
         pass
     return pytest.mark.skipif(not has_neo4j, reason="neo4j instance is required")
+
+
+def requires_sparql_endpoint(*, endpoint: Endpoint):
+    is_unavailable = True
+    sparql = SPARQL(endpoint.endpoint, method=endpoint.method)
+    availability_query = "SELECT * WHERE {}"
+    try:
+        sparql.query(availability_query)
+        is_unavailable = False
+    except Exception as e:
+        print(e)
+    return pytest.mark.skipif(is_unavailable, reason=f" SPARQL endpoint {endpoint.name} is unavailable")
 
 
 requires_neo4j = _requires_neo4j()

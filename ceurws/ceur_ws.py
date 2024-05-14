@@ -417,6 +417,7 @@ class VolumeManager(EntityManager):
             handleInvalidListTypes=True,
             name=self.__class__.__name__,
         )
+        self.volumes: list[Volume] = []
 
     def load(self):
         """
@@ -477,11 +478,11 @@ class VolumeManager(EntityManager):
         self.loadFromIndexHtml(parser_config)
         invalid = 0
         for volume in self.volumes:
-            if volume.number < parser_config.down_to_volume:
+            if volume.number and volume.number < parser_config.down_to_volume:
                 break
             _volume_record, soup = volume.extractValuesFromVolumePage()
             if soup:
-                ptp = PaperTocParser(number=volume.number, soup=soup, debug=self.debug)
+                ptp = PaperTocParser(number=str(volume.number), soup=soup, debug=self.debug)
                 paper_records = ptp.parsePapers()
                 for paper_record in paper_records:
                     paper = Paper()
@@ -509,7 +510,7 @@ class VolumeManager(EntityManager):
         print(f"storing {len(paper_list)} papers")
         pm.store(replace=True)
 
-    def loadFromIndexHtml(self, parser_config: Optional[ParserConfig] = None):
+    def loadFromIndexHtml(self, parser_config: Optional[ParserConfig] = None, vol_limit: Optional[int] = None):
         """
         load my content from the index.html file
 
@@ -519,7 +520,7 @@ class VolumeManager(EntityManager):
         force = parser_config.force_download if parser_config else True
         htmlText = self.getIndexHtml(force)
         indexParser = IndexHtmlParser(htmlText, parser_config)
-        volumeRecords = indexParser.parse()
+        volumeRecords = indexParser.parse(vol_limit)
         for volumeRecord in volumeRecords.values():
             volume = Volume()
             volume.fromDict(volumeRecord)

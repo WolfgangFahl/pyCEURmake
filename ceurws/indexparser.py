@@ -304,7 +304,7 @@ class IndexHtmlParser(Textparser):
         self.log(f"{volumeNumber:4}-{volCount:4}:{fromLine}+{lineCount} {acronym}")
         return volume
 
-    def parse(self):
+    def parse(self, vol_limit: Optional[int] = None):
         """
         parse my html code for Volume info
         """
@@ -313,10 +313,12 @@ class IndexHtmlParser(Textparser):
         lineNo = self.find(1, mainTablePattern)
         volCount = 0
         volumes = {}
-        while lineNo < len(self.lines):
+        while self.lines and lineNo and lineNo < len(self.lines):
+            if vol_limit and volCount >= vol_limit:
+                break
             expectedTr = 3
             volStartLine, volEndLine = self.findVolume(volCount, lineNo, expectedTr=expectedTr)
-            if volStartLine is None:
+            if volStartLine is None or volEndLine is None:
                 break
             else:
                 volCount += 1

@@ -204,7 +204,7 @@ class DblpVolumes(DblpManager):
             for number, volume in sorted(volume_by_number.items()):
                 cache_name = f"dblp/Vol-{number}/metadata"
                 if self.endpoint.progress_bar:
-                    self.endpoint.progress_bar.update(30 / 3650)
+                    self.endpoint.progress_bar.update(int(30 / 3650))
                 self.endpoint.cache_manager.store(cache_name, volume)
         return self.volumes
 

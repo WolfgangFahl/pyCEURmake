@@ -18,6 +18,7 @@ from lodstorage.sql import SQLDB
 
 from ceurws.ceur_ws import CEURWS, PaperManager, Volume, VolumeManager
 from ceurws.dblp import DblpAuthorIdentifier, DblpEndpoint
+from ceurws.endpoints import DBLP_ENDPOINT
 from ceurws.indexparser import ParserConfig
 
 
@@ -41,7 +42,7 @@ class WikidataSync:
             dblp_endpoint_url: sparql endpoint url of dblp
         """
         if dblp_endpoint_url is None:
-            dblp_endpoint_url = "https://sparql.dblp.org/sparql"
+            dblp_endpoint_url = DBLP_ENDPOINT.endpoint
         self.debug = debug
         self.prepareVolumeManager()
         self.preparePaperManager()

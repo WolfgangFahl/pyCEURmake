@@ -6,6 +6,7 @@ Created on 2022-08-11
 
 import datetime
 import logging
+from random import sample
 
 from lodstorage.lod import LOD
 
@@ -54,8 +55,9 @@ class TestIndexHtml(Basetest):
         """
         test loading the volume manager from HTML
         """
+        limit = 10 if self.inPublicCI() else None
         vm = VolumeManager()
-        vm.loadFromIndexHtml()
+        vm.loadFromIndexHtml(vol_limit=limit)
         withStore = False
         if withStore:
             vm.store()
@@ -75,9 +77,9 @@ class TestIndexHtml(Basetest):
         self.assertTrue(lineCount > 99000)
         if debug or self.inPublicCI():
             print(f"{lineCount} lines found in CEUR-WS index.html")
-        # limit=10
-        # volumes=indexParser.parse(limit=10,verbose=True)
-        volumes = indexParser.parse()
+
+        vol_limit = 10 if self.inPublicCI() else None
+        volumes = indexParser.parse(vol_limit=vol_limit)
         self.checkVolumes(volumes)
 
     def testDates(self):
@@ -100,14 +102,14 @@ class TestIndexHtml(Basetest):
         """
         test reading the volume pages
         """
-        withStore = False
+        vol_limit = 20 if self.inPublicCI() else None
         vm = VolumeManager()
-        vm.loadFromIndexHtml()
+        vm.loadFromIndexHtml(vol_limit=vol_limit)
+        withStore = False
         volumesByNumber, _duplicates = LOD.getLookup(vm.getList(), "number")
         debug = self.debug or withStore
         limit = 10 if self.inPublicCI() else 10  # len(volumesByNumber) + 1
-        for number in range(1, limit):
-            volume = volumesByNumber[number]
+        for volume in sample(list(volumesByNumber.values()), limit):
             volume.extractValuesFromVolumePage(timeout=self.timeout)
             if debug and volume.valid:
                 print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
@@ -118,6 +120,7 @@ class TestIndexHtml(Basetest):
         """
         tests extraction of series link over seeAlso
         """
+
         vm = VolumeManager()
         parser_config = ParserConfig()
         debug = self.debug

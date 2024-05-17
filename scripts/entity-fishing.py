@@ -11,7 +11,6 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,7 @@ def config_directory() -> Path:
     return base_directory().joinpath("config")
 
 
-def directory_size(directory: Path) -> Optional[int]:
+def directory_size(directory: Path) -> int | None:
     """
     Calculate directory size
     """

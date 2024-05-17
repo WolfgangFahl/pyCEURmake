@@ -1,7 +1,6 @@
 import json
 import os
 import unittest
-from typing import Union
 
 from ceurws.location import LocationLookup
 from ceurws.volume_neo4j import Editor, Neo4j, Volume
@@ -30,7 +29,7 @@ class TestVolumeEditorLocation(Basetest):
             available = Neo4j.is_port_available(self.neo4j.host, port)
             self.assertTrue(available, f"{service} service at {port}")
 
-    def create_test_volume(self, year: int = 2023) -> Union[int, None]:
+    def create_test_volume(self, year: int = 2023) -> int | None:
         """
         Creates a test Volume node for the given year.
 

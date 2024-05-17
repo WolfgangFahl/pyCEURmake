@@ -91,7 +91,7 @@ class Volume:
             editors=editors,
         )
 
-    def create_node(self, tx) -> Optional[int]:
+    def create_node(self, tx) -> int | None:
         """
         Create a Volume node in Neo4j.
 
@@ -144,7 +144,7 @@ class Volume:
         return default_source
 
     @classmethod
-    def parse_args(cls, argv: Optional[list] = None):
+    def parse_args(cls, argv: list | None = None):
         """
         Parse command line arguments.
 
@@ -191,8 +191,8 @@ class Editor:
     """
 
     name: str
-    orcid: Optional[str] = None
-    likelihood: Optional[float] = None
+    orcid: str | None = None
+    likelihood: float | None = None
 
     @classmethod
     def from_json(cls, json_data):
@@ -220,7 +220,7 @@ class Editor:
                 num_results = data.get("num-found", 0)
                 self.likelihood = num_results / 10  # Arbitrary calculation, adjust as needed
 
-    def create_node(self, tx, volume_node_id: int) -> Optional[int]:
+    def create_node(self, tx, volume_node_id: int) -> int | None:
         """
         Create an Editor node in Neo4j and establish a relationship with a Volume node.
 

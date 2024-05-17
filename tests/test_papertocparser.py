@@ -7,7 +7,6 @@ Created on 2023-03-22
 import json
 import unittest
 from collections import Counter
-from typing import Union
 
 from lodstorage.lod import LOD
 from tqdm import tqdm
@@ -37,7 +36,7 @@ class TestPaperTocParser(Basetest):
 
     def check_paper_toc_parser(
         self,
-        vol_number: Union[int, str],
+        vol_number: int | str,
         counter: Counter,
         debug: bool = False,
         show_failure: bool = True,

@@ -11,7 +11,6 @@ import shutil
 import time
 import urllib.request
 from pathlib import Path
-from typing import Optional
 
 
 class Download:
@@ -95,7 +94,7 @@ class Profiler:
     simple profiler
     """
 
-    def __init__(self, msg: Optional[str] = None, profile: bool = True):
+    def __init__(self, msg: str | None = None, profile: bool = True):
         """
         construct me with the given msg and profile active flag
 

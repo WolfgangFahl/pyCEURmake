@@ -4,7 +4,6 @@ Created on 2023-03-21
 @author: wf
 """
 
-from typing import Optional
 
 from lodstorage.query import Query, QueryManager
 from wikibot3rd.smw import SMWClient
@@ -23,7 +22,7 @@ class NamedQueries:
         if self.wikiClient.needsLogin():
             self.wikiClient.login()
         self.smw = SMWClient(self.wikiClient.getSite())
-        self.qm: Optional[QueryManager] = None
+        self.qm: QueryManager | None = None
 
     def query(self):
         """

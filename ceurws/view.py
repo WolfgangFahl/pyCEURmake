@@ -4,7 +4,6 @@ Created on 2024-02-23
 @author: wf
 """
 
-from typing import Optional
 
 from ngwidgets.widgets import Link
 from tabulate import tabulate
@@ -90,7 +89,7 @@ class View:
         link = self.createLink(url, text)
         return link
 
-    def createItemLink(self, row: dict, key: str, separator: Optional[str] = None) -> str:
+    def createItemLink(self, row: dict, key: str, separator: str | None = None) -> str:
         """
         create an item link
         Args:
@@ -108,7 +107,7 @@ class View:
             item_parts = item.split(separator)
             itemLabel_parts = itemLabel.split(separator)
             links = []
-            for url, label in zip(item_parts, itemLabel_parts):
+            for url, label in zip(item_parts, itemLabel_parts, strict=False):
                 link = self.createLink(url, label)
                 links.append(link)
             itemLink = "<br>".join(links)

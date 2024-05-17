@@ -7,7 +7,6 @@ Created on 2022-08-14
 import datetime
 import os
 import sys
-from typing import Optional, Union
 
 from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 from ez_wikidata.wikidata import UrlReference, Wikidata, WikidataResult
@@ -31,7 +30,7 @@ class WikidataSync:
         self,
         baseurl: str = "https://www.wikidata.org",
         debug: bool = False,
-        dblp_endpoint_url: Optional[str] = None,
+        dblp_endpoint_url: str | None = None,
     ):
         """
         Constructor
@@ -53,7 +52,7 @@ class WikidataSync:
         self.sqldb = SQLDB(CEURWS.CACHE_FILE)
         self.procRecords = None
         self.dblpEndpoint = DblpEndpoint(endpoint=dblp_endpoint_url)
-        self.wikidata_endpoint: Optional[Endpoint] = None
+        self.wikidata_endpoint: Endpoint | None = None
 
     @classmethod
     def from_args(cls, args) -> "WikidataSync":
@@ -282,7 +281,7 @@ class WikidataSync:
         self.procRecords = self.sqldb.query(sqlQuery)
         return self.procRecords
 
-    def getProceedingsForVolume(self, searchVolnumber: int) -> Optional[dict]:
+    def getProceedingsForVolume(self, searchVolnumber: int) -> dict | None:
         """
         get the proceedings record for the given searchVolnumber
 
@@ -348,7 +347,7 @@ class WikidataSync:
         wdItems = [record.get("event")[len("http://www.wikidata.org/entity/") :] for record in qres]
         return wdItems
 
-    def getEventsOfProceedingsByVolnumber(self, volnumber: Union[int, str]) -> list[str]:
+    def getEventsOfProceedingsByVolnumber(self, volnumber: int | str) -> list[str]:
         """
         get the item ids of the events the given proceedings ids is the proceedings from
         Args:
@@ -481,7 +480,7 @@ class WikidataSync:
             print(ex)
             return False
 
-    def checkIfProceedingsFromExists(self, volumeNumber: int, eventItemQid: Union[str, None]) -> bool:
+    def checkIfProceedingsFromExists(self, volumeNumber: int, eventItemQid: str | None) -> bool:
         """Returns True if the is proceedings from relation already exists between the given proceedings and event"""
         eventVar = "?event"
         if eventItemQid is not None:
@@ -506,8 +505,8 @@ class WikidataSync:
     def addLinkBetweenProceedingsAndEvent(
         self,
         eventItemQid: str,
-        volumeNumber: Optional[int] = None,
-        proceedingsWikidataId: Optional[str] = None,
+        volumeNumber: int | None = None,
+        proceedingsWikidataId: str | None = None,
         write: bool = True,
         ignoreErrors: bool = False,
     ) -> WikidataResult:
@@ -651,7 +650,7 @@ class WikidataSync:
     def addDblpPublicationId(
         self,
         volumeNumber: int,
-        dblpRecordId: Optional[str] = None,
+        dblpRecordId: str | None = None,
         write: bool = True,
         ignoreErrors: bool = False,
     ) -> WikidataResult:
@@ -725,8 +724,8 @@ class WikidataSync:
         self,
         itemId: str,
         acronym: str,
-        desc: Optional[str] = None,
-        label: Optional[str] = None,
+        desc: str | None = None,
+        label: str | None = None,
         write: bool = True,
         ignoreErrors: bool = False,
     ):
@@ -806,7 +805,7 @@ class WikidataSync:
         )
         return qId, errors
 
-    def getWikidataIdByVolumeNumber(self, number: Optional[int]) -> Optional[str]:
+    def getWikidataIdByVolumeNumber(self, number: int | None) -> str | None:
         """
         query wikidata for the qId of the proceedings of the given volume number
         Args:
@@ -829,7 +828,7 @@ class WikidataSync:
                 qid = qids[0]
         return qid
 
-    def getWikidataIdByDblpEventId(self, entityId: Optional[str], volumeNumber: Optional[int] = None) -> list[str]:
+    def getWikidataIdByDblpEventId(self, entityId: str | None, volumeNumber: int | None = None) -> list[str]:
         """
         query wikidata for the qId of items that correspond to the given dblpEventId
         Args:
@@ -955,7 +954,7 @@ class WikidataSync:
         return title
 
     @classmethod
-    def getEventTypeFromTitle(cls, title: str) -> tuple[Optional[str], Optional[str]]:
+    def getEventTypeFromTitle(cls, title: str) -> tuple[str | None, str | None]:
         """
         Extract the event type from the given title
         Assumption: lowest mentioned type is the correct one
@@ -979,7 +978,7 @@ class WikidataSync:
     def doCreateEventItemAndLinkProceedings(
         self,
         volume: Volume,
-        proceedingsWikidataId: Optional[str] = None,
+        proceedingsWikidataId: str | None = None,
         write: bool = False,
     ) -> dict[str, WikidataResult]:
         """

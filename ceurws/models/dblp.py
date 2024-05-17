@@ -6,7 +6,6 @@ refactored 2024-03-09 by wf
 """
 
 from dataclasses import field
-from typing import Optional
 
 from lodstorage.yamlable import lod_storable
 
@@ -22,10 +21,10 @@ class DblpScholar:
     """
 
     dblp_author_id: str
-    label: Optional[str] = None
-    wikidata_id: Optional[str] = None
-    orcid_id: Optional[str] = None
-    gnd_id: Optional[str] = None
+    label: str | None = None
+    wikidata_id: str | None = None
+    orcid_id: str | None = None
+    gnd_id: str | None = None
 
 
 @lod_storable
@@ -38,8 +37,8 @@ class DblpPaper:
     dblp_proceeding_id: str
     volume_number: int
     title: str
-    authors: Optional[list[DblpScholar]] = field(default_factory=list)
-    pdf_id: Optional[str] = None
+    authors: list[DblpScholar] | None = field(default_factory=list)
+    pdf_id: str | None = None
 
     def __post_init__(self):
         for i, author in enumerate(self.authors):
@@ -56,9 +55,9 @@ class DblpProceeding:
     dblp_publication_id: str
     volume_number: int
     title: str
-    dblp_event_id: Optional[str] = None
-    papers: Optional[list[DblpPaper]] = field(default_factory=list)
-    editors: Optional[list[DblpScholar]] = field(default_factory=list)
+    dblp_event_id: str | None = None
+    papers: list[DblpPaper] | None = field(default_factory=list)
+    editors: list[DblpScholar] | None = field(default_factory=list)
 
     def __post_init__(self):
         if self.editors:

@@ -3,7 +3,7 @@ Created on 2024-03-16
 @author: wf
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from lodstorage.query import QueryManager
 from lodstorage.sparql import SPARQL
@@ -118,7 +118,7 @@ class Cached:
             print(f"Found {len(self.lod)} records for {self.query_name}")
         return self.lod
 
-    def to_entities(self, max_errors: Optional[int] = None) -> list[Any]:
+    def to_entities(self, max_errors: int | None = None) -> list[Any]:
         """
         Converts records fetched from the LOD into entity instances, applying validation.
         Args:
@@ -148,7 +148,7 @@ class Cached:
             raise Exception(msg)
         return self.entities
 
-    def store(self, max_errors: Optional[int] = None) -> list[Any]:
+    def store(self, max_errors: int | None = None) -> list[Any]:
         """
         Stores the fetched data into the local SQL database.
 

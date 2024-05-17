@@ -7,7 +7,6 @@ Created on 2022-08-14
 import os.path
 import pathlib
 import re
-import typing
 
 from bs4 import BeautifulSoup, NavigableString, PageElement, Tag
 
@@ -43,7 +42,7 @@ class VolumeParser(Textparser):
         self.timeout = timeout
         self.scrape = WebScrape(timeout=timeout)
 
-    def volumeUrl(self, volnumber: typing.Union[str, int]):
+    def volumeUrl(self, volnumber: str | int):
         """
         get the url for the given volume number
 
@@ -57,7 +56,7 @@ class VolumeParser(Textparser):
         url = f"{self.baseurl}/Vol-{volnumber}"
         return url
 
-    def getSoup(self, url: str) -> typing.Optional[BeautifulSoup]:
+    def getSoup(self, url: str) -> BeautifulSoup | None:
         """
         get the beautiful Soup parser for the given url
         Args:
@@ -68,7 +67,7 @@ class VolumeParser(Textparser):
         """
         return self.scrape.getSoup(url, showHtml=self.showHtml, debug=self.debug)
 
-    def get_volume_soup(self, number: int, use_cache: bool = True) -> typing.Optional[BeautifulSoup]:
+    def get_volume_soup(self, number: int, use_cache: bool = True) -> BeautifulSoup | None:
         """
         Get Soup of the volume page for the given volume number
         Args:
@@ -87,7 +86,7 @@ class VolumeParser(Textparser):
         soup = self.scrape.get_soup_from_string(html, show_html=self.showHtml)
         return soup
 
-    def get_volume_page(self, number: int, recache: bool = False) -> typing.Union[str, bytes, None]:
+    def get_volume_page(self, number: int, recache: bool = False) -> str | bytes | None:
         """
         Get the html content of the given volume number.
         Retrieves the volume page from cache or from ceur-ws.org
@@ -108,7 +107,7 @@ class VolumeParser(Textparser):
                 VolumePageCache.cache(number, volume_page)
         return volume_page
 
-    def parse_volume(self, number: int, use_cache: bool = True) -> tuple[dict, typing.Optional[BeautifulSoup]]:
+    def parse_volume(self, number: int, use_cache: bool = True) -> tuple[dict, BeautifulSoup | None]:
         """
         parse the given volume
         caches the volume pages at ~/.ceurws/volumes
@@ -151,7 +150,7 @@ class VolumeParser(Textparser):
         parsed_dict = self.parse_soup(soup=soup) if soup else {}
         return parsed_dict
 
-    def parse_soup(self, soup: BeautifulSoup, number: typing.Optional[str] = None) -> dict:
+    def parse_soup(self, soup: BeautifulSoup, number: str | None = None) -> dict:
         """
         parse the volume page data from the given soup
 
@@ -324,14 +323,14 @@ class VolumeParser(Textparser):
         end = start.find_next("hr")
         affiliations_elements = []
         group_elements: list[PageElement] = []
-        if isinstance(start.previous, (Tag, NavigableString)):
+        if isinstance(start.previous, Tag | NavigableString):
             for element in start.previous.nextGenerator():
-                if isinstance(element, (Tag, NavigableString)) and element.name in ["br", "hr"]:
+                if isinstance(element, Tag | NavigableString) and element.name in ["br", "hr"]:
                     affiliations_elements.append(group_elements)
                     group_elements = []
                 elif isinstance(element, NavigableString) and element.text.strip() == "":
                     pass
-                elif isinstance(element, (Tag, NavigableString)) and element.name == "h3":
+                elif isinstance(element, Tag | NavigableString) and element.name == "h3":
                     # elements inside the element are included through the nextGenerator
                     pass
                 else:
@@ -353,7 +352,7 @@ class VolumeParser(Textparser):
             for element in elements[1:]:
                 if isinstance(element, NavigableString):
                     text_elements.append(element)
-                elif isinstance(element, (Tag, NavigableString)) and element.name == "a":
+                elif isinstance(element, Tag | NavigableString) and element.name == "a":
                     link_elements.append(element)
             affiliation = "".join([elem.text for elem in text_elements])
             affiliation = affiliation.replace("\n", "").replace("\t", "").replace("\r", "")
@@ -451,7 +450,7 @@ class VolumePageCache:
         return os.path.exists(cls._get_volume_cache_path(number))
 
     @classmethod
-    def cache(cls, number: int, html: typing.Union[str, bytes]):
+    def cache(cls, number: int, html: str | bytes):
         """
         cache the volume page corresponding to the given number
         Args:
@@ -476,7 +475,7 @@ class VolumePageCache:
         return f"{cls.cache_location}/Vol-{number}.html"
 
     @classmethod
-    def get(cls, number: int) -> typing.Union[str, bytes, None]:
+    def get(cls, number: int) -> str | bytes | None:
         """
         Get the cached volume page of the given volume number.
         If the volume page is not cached None is returned.
@@ -488,7 +487,7 @@ class VolumePageCache:
             bytes: if the cached volume page contains encoding errors
             None: if no volume with the given number is cached
         """
-        volume_page: typing.Union[str, bytes, None] = None
+        volume_page: str | bytes | None = None
         if cls.is_cached(number):
             filepath = cls._get_volume_cache_path(number)
             try:

@@ -1,8 +1,9 @@
+
 import calendar
 import datetime
 import re
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 from urllib.request import Request, urlopen
 
 import dateutil.parser
@@ -39,31 +40,31 @@ class Volume(JSONAble):
 
     def __init__(
         self,
-        number: Optional[int] = None,
-        url: Optional[str] = None,
-        title: Optional[str] = None,
-        fullTitle: Optional[str] = None,
-        acronym: Optional[str] = None,
-        lang: Optional[str] = None,
-        location: Optional[str] = None,
-        country: Optional[str] = None,
-        countryWikidataId: Optional[str] = None,
-        region: Optional[str] = None,
-        city: Optional[str] = None,
-        cityWikidataId: Optional[str] = None,
-        ordinal: Optional[int] = None,
-        date: Optional[datetime.datetime] = None,
-        dateFrom: Optional[datetime.datetime] = None,
-        dateTo: Optional[datetime.datetime] = None,
-        pubYear: Optional[str] = None,
-        pubDate: Optional[datetime.datetime] = None,
-        submitDate: Optional[datetime.datetime] = None,
+        number: int | None = None,
+        url: str | None = None,
+        title: str | None = None,
+        fullTitle: str | None = None,
+        acronym: str | None = None,
+        lang: str | None = None,
+        location: str | None = None,
+        country: str | None = None,
+        countryWikidataId: str | None = None,
+        region: str | None = None,
+        city: str | None = None,
+        cityWikidataId: str | None = None,
+        ordinal: int | None = None,
+        date: datetime.datetime | None = None,
+        dateFrom: datetime.datetime | None = None,
+        dateTo: datetime.datetime | None = None,
+        pubYear: str | None = None,
+        pubDate: datetime.datetime | None = None,
+        submitDate: datetime.datetime | None = None,
         valid: bool = True,
         conference: Optional["Conference"] = None,
-        editors: Optional[list["Editor"]] = None,
-        sessions: Optional[list["Session"]] = None,
+        editors: list["Editor"] | None = None,
+        sessions: list["Session"] | None = None,
         virtualEvent: bool = False,
-        submittedBy: Optional[str] = None,
+        submittedBy: str | None = None,
     ):
         """
         constructor
@@ -130,7 +131,7 @@ class Volume(JSONAble):
         number = getattr(self, "number", "Volume has no number")
         return number
 
-    def getVolumeUrl(self) -> Union[str, None]:
+    def getVolumeUrl(self) -> str | None:
         """
         get the url of the volume page
         """
@@ -142,8 +143,8 @@ class Volume(JSONAble):
 
     @staticmethod
     def getVolumeUrlOf(
-        number: Union[str, int],
-    ) -> Union[str, None]:
+        number: str | int,
+    ) -> str | None:
         """
         get the volume url of the given volume number
         Args:
@@ -167,7 +168,7 @@ class Volume(JSONAble):
         """
         pass
 
-    def get_loctime(self) -> Optional[str]:
+    def get_loctime(self) -> str | None:
         """
         get the loctime
         """
@@ -244,7 +245,7 @@ class Volume(JSONAble):
 
     def extractDates(
         self, dateStr: str, durationThreshold: int = 11
-    ) -> tuple[Optional[datetime.date], Optional[datetime.date]]:
+    ) -> tuple[datetime.date | None, datetime.date | None]:
         """ "
         Extracts the start and end time from the given string
         optimized for the format of the loctime property
@@ -374,7 +375,7 @@ class Volume(JSONAble):
         """
         return
 
-    def extractValuesFromVolumePage(self, timeout: float = 3) -> Union[tuple[Optional[dict], Optional[BeautifulSoup]]]:
+    def extractValuesFromVolumePage(self, timeout: float = 3) -> tuple[dict | None, BeautifulSoup | None]:
         """
         extract values from the given volume page
         """
@@ -510,7 +511,7 @@ class VolumeManager(EntityManager):
         print(f"storing {len(paper_list)} papers")
         pm.store(replace=True)
 
-    def loadFromIndexHtml(self, parser_config: Optional[ParserConfig] = None, vol_limit: Optional[int] = None):
+    def loadFromIndexHtml(self, parser_config: ParserConfig | None = None, vol_limit: int | None = None):
         """
         load my content from the index.html file
 
@@ -553,13 +554,13 @@ class Paper(JSONAble):
 
     def __init__(
         self,
-        id: Optional[str] = None,
-        title: Optional[str] = None,
-        type: Optional[str] = None,
-        position: Optional[int] = None,
-        pagesFrom: Optional[int] = None,
-        pagesTo: Optional[int] = None,
-        authors: Optional[dict] = None,
+        id: str | None = None,
+        title: str | None = None,
+        type: str | None = None,
+        position: int | None = None,
+        pagesFrom: int | None = None,
+        pagesTo: int | None = None,
+        authors: dict | None = None,
     ):
         super().__init__()
         self.id = id
@@ -658,7 +659,7 @@ class Session(JSONAble):
     """
 
     def __init__(
-        self, id: Optional[str], title: Optional[str], position: Optional[int], papers: Optional[dict[str, "Paper"]]
+        self, id: str | None, title: str | None, position: int | None, papers: dict[str, "Paper"] | None
     ):
         """
         constructor

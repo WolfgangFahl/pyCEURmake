@@ -9,7 +9,6 @@ import os
 import time
 from dataclasses import dataclass
 from itertools import groupby
-from typing import Optional, Union
 from urllib.error import HTTPError
 
 from lodstorage.cache import CacheManager
@@ -60,7 +59,7 @@ class DblpAuthors(DblpManager):
 
     def __init__(self, endpoint: "DblpEndpoint"):
         super().__init__(endpoint, "dblp/authors", "CEUR-WS Paper Authors")
-        self.authors: Optional[list[DblpScholar]] = None
+        self.authors: list[DblpScholar] | None = None
 
     def load(self, force_query: bool = False):
         """
@@ -82,7 +81,7 @@ class DblpEditors(DblpManager):
 
     def __init__(self, endpoint: "DblpEndpoint"):
         super().__init__(endpoint, "dblp/editors", "CEUR-WS all Editors")
-        self.editors: Optional[list[DblpScholar]] = None
+        self.editors: list[DblpScholar] | None = None
 
     def load(self, force_query: bool = False):
         """
@@ -104,7 +103,7 @@ class DblpPapers(DblpManager):
 
     def __init__(self, endpoint: "DblpEndpoint"):
         super().__init__(endpoint, "dblp/papers", "CEUR-WS all Papers")
-        self.papers: Optional[list[DblpPaper]] = None
+        self.papers: list[DblpPaper] | None = None
         self.papers_by_volume: dict[str, dict] = {}
         self.papersById: dict[str, DblpPaper] = {}
         self.papersByProceeding: dict[str, list[DblpPaper]] = {}
@@ -324,7 +323,7 @@ class DblpEndpoint:
             qIds = [record.get("proceeding")[len(self.DBLP_REC_PREFIX) :] for record in qres]
         return qIds
 
-    def getDblpUrlByDblpId(self, entityId: Optional[str] = None) -> Union[str, None]:
+    def getDblpUrlByDblpId(self, entityId: str | None = None) -> str | None:
         """
         Get the dblp url for given entity id
         Args:
@@ -346,7 +345,7 @@ class DblpEndpoint:
         qId = qIds[0] if qIds is not None and len(qIds) > 0 else None
         return qId
 
-    def convertEntityIdToUrlId(self, entityId: Optional[str]) -> Union[str, None]:
+    def convertEntityIdToUrlId(self, entityId: str | None) -> str | None:
         """
         Convert the given entityId to the id used in the url
         Note: use with care this conversion does not always work
@@ -361,7 +360,7 @@ class DblpEndpoint:
         """
         return self.getDblpUrlByDblpId(entityId)
 
-    def toDblpUrl(self, entityId: str, withPostfix: bool = False) -> Union[str, None]:
+    def toDblpUrl(self, entityId: str, withPostfix: bool = False) -> str | None:
         """
         Convert the given id to the corresponding dblp url
         Args:
@@ -380,7 +379,7 @@ class DblpEndpoint:
             url += postfix
         return url
 
-    def getEditorsOfVolume(self, number: Union[int, str, None]) -> list[dict]:
+    def getEditorsOfVolume(self, number: int | str | None) -> list[dict]:
         """
         Get the editors for the given volume number
         Args:
@@ -443,7 +442,7 @@ class DblpAuthorIdentifier:
 
     name: str  # the name should be usable as SPARQL variable
     dblp_property: str
-    wikidata_property: Optional[str]
+    wikidata_property: str | None
 
     @classmethod
     def all(cls) -> list["DblpAuthorIdentifier"]:
@@ -500,7 +499,7 @@ class DblpAuthorIdentifier:
             # unknown identifier
             return ""
         wd_prop = dblp_author_ids.wikidata_property
-        values: Union[str, list[str]]
+        values: str | list[str]
         if id_name == "wikidata":
             values = value
             if isinstance(value, str):

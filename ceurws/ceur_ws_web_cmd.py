@@ -7,7 +7,6 @@ Created on 2024-02-22
 import sys
 from argparse import ArgumentParser
 from dataclasses import asdict
-from typing import Optional
 
 from ngwidgets.cmd import WebserverCmd
 from tabulate import tabulate
@@ -148,7 +147,7 @@ class CeurWsCmd(WebserverCmd):
         return handled
 
 
-def main(argv: Optional[list] = None):
+def main(argv: list | None = None):
     """
     main call
     """

@@ -15,6 +15,8 @@ import requests
 from lodstorage.query import Endpoint
 from lodstorage.sparql import SPARQL
 
+from ceurws.services.entity_fishing import ENTITY_FISHING_ENDPOINT
+
 
 class Basetest(TestCase):
     """
@@ -75,6 +77,9 @@ class Profiler:
 
 
 def _requires_neo4j():
+    """
+    test case requires local neo4j instance
+    """
     has_neo4j = False
     try:
         port = 7474
@@ -87,7 +92,13 @@ def _requires_neo4j():
     return pytest.mark.skipif(not has_neo4j, reason="neo4j instance is required")
 
 
+requires_neo4j = _requires_neo4j()
+
+
 def requires_sparql_endpoint(*, endpoint: Endpoint):
+    """
+    test case requires given SPARQL endpoint
+    """
     is_unavailable = True
     sparql = SPARQL(endpoint.endpoint, method=endpoint.method)
     availability_query = "SELECT * WHERE {}"
@@ -99,4 +110,19 @@ def requires_sparql_endpoint(*, endpoint: Endpoint):
     return pytest.mark.skipif(is_unavailable, reason=f" SPARQL endpoint {endpoint.name} is unavailable")
 
 
-requires_neo4j = _requires_neo4j()
+def _requires_entity_fishing_endpoint():
+    """
+    test case requires entity fishing endpoint
+    """
+    is_unavailable = True
+    try:
+        url = f"{ENTITY_FISHING_ENDPOINT}/service/kb/concept/Q5"
+        resp = requests.get(url)
+        resp.raise_for_status()
+        is_unavailable = False
+    except Exception as e:
+        print(e)
+    return pytest.mark.skipif(is_unavailable, reason="entity fishing endpoint is not available")
+
+
+requires_entity_fishing_endpoint = _requires_entity_fishing_endpoint()

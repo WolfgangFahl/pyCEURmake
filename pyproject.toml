@@ -51,7 +51,8 @@ dependencies = [
     # https://pypi.org/project/wdgrid/
     'wdgrid>=0.1.0',
     "requests",
-    "tabulate"
+    "tabulate",
+    "spacy"
 ]
 
 requires-python = ">=3.9"

@@ -43,7 +43,6 @@ jobs:
     - name: install
       run: |
         scripts/install
-        python -m spacy download en_core_web_sm
 #       pip install sphinx
 #       pip install sphinx_rtd_theme
 #       scripts/doc

@@ -1,12 +1,23 @@
 import unittest
 
 import spacy
+from spacy.cli import download
 
 from ceurws.services.entity_fishing import ENTITY_FISHING_PIPELINE
 from tests.basetest import Basetest, requires_entity_fishing_endpoint
 
 
 class TestEntityFishing(Basetest):
+
+    def setUp(self, debug=False, profile=True):
+        super(TestEntityFishing, self).setUp(debug=debug, profile=profile)
+        try:
+            nlp_lg = spacy.load("en_core_web_sm")
+        except (ModuleNotFoundError, IOError):
+            download(model="en_core_web_sm")
+            nlp_lg = spacy.load("en_core_web_sm")
+        self.nlp = nlp_lg
+
     @requires_entity_fishing_endpoint
     def test_entity_fishing_spacy_pipeline(self):
         """

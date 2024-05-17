@@ -13,7 +13,6 @@ before_script:
 - source venv/bin/activate
 - pip install .[test]
 - python scripts/getData.py
-- python -m spacy download en_core_web_sm
 test:
   script:
     - tox -e py

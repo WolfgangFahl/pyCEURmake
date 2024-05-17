@@ -4,7 +4,6 @@ Created on 2024-03-16
 @author: wf
 """
 
-
 from sqlmodel import Field, SQLModel
 
 

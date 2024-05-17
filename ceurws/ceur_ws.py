@@ -1,4 +1,3 @@
-
 import calendar
 import datetime
 import re
@@ -658,9 +657,7 @@ class Session(JSONAble):
     Represents a session in ceur-ws
     """
 
-    def __init__(
-        self, id: str | None, title: str | None, position: int | None, papers: dict[str, "Paper"] | None
-    ):
+    def __init__(self, id: str | None, title: str | None, position: int | None, papers: dict[str, "Paper"] | None):
         """
         constructor
         """

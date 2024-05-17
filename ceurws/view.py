@@ -4,7 +4,6 @@ Created on 2024-02-23
 @author: wf
 """
 
-
 from ngwidgets.widgets import Link
 from tabulate import tabulate
 

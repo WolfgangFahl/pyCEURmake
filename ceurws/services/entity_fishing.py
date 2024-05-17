@@ -2,7 +2,7 @@ import concurrent.futures
 import contextlib
 import json
 import logging
-from email import iterators
+from collections.abc import Iterable
 
 import requests
 from spacy import util
@@ -94,7 +94,11 @@ class CeurEntityFishing:
 
     @staticmethod
     def generic_client_batch(
-        method: str, url_batch: list[str], verbose: bool, params: dict = None, files_batch: list[dict] = None
+        method: str,
+        url_batch: list[str],
+        verbose: bool,
+        params: dict | None = None,
+        files_batch: list[dict] | None = None,
     ) -> list[requests.Response]:
         """
         It takes a list of urls and a list of files, and it sends a request to each url with the
@@ -436,7 +440,7 @@ class CeurEntityFishing:
         )[0]
         return self.process_single_doc_after_call(doc, result_from_ef_text)
 
-    def pipe(self, stream: iterators, batch_size: int = 128) -> Doc:
+    def pipe(self, stream: Iterable, batch_size: int = 128) -> Doc:
         """
         For each batch of documents, we disambiguate the named entities in the documents, and then yield
         the results

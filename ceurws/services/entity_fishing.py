@@ -132,7 +132,7 @@ class CeurEntityFishing:
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             future_to_url = {
                 executor.submit(load_url, type_url, type_files): (type_url, type_files)
-                for type_url, type_files in zip(url_batch, files_batch)
+                for type_url, type_files in zip(url_batch, files_batch, strict=False)
             }
             for future in concurrent.futures.as_completed(future_to_url):
                 # url = future_to_url[future]
@@ -337,7 +337,7 @@ class CeurEntityFishing:
         """
         data_to_post_batch = [
             self.prepare_data(text=text, terms=terms, entities=entities, language=self.language, full=self.flag_extra)
-            for text, terms, entities in zip(text_batch, terms_batch, entities_batch)
+            for text, terms, entities in zip(text_batch, terms_batch, entities_batch, strict=False)
         ]
         reqs = self.disambiguate_text_batch(files_batch=data_to_post_batch)
 
@@ -456,5 +456,5 @@ class CeurEntityFishing:
                 text_batch=text_batch, terms_batch=terms_batch, entities_batch=entities_batch
             )
 
-            for doc, result_from_ef_text in zip(docs, result_from_ef_text_batch):
+            for doc, result_from_ef_text in zip(docs, result_from_ef_text_batch, strict=False):
                 yield self.process_single_doc_after_call(doc, result_from_ef_text)

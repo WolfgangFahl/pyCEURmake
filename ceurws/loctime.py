@@ -8,7 +8,6 @@ import os
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Optional
 
 import yaml
 from tabulate import tabulate
@@ -29,7 +28,7 @@ class LoctimeParser:
         total_loctimes (int): The total count of processed loctimes.
     """
 
-    def __init__(self, filepath: Optional[str] = None):
+    def __init__(self, filepath: str | None = None):
         """
         Initializes the LoctimeParser object, setting up paths, loading lookups,
         and initializing counters and patterns.

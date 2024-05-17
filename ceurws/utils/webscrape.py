@@ -7,7 +7,6 @@ this is a redundant copy of the sources at https://github.com/WolfgangFahl/Confe
 """
 
 import re
-import typing
 import urllib.request
 from dataclasses import dataclass
 from urllib.error import HTTPError
@@ -44,7 +43,7 @@ class WebScrape:
             timeout(float): the default timeout
             agent(str): the agent to mimic
         """
-        self.err: typing.Optional[Exception] = None
+        self.err: Exception | None = None
         self.valid = False
         self.debug = debug
         self.showHtml = showHtml
@@ -75,8 +74,8 @@ class WebScrape:
         self,
         soup: BeautifulSoup,
         tag: str,
-        attr: typing.Optional[str] = None,
-        value: typing.Optional[str] = None,
+        attr: str | None = None,
+        value: str | None = None,
         multi: bool = False,
     ):
         """
@@ -106,7 +105,7 @@ class WebScrape:
         else:
             return None
 
-    def getSoup(self, url: str, showHtml: bool = False, debug: bool = False) -> typing.Optional[BeautifulSoup]:
+    def getSoup(self, url: str, showHtml: bool = False, debug: bool = False) -> BeautifulSoup | None:
         """
         get the beautiful Soup parser
 
@@ -121,7 +120,7 @@ class WebScrape:
         soup = self.get_soup_from_string(html, show_html=showHtml) if html is not None else None
         return soup
 
-    def get_soup_from_string(self, html: typing.Union[str, bytes], show_html: bool = False) -> BeautifulSoup:
+    def get_soup_from_string(self, html: str | bytes, show_html: bool = False) -> BeautifulSoup:
         """
         get the beautiful Soup parser for the given html string
 
@@ -150,7 +149,7 @@ class WebScrape:
     def parseWithScrapeDescription(
         self,
         soup: BeautifulSoup,
-        scrapeDescr: typing.Union[list["ScrapeDescription"], None] = None,
+        scrapeDescr: list["ScrapeDescription"] | None = None,
     ) -> dict:
         """
         parse the given url with the given encoding
@@ -205,7 +204,7 @@ class WebScrape:
             self.err = terr
         return triples
 
-    def get_html_from_url(self, url: str, debug: bool = False) -> typing.Union[str, bytes, None]:
+    def get_html_from_url(self, url: str, debug: bool = False) -> str | bytes | None:
         """
         Get the html response from the given url
         Args:

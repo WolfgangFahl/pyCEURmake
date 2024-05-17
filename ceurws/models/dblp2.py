@@ -4,7 +4,6 @@ Created on 2024-03-16
 @author: wf
 """
 
-from typing import Optional
 
 from sqlmodel import Field, SQLModel
 
@@ -15,10 +14,10 @@ class Scholar(SQLModel, table=True):  # type: ignore
     """
 
     dblp_author_id: str = Field(primary_key=True)
-    label: Optional[str] = None
-    wikidata_id: Optional[str] = None
-    orcid_id: Optional[str] = None
-    gnd_id: Optional[str] = None
+    label: str | None = None
+    wikidata_id: str | None = None
+    orcid_id: str | None = None
+    gnd_id: str | None = None
 
 
 class Paper(SQLModel, table=True):  # type: ignore
@@ -27,10 +26,10 @@ class Paper(SQLModel, table=True):  # type: ignore
     """
 
     paper: str = Field(primary_key=True)
-    proceeding: Optional[str] = Field(foreign_key="proceeding.proceeding")
+    proceeding: str | None = Field(foreign_key="proceeding.proceeding")
     volume_number: str = Field(index=True)
     title: str
-    pdf_url: Optional[str] = None
+    pdf_url: str | None = None
 
 
 class Proceeding(SQLModel, table=True):  # type: ignore
@@ -41,7 +40,7 @@ class Proceeding(SQLModel, table=True):  # type: ignore
     proceeding: str = Field(primary_key=True)
     volume_number: int = Field(index=True)
     title: str
-    dblp_event_id: Optional[str] = None
+    dblp_event_id: str | None = None
 
 
 class Editorship(SQLModel, table=True):  # type: ignore

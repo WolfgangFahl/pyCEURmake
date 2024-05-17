@@ -7,7 +7,6 @@ Created on 11.08.2022
 import datetime
 import html
 import re
-from typing import Optional
 
 from tqdm import tqdm
 
@@ -21,7 +20,7 @@ class ParserConfig:
 
     def __init__(
         self,
-        progress_bar: Optional[tqdm] = None,
+        progress_bar: tqdm | None = None,
         down_to_volume: int = 1,
         force_download: bool = False,
         verbose: bool = False,
@@ -52,7 +51,7 @@ class IndexHtmlParser(Textparser):
     CEUR-WS Index.html parser
     """
 
-    def __init__(self, htmlText: str, config: Optional[ParserConfig] = None):
+    def __init__(self, htmlText: str, config: ParserConfig | None = None):
         """
         Constructor
 
@@ -83,7 +82,7 @@ class IndexHtmlParser(Textparser):
         self.editedByPattern = re.compile("Edited by:")
         self.tdBgColorPattern = re.compile("<td bgcolor", re.I)
 
-    def find(self, startLine: int, compiledPattern, step: int = 1) -> Optional[int]:
+    def find(self, startLine: int, compiledPattern, step: int = 1) -> int | None:
         """
         find the next line with the given compiled regular expression pattern
 
@@ -109,7 +108,7 @@ class IndexHtmlParser(Textparser):
         startLine: int,
         expectedTr: int = 3,
         progress: int = 10,
-    ) -> tuple[Optional[int], Optional[int]]:
+    ) -> tuple[int | None, int | None]:
         """
         find Volume lines from the given startLine
 
@@ -304,7 +303,7 @@ class IndexHtmlParser(Textparser):
         self.log(f"{volumeNumber:4}-{volCount:4}:{fromLine}+{lineCount} {acronym}")
         return volume
 
-    def parse(self, vol_limit: Optional[int] = None):
+    def parse(self, vol_limit: int | None = None):
         """
         parse my html code for Volume info
         """

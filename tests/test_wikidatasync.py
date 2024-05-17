@@ -9,7 +9,6 @@ import dataclasses
 import pprint
 import time
 import unittest
-from typing import Union
 
 from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 from ez_wikidata.wikidata import UrlReference
@@ -601,7 +600,7 @@ class TestWikidataSync(Basetest):
 
         @dataclasses.dataclass
         class TestParam:
-            volumenumber: Union[int, str]
+            volumenumber: int | str
             expected_qids: list[str]
 
         test_params = [

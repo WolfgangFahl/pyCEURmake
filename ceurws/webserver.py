@@ -7,6 +7,7 @@ Created on 2024-02-22
 import os
 from pathlib import Path
 
+import orjson
 from fastapi import HTTPException
 from fastapi.responses import ORJSONResponse
 from ngwidgets.input_webserver import InputWebserver, InputWebSolution
@@ -91,9 +92,11 @@ class CeurWsWebServer(InputWebserver):
             """
             direct fastapi return of paper information from dblp
             """
-            self.wdSync.dblp_papers.load()
-            papers = self.wdSync.dblp_papers.papers
-            return ORJSONResponse(papers)
+            self.wdSync.dblpEndpoint.dblp_papers.load()
+            papers = self.wdSync.dblpEndpoint.dblp_papers.papers
+            records = [p.to_json() for p in papers[:5]]
+            lod = [orjson.loads(json_str) for json_str in records]
+            return ORJSONResponse(lod)
 
         @app.get(
             "/authors_dblp.json",

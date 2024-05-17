@@ -94,7 +94,7 @@ class CeurWsWebServer(InputWebserver):
             """
             self.wdSync.dblpEndpoint.dblp_papers.load()
             papers = self.wdSync.dblpEndpoint.dblp_papers.papers
-            records = [p.to_json() for p in papers[:5]]
+            records = [p.to_json() for p in papers]
             lod = [orjson.loads(json_str) for json_str in records]
             return ORJSONResponse(lod)
 

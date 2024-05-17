@@ -291,7 +291,7 @@ class IndexHtmlParser(Textparser):
             ("Published on CEUR-WS", "pubDate"),
         ]
         for prefix, info in infoMappings:
-            infoPattern[info] = re.compile(f"^\s*{prefix}:(.*)")
+            infoPattern[info] = re.compile(rf"^\s*{prefix}:(.*)")
         for lineIndex in range(fromLine, toLine):
             line = self.lines[lineIndex]
             for info, pattern in infoPattern.items():

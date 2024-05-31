@@ -16,6 +16,7 @@ from lodstorage.query import Endpoint
 from lodstorage.sparql import SPARQL
 
 from ceurws.services.entity_fishing import ENTITY_FISHING_ENDPOINT
+from services.opentapioca import OPENTAPIOCA_ENDPOINT
 
 
 class Basetest(TestCase):
@@ -124,5 +125,20 @@ def _requires_entity_fishing_endpoint():
         print(e)
     return pytest.mark.skipif(is_unavailable, reason="entity fishing endpoint is not available")
 
+def _requires_opentapioca_endpoint():
+    """
+    test case requires entity fishing endpoint
+    """
+    is_unavailable = True
+    try:
+        url = OPENTAPIOCA_ENDPOINT
+        resp = requests.get(url)
+        resp.raise_for_status()
+        is_unavailable = False
+    except Exception as e:
+        print(e)
+    return pytest.mark.skipif(is_unavailable, reason="opentapioca is not available")
+
 
 requires_entity_fishing_endpoint = _requires_entity_fishing_endpoint()
+requires_opentapioca_endpoint = _requires_opentapioca_endpoint()

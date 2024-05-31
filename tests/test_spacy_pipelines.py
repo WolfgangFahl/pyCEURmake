@@ -5,7 +5,7 @@ from spacy.cli import download
 
 from ceurws.services.entity_fishing import ENTITY_FISHING_PIPELINE
 from ceurws.services.opentapioca import OPENTAPIOCA_PIPELINE
-from tests.basetest import Basetest, requires_entity_fishing_endpoint
+from tests.basetest import Basetest, requires_entity_fishing_endpoint, requires_opentapioca_endpoint
 
 
 class TestSpacyPipelines(Basetest):
@@ -47,7 +47,7 @@ class TestSpacyPipelines(Basetest):
         # Koper → Q6431071 (Koper railway station) is incorrect match
         self.assertSetEqual(entities, {"Q1378123", "Q6431071", "Q215", "Q54303353"})
 
-
+    @requires_opentapioca_endpoint
     def test_opentapioca_spacy_pipeline(self):
         """
         tests entity fishing spacy pipeline

@@ -9,7 +9,7 @@ import time
 from ngwidgets.lod_grid import GridConfig, ListOfDictsGrid
 from ngwidgets.progress import NiceguiProgressbar
 from ngwidgets.widgets import Link
-from nicegui import ui
+from nicegui import ui, run
 
 from ceurws.ceur_ws import Volume
 from ceurws.view import View
@@ -241,9 +241,8 @@ class VolumeListView(View):
                 self.ignore_errors_check_box = ui.checkbox("ignore_errors", value=self.ignore_errors).bind_value(
                     self, "ignore_errors"
                 )
-
                 pass
-            self.progress_bar = NiceguiProgressbar(total=100, desc="added", unit="volume")
+                self.progress_bar = NiceguiProgressbar(total=100, desc="added", unit="volume")
             with ui.row() as self.log_row:
                 self.log_view = ui.html()
             with ui.row() as self.grid_row:
@@ -264,7 +263,8 @@ class VolumeListView(View):
         Args:
             msg(str): the message to display
         """
-        self.log_view.content = msg
+        with self.log_row:
+            self.log_view.content = msg
 
     def add_msg(self, html_markup: str):
         """
@@ -273,31 +273,39 @@ class VolumeListView(View):
         Args:
             msg(str): the html formatted message to add
         """
-        self.log_view.content += html_markup
-
-    async def onWikidataButtonClick(self, _args):
+        with self.log_row:
+            self.log_view.content += html_markup
+            
+    def updateWikidataVolumes(self,selected_rows):
         """
-        handle wikidata sync request
+        update wikidata volumes
         """
         try:
-            selected_rows = await self.lod_grid.get_selected_rows()
             for row in selected_rows:
                 vol_number = row["#"]
                 volume = self.wdSync.volumesByNumber[vol_number]
                 msg = f"{len(selected_rows)} Volumes selected<br>"
                 self.clear_msg(msg)
-                await self.add_or_update_volume_in_wikidata(volume)
+                self.add_or_update_volume_in_wikidata(volume)
             pass
         except Exception as ex:
             self.solution.handle_exception(ex)
 
-    async def on_check_recently_update_volumes_button_click(self, args):
+    async def onWikidataButtonClick(self, _args):
         """
-        handle clicking of the refresh button to get recently added volumes
+        handle wikidata sync request
+        """
+        selected_rows = await self.lod_grid.get_selected_rows()
+        await run.io_bound(self.updateWikidataVolumes,selected_rows)
+   
+            
+    def check_recently_updated_volumes(self):
+        """
+        check recently updated volumes
         """
         try:
             text = "checking CEUR-WS index.html for recently added volumes ..."
-            self.log_view.content = text
+            self.clear_msg(text)
             (
                 volumesByNumber,
                 addedVolumeNumberList,
@@ -317,10 +325,19 @@ class VolumeListView(View):
                 self.add_msg(f":{link}")
             pass
             self.wdSync.storeVolumes()
-            self.progress_bar.reset()
-            self.lod_grid.update()
+            with self.parent:
+                self.progress_bar.reset()
+            with self.grid_row:
+                self.lod_grid.update()
         except Exception as ex:
             self.solution.handle_exception(ex)
+
+    async def on_check_recently_update_volumes_button_click(self, args):
+        """
+        handle clicking of the refresh button to get recently added volumes
+        """
+        await run.io_bound(self.check_recently_updated_volumes)
+  
 
     def updateRecentlyAddedVolume(self, volume, index, total):
         """
@@ -359,18 +376,20 @@ class VolumeListView(View):
                 }
             )
 
-    async def add_or_update_volume_in_wikidata(self, volume: Volume):
+    def add_or_update_volume_in_wikidata(self, volume: Volume):
         try:
             msg = f"trying to add Volume {volume.number} to wikidata"
-            ui.notify(msg)
+            with self.parent:
+                ui.notify(msg)
             self.add_msg(msg + "<br>")
-            proceedingsWikidataId = await self.createProceedingsItemFromVolume(volume)
+            proceedingsWikidataId = self.createProceedingsItemFromVolume(volume)
             if proceedingsWikidataId is not None:
-                await self.createEventItemAndLinkProceedings(volume, proceedingsWikidataId)
+                self.createEventItemAndLinkProceedings(volume, proceedingsWikidataId)
             else:
                 msg = f"<br>adding Volume {volume.number} proceedings to wikidata failed"
                 self.add_msg(msg)
-                ui.notify(msg)
+                with self.parent:
+                    ui.notify(msg)
         except Exception as ex:
             self.solution.handle_exception(ex)
 
@@ -386,7 +405,7 @@ class VolumeListView(View):
             self.wdSync.login()
         return write
 
-    async def createProceedingsItemFromVolume(self, volume: Volume):
+    def createProceedingsItemFromVolume(self, volume: Volume):
         """
         Create wikidata item for proceedings of given volume
         """
@@ -428,7 +447,7 @@ class VolumeListView(View):
             self.solution.handle_exception(ex)
         return qId
 
-    async def createEventItemAndLinkProceedings(self, volume: Volume, proceedingsWikidataId: str | None = None):
+    def createEventItemAndLinkProceedings(self, volume: Volume, proceedingsWikidataId: str | None = None):
         """
         Create event  wikidata item for given volume and link
         the proceedings with the event

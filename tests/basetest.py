@@ -10,7 +10,7 @@ import socket
 import time
 from unittest import TestCase
 
-#import pytest
+import pytest
 import requests
 from lodstorage.query import Endpoint
 from lodstorage.sparql import SPARQL

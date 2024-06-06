@@ -49,7 +49,7 @@ class WikidataSync:
         self.wdQuery = self.qm.queriesByName["Proceedings"]
         self.baseurl = baseurl
         self.wd = Wikidata(debug=debug)
-        self.sqldb = SQLDB(CEURWS.CACHE_FILE)
+        self.sqldb = SQLDB(CEURWS.CACHE_FILE,check_same_thread=False)
         self.procRecords = None
         self.dblpEndpoint = DblpEndpoint(endpoint=dblp_endpoint_url)
         self.wikidata_endpoint: Endpoint | None = None

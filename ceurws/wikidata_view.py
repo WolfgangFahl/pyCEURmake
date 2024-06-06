@@ -5,7 +5,7 @@ Created on 2024-02-23
 """
 
 from ngwidgets.lod_grid import ListOfDictsGrid
-from nicegui import ui
+from nicegui import ui,run
 from wd.query_view import QueryView
 
 from ceurws.view import View
@@ -70,12 +70,13 @@ class WikidataView(View):
             itemLink = self.createItemLink(row, "item")
             eventLink = self.createItemLink(row, "event", separator="|")
             eventSeriesLink = self.createItemLink(row, "eventSeries", separator="|")
-            dblpLink = self.createExternalLink(row, "dblpProceedingsId", "dblp", DblpEndpoint.DBLP_REC_PREFIX)
+            dblpLink = self.createExternalLink(row, "dblpProceedingsId", "dblp", DblpEndpoint.DBLP_REC_PREFIX, emptyIfNone=True)
             k10PlusLink = self.createExternalLink(
                 row,
                 "ppnId",
                 "k10plus",
                 "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",
+                emptyIfNone=True
             )
             lod.append(
                 {
@@ -92,16 +93,26 @@ class WikidataView(View):
                 }
             )
         self.lod_grid.load_lod(lod)
+        for col_def in self.lod_grid.ag_grid.options["columnDefs"]:
+                if col_def["field"] == "Item":  # Identify the "Title" column
+                    col_def["maxWidth"] = 350  # width in pixels
         self.lod_grid.sizeColumnsToFit()
-
+    
     async def on_refresh_button_click(self):
         """
         handle the refreshing of the proceedings from wikidata
         """
+        await run.io_bound(self.refresh_wikidata)
+        
+    def refresh_wikidata(self):
         try:
-            ui.notify("wikidata refresh button clicked")
+            with self.solution.container:
+                ui.notify("wikidata refresh button clicked")
             wd_records = self.solution.wdSync.update()
-            self.lod_grid.load_lod(wd_records)
+            with self.solution.container:
+                ui.notify(f"read {len(wd_records)} proceeding records from wikidata")
+            with self.parent:
+                self.reload_aggrid(wd_records)
             pass
         except Exception as ex:
             self.solution.handle_exception(ex)

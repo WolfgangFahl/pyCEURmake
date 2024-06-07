@@ -16,7 +16,7 @@ from lodstorage.query import Endpoint
 from lodstorage.sparql import SPARQL
 
 from ceurws.services.entity_fishing import ENTITY_FISHING_ENDPOINT
-from services.opentapioca import OPENTAPIOCA_ENDPOINT
+from ceurws.services.opentapioca import OPENTAPIOCA_ENDPOINT
 
 
 class Basetest(TestCase):

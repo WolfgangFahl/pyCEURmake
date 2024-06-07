@@ -45,7 +45,7 @@ dependencies = [
     # https://pypi.org/project/neo4j/
     'neo4j',
     # https://github.com/WolfgangFahl/nicegui_widgets
-    'ngwidgets>=0.12.5',
+    'ngwidgets>=0.15.2',
     # https://pypi.org/project/sqlmodel/
     'sqlmodel>=0.0.16',
     # https://pypi.org/project/wdgrid/

@@ -70,13 +70,12 @@ class WikidataView(View):
             itemLink = self.createItemLink(row, "item")
             eventLink = self.createItemLink(row, "event", separator="|")
             eventSeriesLink = self.createItemLink(row, "eventSeries", separator="|")
-            dblpLink = self.createExternalLink(row, "dblpProceedingsId", "dblp", DblpEndpoint.DBLP_REC_PREFIX, emptyIfNone=True)
+            dblpLink = self.createExternalLink(row, "dblpProceedingsId", "dblp", DblpEndpoint.DBLP_REC_PREFIX)
             k10PlusLink = self.createExternalLink(
                 row,
                 "ppnId",
                 "k10plus",
-                "https://opac.k10plus.de/DB=2.299/PPNSET?PPN=",
-                emptyIfNone=True
+                "https://opac.k10plus.de/DB=2.299/PPNSET?PPN="
             )
             lod.append(
                 {
@@ -93,9 +92,9 @@ class WikidataView(View):
                 }
             )
         self.lod_grid.load_lod(lod)
-        for col_def in self.lod_grid.ag_grid.options["columnDefs"]:
-                if col_def["field"] == "Item":  # Identify the "Title" column
-                    col_def["maxWidth"] = 350  # width in pixels
+        # set max width of Item column
+        self.lod_grid.set_column_def("item","maxWidth",380)
+        self.lod_grid.set_column_def("event","maxWidth",380)
         self.lod_grid.sizeColumnsToFit()
     
     async def on_refresh_button_click(self):

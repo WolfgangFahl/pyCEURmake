@@ -125,3 +125,20 @@
     where acronymlen < 20
     group by acronymlen
     order by 2 desc
+'WikidataSync':
+  sql: |
+    -- Volumes in Proceedings not in Volumes (no title, so we don't include these)
+    SELECT p.sVolume AS VolumeNumber, NULL AS Title, NULL AS Valid, 
+           strftime('%Y-%m-%d', datetime(p.publication_date / 1000000, 'unixepoch')) AS PublicationDate
+    FROM Proceedings p
+    LEFT JOIN volumes v ON p.sVolume = v.number
+    WHERE v.number IS NULL
+    
+    UNION
+    
+    -- Volumes in Volumes not in Proceedings (include title, valid flag, and publication date only when title is not NULL)
+    SELECT v.number AS VolumeNumber, v.title AS Title, v.valid AS Valid, 
+           strftime('%Y-%m-%d', datetime(v.pubDate / 1000000, 'unixepoch')) AS PublicationDate
+    FROM volumes v
+    LEFT JOIN Proceedings p ON v.number = p.sVolume
+    WHERE p.sVolume IS NULL AND v.title IS NOT NULL;

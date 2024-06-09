@@ -51,6 +51,7 @@ class WikidataSync:
         self.wd = Wikidata(debug=debug)
         self.sqldb = SQLDB(CEURWS.CACHE_FILE,check_same_thread=False)
         self.procRecords = None
+        self.procsByVolnumber = None
         self.dblpEndpoint = DblpEndpoint(endpoint=dblp_endpoint_url)
         self.wikidata_endpoint: Endpoint | None = None
 
@@ -294,6 +295,7 @@ class WikidataSync:
         """
         if self.procRecords is None:
             self.loadProceedingsFromCache()
+        if self.procsByVolnumber is None:
             self.procsByVolnumber: dict[int, dict] = {}
             if isinstance(self.procRecords, list):
                 for procRecord in self.procRecords:

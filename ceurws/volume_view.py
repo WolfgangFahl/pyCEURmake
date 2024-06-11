@@ -278,14 +278,14 @@ class VolumeListView(View):
             
     def updateWikidataVolumes(self,selected_rows):
         """
-        update wikidata volumes
+        update wikidata volumes for the selected rows
         """
         try:
+            msg = f"{len(selected_rows)} Volumes selected<br>"
+            self.clear_msg(msg)
             for row in selected_rows:
                 vol_number = row["#"]
-                volume = self.wdSync.volumesByNumber[vol_number]
-                msg = f"{len(selected_rows)} Volumes selected<br>"
-                self.clear_msg(msg)
+                volume = self.wdSync.volumesByNumber[vol_number] 
                 self.add_or_update_volume_in_wikidata(volume)
             pass
         except Exception as ex:
@@ -377,6 +377,12 @@ class VolumeListView(View):
             )
 
     def add_or_update_volume_in_wikidata(self, volume: Volume):
+        """
+        add the given volume to wikidata or update it if it already exists
+        
+        Args:
+            volume(Volume): the CEUR-WS volume to update proceedings and event entries for
+        """
         try:
             msg = f"trying to add Volume {volume.number} to wikidata"
             with self.parent:

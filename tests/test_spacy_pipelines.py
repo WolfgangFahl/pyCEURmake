@@ -52,8 +52,10 @@ class TestSpacyPipelines(Basetest):
         """
         tests entity fishing spacy pipeline
         """
-        text = ("University of Primorska, Faculty of Mathematics, Natural Sciences and Information Technologies, "
-                "Koper, Slovenia, Stefan Decker")
+        text = (
+            "University of Primorska, Faculty of Mathematics, Natural Sciences and Information Technologies, "
+            "Koper, Slovenia, Stefan Decker"
+        )
         nlp = spacy.load("en_core_web_sm")
         nlp.add_pipe(OPENTAPIOCA_PIPELINE)
         doc = nlp(text)

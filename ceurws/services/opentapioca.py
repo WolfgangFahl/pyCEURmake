@@ -2,6 +2,7 @@
 
 @author: https://github.com/UB-Mannheim/spacyopentapioca/blob/main/spacyopentapioca/entity_linker.py
 """
+
 import concurrent.futures
 import logging
 
@@ -16,9 +17,9 @@ log = logging.getLogger(__name__)
 OPENTAPIOCA_PIPELINE = "ceur-opentapioca"
 OPENTAPIOCA_ENDPOINT = "https://opentapioca.wikidata.dbis.rwth-aachen.de"
 
-@Language.factory(OPENTAPIOCA_PIPELINE,
-                  default_config={"url": f"{OPENTAPIOCA_ENDPOINT}/api/annotate"})
-class EntityLinker(object):
+
+@Language.factory(OPENTAPIOCA_PIPELINE, default_config={"url": f"{OPENTAPIOCA_ENDPOINT}/api/annotate"})
+class EntityLinker:
     """
     Sends raw data to the OpenTapioca API. Attaches entities to the document.
     Based on: https://github.com/UB-Mannheim/spacyopentapioca/blob/main/spacyopentapioca/entity_linker.py
@@ -45,46 +46,51 @@ class EntityLinker(object):
         data = r.json()
 
         # Attaches raw data to doc
-        doc._.annotations = data.get('annotations')
-        doc._.metadata = {"status_code": r.status_code, "reason": r.reason,
-                          "ok": r.ok, "encoding": r.encoding}
+        doc._.annotations = data.get("annotations")
+        doc._.metadata = {"status_code": r.status_code, "reason": r.reason, "ok": r.ok, "encoding": r.encoding}
 
         # Attaches indexes, label and QID to spans
         # Processes annotations: if 'best_qid'==None, then no annotation
         ents = []
-        for ent in data.get('annotations'):
-            start, end = ent['start'], ent['end']
-            if ent.get('best_qid'):
-                ent_kb_id = ent['best_qid']
+        for ent in data.get("annotations"):
+            start, end = ent["start"], ent["end"]
+            if ent.get("best_qid"):
+                ent_kb_id = ent["best_qid"]
                 try:  # to identify the type of entities
-                    t = ent['tags'][0]['types']
-                    types = {'PERSON': t['Q5'] + t['P496'],
-                             'ORG': t['Q43229'] + t['P2427'],
-                             'LOC': t['Q618123'] + t['P1566']}
+                    t = ent["tags"][0]["types"]
+                    types = {
+                        "PERSON": t["Q5"] + t["P496"],
+                        "ORG": t["Q43229"] + t["P2427"],
+                        "LOC": t["Q618123"] + t["P1566"],
+                    }
                     m = max(types.values())
-                    etype = ''.join([k for k, v in types.items() if v == m])
+                    etype = "".join([k for k, v in types.items() if v == m])
                 except Exception as e:
                     log.error(e, extra=ent)
-                    etype = ''
+                    etype = ""
                 span = doc.char_span(start, end, etype, ent_kb_id)
             else:
-                etype, ent_kb_id = '', ''
+                etype, ent_kb_id = "", ""
                 span = doc.char_span(start, end, etype)
             if not span:
-                span = doc.char_span(start, end, etype, ent_kb_id,
-                                     alignment_mode='expand')
-                log.warning('The OpenTapioca-entity "%s" %s does not fit the span "%s" %s in spaCy. EXPANDED!',
-                            ent['tags'][0]['label'][0], (start, end), span.text, (span.start_char, span.end_char))
+                span = doc.char_span(start, end, etype, ent_kb_id, alignment_mode="expand")
+                log.warning(
+                    'The OpenTapioca-entity "%s" %s does not fit the span "%s" %s in spaCy. EXPANDED!',
+                    ent["tags"][0]["label"][0],
+                    (start, end),
+                    span.text,
+                    (span.start_char, span.end_char),
+                )
             span._.annotations = ent
-            span._.description = ent['tags'][0]['desc']
-            span._.aliases = ent['tags'][0]['aliases']
-            span._.rank = ent['tags'][0]['rank']
-            span._.score = ent['tags'][0]['score']
-            span._.types = ent['tags'][0]['types']
-            span._.label = ent['tags'][0]['label']
-            span._.extra_aliases = ent['tags'][0]['extra_aliases']
-            span._.nb_sitelinks = ent['tags'][0]['nb_sitelinks']
-            span._.nb_statements = ent['tags'][0]['nb_statements']
+            span._.description = ent["tags"][0]["desc"]
+            span._.aliases = ent["tags"][0]["aliases"]
+            span._.rank = ent["tags"][0]["rank"]
+            span._.score = ent["tags"][0]["score"]
+            span._.types = ent["tags"][0]["types"]
+            span._.label = ent["tags"][0]["label"]
+            span._.extra_aliases = ent["tags"][0]["extra_aliases"]
+            span._.nb_sitelinks = ent["tags"][0]["nb_sitelinks"]
+            span._.nb_statements = ent["tags"][0]["nb_statements"]
             ents.append(span)
 
         # Attach processed entities to doc.ents
@@ -95,13 +101,11 @@ class EntityLinker(object):
             # filter the overlapping spans, keep the (first) longest one
             doc.ents = spacy.util.filter_spans(ents)
         # Attach all entities found by OpenTapioca to spans
-        doc.spans['all_entities_opentapioca'] = ents
+        doc.spans["all_entities_opentapioca"] = ents
         return doc
 
     def make_request(self, doc: Doc):
-        return requests.post(url=self.url,
-                             data={'query': doc.text},
-                             headers={'User-Agent': 'spaCyOpenTapioca'})
+        return requests.post(url=self.url, data={"query": doc.text}, headers={"User-Agent": "spaCyOpenTapioca"})
 
     def __call__(self, doc):
         """Requests the OpenTapioca API. Attaches entities to spans and doc."""
@@ -122,8 +126,7 @@ class EntityLinker(object):
         """
         for docs in util.minibatch(stream, size=batch_size):
             with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-                future_to_url = {executor.submit(
-                    self.make_request, doc): doc for doc in docs}
+                future_to_url = {executor.submit(self.make_request, doc): doc for doc in docs}
                 for future in concurrent.futures.as_completed(future_to_url):
                     doc = future_to_url[future]
                     yield self.process_single_doc_after_call(doc, future.result())

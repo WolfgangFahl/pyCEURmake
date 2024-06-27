@@ -5,7 +5,7 @@ Created on 2023-12-22
 """
 
 import json
-import os
+from pathlib import Path
 
 from ceurws.loctime import LoctimeParser, PercentageTable
 from tests.basetest import Basetest
@@ -21,15 +21,15 @@ class TestLoctimeParser(Basetest):
         setUp the test case
         """
         Basetest.setUp(self, debug=debug, profile=profile)
-        self.ceurws_path = os.path.expanduser("~/.ceurws")
-        self.volumes_path = os.path.join(self.ceurws_path, "volumes.json")
+        self.ceurws_path = Path.home() / ".ceurws"
+        self.volumes_path = self.ceurws_path / "volumes.json"
         self.volumes = self.get_volumes()
         self.loctime_parser = LoctimeParser()
 
     def get_volumes(self):
         # Path to the volumes.json file
         # Ensure the file exists
-        if not os.path.exists(self.volumes_path):
+        if not self.volumes_path.is_file():
             return None
         # Read the JSON data
         with open(self.volumes_path, encoding="utf-8") as file:

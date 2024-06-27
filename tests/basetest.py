@@ -125,6 +125,7 @@ def _requires_entity_fishing_endpoint():
         print(e)
     return pytest.mark.skipif(is_unavailable, reason="entity fishing endpoint is not available")
 
+
 def _requires_opentapioca_endpoint():
     """
     test case requires entity fishing endpoint

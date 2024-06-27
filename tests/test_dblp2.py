@@ -20,13 +20,13 @@ class TestDblpCache(Basetest):
     def setUp(self, debug=True, profile=True):
         Basetest.setUp(self, debug=debug, profile=profile)
         # self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
-        self.endpoint_url = "https://qlever.cs.uni-freiburg.de/api/dblp"
+        self.endpoint_url = "https://sparql.dblp.org/sparql"
         self.sparql = SPARQL(self.endpoint_url)
         self.force_query = True
-        path = os.path.dirname(__file__)
-        self.qYamlFile = Path(os.path.dirname(path)).joinpath(Path("ceurws/resources/queries/dblp.yaml"))
+        path = Path(__file__).parent.parent
+        self.qYamlFile = path / "ceurws/resources/queries/dblp.yaml"
         if os.path.isfile(self.qYamlFile):
-            self.qm = QueryManager(lang="sparql", queriesPath=self.qYamlFile)
+            self.qm = QueryManager(lang="sparql", queriesPath=str(self.qYamlFile))
         self.db_path = "/tmp/ceurws.db"
         if self.force_query and os.path.isfile(self.db_path):
             os.remove(self.db_path)

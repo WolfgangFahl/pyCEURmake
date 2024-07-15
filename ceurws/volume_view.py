@@ -283,7 +283,9 @@ class VolumeListView(View):
         try:
             msg = f"{len(selected_rows)} Volumes selected<br>"
             self.clear_msg(msg)
-            for row in selected_rows:
+            # First, sort selected_rows by the volume number in ascending order
+            sorted_rows = sorted(selected_rows, key=lambda row: row["#"])
+            for row in sorted_rows:
                 vol_number = row["#"]
                 volume = self.wdSync.volumesByNumber[vol_number] 
                 self.add_or_update_volume_in_wikidata(volume)

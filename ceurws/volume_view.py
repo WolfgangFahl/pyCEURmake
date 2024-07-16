@@ -9,7 +9,7 @@ import time
 from ngwidgets.lod_grid import GridConfig, ListOfDictsGrid
 from ngwidgets.progress import NiceguiProgressbar
 from ngwidgets.widgets import Link
-from nicegui import ui, run
+from nicegui import run, ui
 
 from ceurws.ceur_ws import Volume
 from ceurws.view import View
@@ -275,8 +275,8 @@ class VolumeListView(View):
         """
         with self.log_row:
             self.log_view.content += html_markup
-            
-    def updateWikidataVolumes(self,selected_rows):
+
+    def updateWikidataVolumes(self, selected_rows):
         """
         update wikidata volumes for the selected rows
         """
@@ -287,7 +287,7 @@ class VolumeListView(View):
             sorted_rows = sorted(selected_rows, key=lambda row: row["#"])
             for row in sorted_rows:
                 vol_number = row["#"]
-                volume = self.wdSync.volumesByNumber[vol_number] 
+                volume = self.wdSync.volumesByNumber[vol_number]
                 self.add_or_update_volume_in_wikidata(volume)
             pass
         except Exception as ex:
@@ -298,9 +298,8 @@ class VolumeListView(View):
         handle wikidata sync request
         """
         selected_rows = await self.lod_grid.get_selected_rows()
-        await run.io_bound(self.updateWikidataVolumes,selected_rows)
-   
-            
+        await run.io_bound(self.updateWikidataVolumes, selected_rows)
+
     def check_recently_updated_volumes(self):
         """
         check recently updated volumes
@@ -339,7 +338,6 @@ class VolumeListView(View):
         handle clicking of the refresh button to get recently added volumes
         """
         await run.io_bound(self.check_recently_updated_volumes)
-  
 
     def updateRecentlyAddedVolume(self, volume, index, total):
         """
@@ -381,7 +379,7 @@ class VolumeListView(View):
     def add_or_update_volume_in_wikidata(self, volume: Volume):
         """
         add the given volume to wikidata or update it if it already exists
-        
+
         Args:
             volume(Volume): the CEUR-WS volume to update proceedings and event entries for
         """

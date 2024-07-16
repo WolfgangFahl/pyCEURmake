@@ -76,7 +76,7 @@ class View:
             str - html link for external id
         """
         value = self.getRowValue(row, key)
-        if not value or value==View.noneValue:
+        if not value or value == View.noneValue:
             if emptyIfNone:
                 return ""
             else:

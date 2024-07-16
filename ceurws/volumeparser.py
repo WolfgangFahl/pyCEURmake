@@ -3,12 +3,12 @@ Created on 2022-08-14
 
 @author: wf
 """
-
-import os.path
-import pathlib
+import os
 import re
+from pathlib import Path
 
 from bs4 import BeautifulSoup, NavigableString, PageElement, Tag
+from ceurws.ceur_ws import CEURWS
 
 from ceurws.textparser import Textparser
 from ceurws.urn import URN
@@ -435,7 +435,7 @@ class VolumePageCache:
     Cache interface for ceur-ws volume pages
     """
 
-    cache_location = f"{pathlib.Path.home()}/.ceurws/volumes"
+    cache_location: Path = CEURWS.CACHE_DIR / "volumes"
 
     @classmethod
     def is_cached(cls, number: int) -> bool:
@@ -447,7 +447,7 @@ class VolumePageCache:
         Returns:
             True if the corresponding volume page is cached
         """
-        return os.path.exists(cls._get_volume_cache_path(number))
+        return cls._get_volume_cache_path(number).is_file()
 
     @classmethod
     def cache(cls, number: int, html: str | bytes):
@@ -459,7 +459,7 @@ class VolumePageCache:
         """
         if html is None:
             return
-        pathlib.Path(cls.cache_location).mkdir(parents=True, exist_ok=True)
+        Path(cls.cache_location).mkdir(parents=True, exist_ok=True)
         filename = cls._get_volume_cache_path(number)
         mode = "w"
         if isinstance(html, bytes):
@@ -468,11 +468,11 @@ class VolumePageCache:
             f.write(html)
 
     @classmethod
-    def _get_volume_cache_path(cls, number: int):
+    def _get_volume_cache_path(cls, number: int) -> Path:
         """
         get the name of the volume cache file
         """
-        return f"{cls.cache_location}/Vol-{number}.html"
+        return cls.cache_location / f"Vol-{number}.html"
 
     @classmethod
     def get(cls, number: int) -> str | bytes | None:
@@ -491,11 +491,9 @@ class VolumePageCache:
         if cls.is_cached(number):
             filepath = cls._get_volume_cache_path(number)
             try:
-                with open(filepath) as f:
-                    volume_page = f.read()
+                volume_page = filepath.read_text()
             except UnicodeDecodeError as _ex:
-                with open(filepath, mode="rb") as f:
-                    volume_page = f.read()
+                volume_page = filepath.read_bytes()
         return volume_page
 
     @classmethod

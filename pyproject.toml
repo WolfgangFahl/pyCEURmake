@@ -131,6 +131,7 @@ legacy_tox_ini = """
     [tox]
     env_list = lint, type, py{310,311,312}
     minversion = 4.15.0
+    passenv = GITHUB_WORKSPACE
 
     [testenv]
     description = run the tests with pytest

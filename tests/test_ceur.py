@@ -8,7 +8,7 @@ import unittest
 
 from sqlmodel import select  # Added 'select' here
 
-from ceurws.ceur_ws import CEURWS
+from ceurws.config import CEURWS
 from ceurws.models.ceur import Paper, Volume
 from ceurws.sql_cache import SqlDB
 from tests.basetest import Basetest

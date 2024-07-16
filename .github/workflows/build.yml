@@ -26,7 +26,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -46,6 +46,11 @@ jobs:
 #       pip install sphinx
 #       pip install sphinx_rtd_theme
 #       scripts/doc
+
+    - name: Prepare cache directory
+      run: |
+        mkdir -p ~/.ceurws
+        chmod 755 ~/.ceurws
 
     - name: Cache Sqlite
       id: cache-sqlite

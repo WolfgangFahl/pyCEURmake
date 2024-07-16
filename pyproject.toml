@@ -131,10 +131,12 @@ legacy_tox_ini = """
     [tox]
     env_list = lint, type, py{310,311,312}
     minversion = 4.15.0
-    passenv = GITHUB_WORKSPACE
 
     [testenv]
     description = run the tests with pytest
+    passenv =
+        GITHUB_*
+        CI
     package = wheel
     wheel_build_env = .pkg
     allowlist_externals =
@@ -149,6 +151,9 @@ legacy_tox_ini = """
 
     [testenv:coverage]
     description = run terst coverage
+    passenv =
+        GITHUB_*
+        CI
     deps =
         .[test]
     commands =
@@ -157,6 +162,9 @@ legacy_tox_ini = """
 
     [testenv:format]
     description = install ruff and format the project code
+    passenv =
+        GITHUB_*
+        CI
     deps =
         ruff
     commands =
@@ -164,6 +172,9 @@ legacy_tox_ini = """
 
     [testenv:lint]
     description = run linters
+    passenv =
+        GITHUB_*
+        CI
     skip_install = true
     deps =
         ruff
@@ -172,6 +183,9 @@ legacy_tox_ini = """
 
     [testenv:type]
     description = run type checks
+    passenv =
+        GITHUB_*
+        CI
     deps =
         mypy>=1.1
     commands =

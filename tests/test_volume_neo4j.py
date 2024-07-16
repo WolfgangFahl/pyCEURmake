@@ -93,7 +93,7 @@ class TestVolumeEditorLocation(Basetest):
         Test the parse_args function.
         """
         source = Volume.default_source()
-        args = Volume.parse_args(["--source", source])
+        args = Volume.parse_args(["--source", str(source)])
         self.assertEqual(args.source, source)
 
     @requires_neo4j

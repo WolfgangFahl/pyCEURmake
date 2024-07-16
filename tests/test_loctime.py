@@ -5,10 +5,8 @@ Created on 2023-12-22
 """
 
 import json
-from pathlib import Path
 
 from ceurws.ceur_ws import CEURWS
-
 from ceurws.loctime import LoctimeParser, PercentageTable
 from tests.basetest import Basetest
 

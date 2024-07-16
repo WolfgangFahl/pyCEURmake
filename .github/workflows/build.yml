@@ -18,10 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        #os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ubuntu-latest]
-        #python-version: [3.8, 3.9, '3.10','3.11']
-        python-version: ['3.10']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.10','3.11', "3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -45,7 +43,7 @@ jobs:
       id: cache-sqlite
       uses: actions/cache@v4
       with:
-        path: $GITHUB_WORKSPACE/.ceurws
+        path: ${{ github.workspace }}/.ceurws
         key: ceurws
 
     - name: fill sqlite
@@ -56,7 +54,7 @@ jobs:
       id: saveSqlite
       uses: actions/cache/save@v4
       with:
-        path: $GITHUB_WORKSPACE/.ceurws
+        path: ${{ github.workspace }}/.ceurws
         key: ceurws
 
     - name: Run tests

@@ -7,6 +7,8 @@ Created on 2023-12-22
 import json
 from pathlib import Path
 
+from ceurws.ceur_ws import CEURWS
+
 from ceurws.loctime import LoctimeParser, PercentageTable
 from tests.basetest import Basetest
 
@@ -21,7 +23,7 @@ class TestLoctimeParser(Basetest):
         setUp the test case
         """
         Basetest.setUp(self, debug=debug, profile=profile)
-        self.ceurws_path = Path.home() / ".ceurws"
+        self.ceurws_path = CEURWS.CACHE_DIR
         self.volumes_path = self.ceurws_path / "volumes.json"
         self.volumes = self.get_volumes()
         self.loctime_parser = LoctimeParser()

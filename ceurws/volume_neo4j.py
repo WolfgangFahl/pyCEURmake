@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import requests
+from ceurws.ceur_ws import CEURWS
 from neo4j import GraphDatabase
 from neo4j.exceptions import AuthError, ConfigurationError, ServiceUnavailable
 
@@ -140,7 +141,7 @@ class Volume:
         """
         get the default source
         """
-        default_source = os.path.expanduser("~/.ceurws/volumes.json")
+        default_source = CEURWS.CACHE_DIR / "volumes.json"
         return default_source
 
     @classmethod

@@ -94,7 +94,7 @@ class TestVolumeEditorLocation(Basetest):
         """
         source = Volume.default_source()
         args = Volume.parse_args(["--source", str(source)])
-        self.assertEqual(args.source, source)
+        self.assertEqual(args.source, str(source))
 
     @requires_neo4j
     def test_json_loading(self):

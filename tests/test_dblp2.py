@@ -20,7 +20,7 @@ class TestDblpCache(Basetest):
     def setUp(self, debug=True, profile=True):
         Basetest.setUp(self, debug=debug, profile=profile)
         # self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
-        self.endpoint_url = "https://sparql.dblp.org/"
+        self.endpoint_url = "https://sparql.dblp.org/sparql/"
         self.sparql = SPARQL(self.endpoint_url)
         self.force_query = True
         path = Path(__file__).parent.parent

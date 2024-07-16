@@ -49,8 +49,8 @@ jobs:
 
     - name: Prepare cache directory
       run: |
-        mkdir -p ~/.ceurws
-        chmod 755 ~/.ceurws
+        sudo mkdir -p ~/.ceurws
+        sudo chmod 755 ~/.ceurws
 
     - name: Cache Sqlite
       id: cache-sqlite

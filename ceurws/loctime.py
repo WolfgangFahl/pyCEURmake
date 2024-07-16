@@ -12,6 +12,8 @@ from pathlib import Path
 import yaml
 from tabulate import tabulate
 
+from ceurws.ceur_ws import CEURWS
+
 
 class LoctimeParser:
     """
@@ -40,7 +42,7 @@ class LoctimeParser:
             FileNotFoundError: Raises an error if the specified YAML file does not exist.
         """
         if filepath is None:
-            self.ceurws_path = Path(os.path.expanduser("~/.ceurws"))
+            self.ceurws_path = CEURWS.CACHE_DIR
             self.filepath: Path = self.ceurws_path.joinpath("loctime.yaml")
         else:
             self.file_path = Path(filepath)

@@ -1,16 +1,17 @@
 import argparse
 import json
-import os
 import re
 import socket
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 import requests
-from ceurws.ceur_ws import CEURWS
 from neo4j import GraphDatabase
 from neo4j.exceptions import AuthError, ConfigurationError, ServiceUnavailable
+
+from ceurws.ceur_ws import CEURWS
 
 
 class Neo4j:
@@ -137,7 +138,7 @@ class Volume:
         return volumes
 
     @classmethod
-    def default_source(cls) -> str:
+    def default_source(cls) -> Path:
         """
         get the default source
         """
@@ -158,7 +159,7 @@ class Volume:
 
         default_source = cls.default_source()
         parser = argparse.ArgumentParser(description="Volume/Editor/Location Information")
-        parser.add_argument("--source", default=default_source, help="Source JSON file path")
+        parser.add_argument("--source", default=str(default_source), help="Source JSON file path")
         # Add progress option
         parser.add_argument(
             "--progress",

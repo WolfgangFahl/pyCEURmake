@@ -7,7 +7,7 @@ from urllib.request import urlopen
 from zipfile import ZipFile
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__file__)
 
 
 def download_index_pages():
@@ -50,7 +50,7 @@ def download_db():
             with urlopen(url) as resp:
                 zip_file = ZipFile(BytesIO(resp.read()))
             target_location = cache_path()
-            logger.info("Storing ceurws.db at {target_location}")
+            logger.info(f"Storing ceurws.db at {target_location}")
             target_location.mkdir(parents=True, exist_ok=True)
             zip_file.extractall(target_location)
         except Exception as e:

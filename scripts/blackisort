@@ -1,7 +1,4 @@
 #!/bin/bash
 # WF 2024-01-10
-package=ceurws
-isort tests/*.py
-black tests/*.py
-isort $package/*.py
-black $package/*.py
+ruff format
+ruff check --fix

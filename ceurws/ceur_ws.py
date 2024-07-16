@@ -1,8 +1,6 @@
 import calendar
 import datetime
-import os
 import re
-from pathlib import Path
 from typing import Optional
 from urllib.request import Request, urlopen
 
@@ -11,36 +9,13 @@ from bs4 import BeautifulSoup
 from geograpy.locator import City, Country, Location, LocationContext, Region
 from lodstorage.entity import EntityManager
 from lodstorage.jsonable import JSONAble
-from lodstorage.storageconfig import StorageConfig
 
+from ceurws.config import CEURWS
 from ceurws.indexparser import IndexHtmlParser, ParserConfig
 from ceurws.loctime import LoctimeParser
 from ceurws.papertocparser import PaperTocParser
 from ceurws.utils.download import Download
 from ceurws.volumeparser import VolumeParser
-
-
-class CEURWS:
-    """
-    CEUR-WS
-    """
-
-    @staticmethod
-    def get_home_path() -> Path:
-        """
-        Get home path
-        """
-        home = Path.home()
-        if "GITHUB_WORKSPACE" in os.environ:
-            home = Path(os.environ["GITHUB_WORKSPACE"])
-        return home
-
-    URL = "http://ceur-ws.org"
-    home = get_home_path()
-    CACHE_DIR = home.joinpath(".ceurws")
-    CACHE_FILE = CACHE_DIR.joinpath("ceurws.db")
-    CACHE_HTML = CACHE_DIR.joinpath("index.html")
-    CONFIG = StorageConfig(cacheFile=str(CACHE_FILE))
 
 
 class Volume(JSONAble):
@@ -587,8 +562,7 @@ class Paper(JSONAble):
         get sample records of the entity
         """
         samples = [
-            {
-                # id is constructed with volume and position
+            {  # id is constructed with volume and position
                 # → <volNumber>/s<position>/<type>_<position_relative_to_type>
                 "id": "Vol-2436/s1/summary",
                 "type": "summary",
@@ -728,7 +702,8 @@ class SessionManager(EntityManager):
             clazz=Session,
             tableName="sessions",
             entityName=Session.__class__.__name__,
-            primaryKey="id",  # ToDo: check if just the title is a sufficent key or if an ID must be added
+            primaryKey="id",
+            # ToDo: check if just the title is a sufficent key or if an ID must be added
             entityPluralName="sessions",
             config=CEURWS.CONFIG,
             name=self.__class__.__name__,

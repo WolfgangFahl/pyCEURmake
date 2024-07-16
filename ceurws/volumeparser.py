@@ -3,13 +3,14 @@ Created on 2022-08-14
 
 @author: wf
 """
+
 import os
 import re
 from pathlib import Path
 
 from bs4 import BeautifulSoup, NavigableString, PageElement, Tag
-from ceurws.ceur_ws import CEURWS
 
+from ceurws.config import CEURWS
 from ceurws.textparser import Textparser
 from ceurws.urn import URN
 from ceurws.utils.webscrape import ScrapeDescription, WebScrape

@@ -15,7 +15,8 @@ from lodstorage.query import Endpoint, EndpointManager, QueryManager
 from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
 
-from ceurws.ceur_ws import CEURWS, PaperManager, Volume, VolumeManager
+from ceurws.ceur_ws import PaperManager, Volume, VolumeManager
+from ceurws.config import CEURWS
 from ceurws.dblp import DblpAuthorIdentifier, DblpEndpoint
 from ceurws.endpoints import DBLP_ENDPOINT
 from ceurws.indexparser import ParserConfig

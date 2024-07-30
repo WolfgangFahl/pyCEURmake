@@ -1,0 +1,54 @@
+#!/bin/bash
+# WF 2024-01-30
+# call ceur-ws from venv
+root=$HOME/py-workspace
+project=pyCEURmake
+if [ ! -d $root/$project ]
+then
+   cd $root
+   git clone https://github.com/WolfgangFahl/$project
+fi
+
+cd $root/$project
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+fi
+source venv/bin/activate
+
+#
+# rebuild
+#
+rebuild() {
+  echo "Rebuilding ceur-ws from source..."
+  git pull
+  pip install --upgrade pip
+  pip install .
+}
+
+# Add logic for determining if a rebuild is necessary
+# This is a simple check; adapt it to your specific needs
+NEEDS_REBUILD=0
+SOURCE_DIR="ceurws"
+
+for file in $(find $SOURCE_DIR -name '*.py'); do
+    if [ $file -nt "venv/bin/ceur-ws" ]; then
+        NEEDS_REBUILD=1
+        break
+    fi
+done
+
+if [ $NEEDS_REBUILD -eq 1 ]; then
+    rebuild
+fi
+
+# Call the script directly if it's installed as an entry point
+if [ -x "venv/bin/ceur-ws" ]; then
+    # Pass all script arguments to ceur-ws
+    venv/bin/ceur-ws "$@"
+else
+    # If the script is not found, you can call it with Python, but this depends on your project structure
+    python -m ceurws.ceur_ws_cmd "$@"
+fi
+
+# Deactivate the virtual environment
+deactivate

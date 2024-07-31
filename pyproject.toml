@@ -7,7 +7,7 @@ name = "pyCEURmake"
 authors = [
   {name = "Tim Holzheim", email = "tim.holzheim@rwth-aachen.de"},
   {name = "Wolfgang Fahl", email = "wf@bitplan.com"}
-  
+
 ]
 maintainers = [
   { name = "Wolfgang Fahl", email = "wf@bitplan.com" },
@@ -45,7 +45,7 @@ dependencies = [
     # https://pypi.org/project/neo4j/
     'neo4j',
     # https://github.com/WolfgangFahl/nicegui_widgets
-    'ngwidgets>=0.15.2',
+    'ngwidgets>=0.16.4',
     # https://pypi.org/project/sqlmodel/
     'sqlmodel>=0.0.16',
     # https://pypi.org/project/wdgrid/
@@ -89,9 +89,11 @@ test = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = [
-  "ceurws",
-]
+only-include = ["ceurws"]
+
+[tool.hatch.build.targets.wheel.sources]
+"ngwidgets" = "ceurws"
+
 [project.scripts]
 ceur-ws = "ceurws.ceur_ws_web_cmd:main"
 

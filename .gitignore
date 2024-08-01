@@ -132,3 +132,6 @@ dmypy.json
 # qres
 qres
 ceurws/qres
+
+# tox
+report.xml

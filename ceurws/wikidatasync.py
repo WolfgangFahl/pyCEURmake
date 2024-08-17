@@ -359,10 +359,10 @@ class WikidataSync:
         Returns:
             List of the events
         """
-        query = f"""SELECT ?event 
+        query = f"""SELECT ?event
                     WHERE {{
-                    ?proceeding wdt:P31 wd:Q1143604; 
-                                p:P179 [ps:P179 wd:Q27230297; pq:P478 "{volnumber}"]; 
+                    ?proceeding wdt:P31 wd:Q1143604;
+                                p:P179 [ps:P179 wd:Q27230297; pq:P478 "{volnumber}"];
                                 wdt:P4745 ?event.}}
         """
         qres = self.sparql.queryAsListOfDicts(query)

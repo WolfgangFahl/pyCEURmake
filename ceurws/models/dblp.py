@@ -7,7 +7,7 @@ refactored 2024-03-09 by wf
 
 from dataclasses import field
 
-from lodstorage.yamlable import lod_storable
+from basemkit.yamlable import lod_storable
 
 
 @lod_storable

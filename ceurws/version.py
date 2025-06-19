@@ -4,12 +4,12 @@ Created on 2022-09-11
 @author: wf
 """
 
-from dataclasses import dataclass
+from basemkit.yamlable import lod_storable
 
 import ceurws
 
 
-@dataclass
+@lod_storable
 class Version:
     """
     Version handling for VolumeBrowser

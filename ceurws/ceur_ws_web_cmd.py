@@ -56,12 +56,6 @@ class CeurWsCmd(WebserverCmd):
             default="qlever-dblp",
         )
         parser.add_argument(
-            "-f",
-            "--force",
-            action="store_true",
-            help="force update [default: %(default)s]",
-        )
-        parser.add_argument(
             "--list",
             action="store_true",
             help="list all volumes [default: %(default)s]",

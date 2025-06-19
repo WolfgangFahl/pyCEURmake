@@ -16,6 +16,10 @@ maintainers = [
 readme = "README.md"
 license= "Apache-2.0"
 dependencies = [
+	# https://pypi.org/project/pybasemkit/
+	# https://github.com/WolfgangFahl/pybasemkit
+	# Python base module kit: YAML/JSON I/O, structured logging, CLI tooling, shell execution, and remote pydevd debug support.
+	"pybasemkit>=0.0.3",
     # https://pypi.org/project/fastapi/
     # pin fastapi, httpcore and starlette as long as we use justpy
     #	'fastapi==0.95.0',
@@ -26,30 +30,30 @@ dependencies = [
     #https://github.com/martinblech/xmltodict
     'xmltodict>=0.13.0',
     # https://pypi.org/project/pylodstorage/
-    'pylodstorage>=0.12.2',
+    'pylodstorage>=0.16.4',
     # https://github.com/pyparsing/pyparsing
     'pyparsing>=3.0.9',
     # https://pypi.org/project/beautifulsoup4/
     'BeautifulSoup4>=4.11.2',
     # https://pypi.org/project/lxml/
-    'lxml>=5.2.0',
+    'lxml>=5.4.0',
     'lxml_html_clean',
     # https://pypi.org/project/pyGenericSpreadSheet/
     #'pyGenericSpreadSheet>=0.2.4',
     # https://pypi.org/project/py-ez-wikidata/
-    'py-ez-wikidata>=0.1.5',
+    'py-ez-wikidata>=0.3.1',
     # https://pypi.org/project/py-3rdparty-mediawiki/
-    'py-3rdparty-mediawiki>=0.12.1',
+    'py-3rdparty-mediawiki>=0.15.4',
     # https://github.com/tqdm/tqdm
     'tqdm',
     # https://pypi.org/project/neo4j/
     'neo4j',
     # https://github.com/WolfgangFahl/nicegui_widgets
-    'ngwidgets>=0.17.2',
+    'ngwidgets>=0.27.1',
     # https://pypi.org/project/sqlmodel/
     'sqlmodel>=0.0.16',
     # https://pypi.org/project/wdgrid/
-    'wdgrid>=0.1.0',
+    'wdgrid>=0.2.0',
     "requests",
     "tabulate",
     "spacy"

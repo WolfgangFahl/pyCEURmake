@@ -16,7 +16,7 @@ endpoints:
     prefix_sets:
       - wikidata
 
-  dblp:
+  qlever-dblp:
     name: dblp
     lang: sparql
     endpoint: https://sparql.dblp.org/sparql

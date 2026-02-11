@@ -1,0 +1,27 @@
+# SPARQL endpoint configurations for CEUR-WS
+#
+# This file defines the SPARQL endpoints used by pyCEURmake for querying
+# Wikidata and DBLP bibliographic data.
+#
+# See https://github.com/WolfgangFahl/pyLoDStorage for endpoint configuration details
+
+endpoints:
+  wikidata:
+    name: wikidata
+    lang: sparql
+    endpoint: https://query.wikidata.org/sparql
+    website: https://query.wikidata.org/
+    database: blazegraph
+    method: POST
+    prefix_sets:
+      - wikidata
+
+  dblp:
+    name: dblp
+    lang: sparql
+    endpoint: https://sparql.dblp.org/sparql
+    website: https://sparql.dblp.org
+    database: qlever
+    method: POST
+    prefix_sets:
+      - wikidata

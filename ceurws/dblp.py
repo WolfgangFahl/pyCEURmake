@@ -10,8 +10,7 @@ import time
 from dataclasses import dataclass
 from itertools import groupby
 from urllib.error import HTTPError
-
-from lodstorage.cache import CacheManager
+from lodentity.cache import CacheManager
 from lodstorage.lod import LOD
 from lodstorage.query import QueryManager
 from lodstorage.sparql import SPARQL
@@ -308,7 +307,7 @@ class DblpEndpoint:
         """
         query = f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
             SELECT *
-            WHERE {{ 
+            WHERE {{
                 ?proceeding dblp:publishedIn "CEUR Workshop Proceedings";
                             dblp:publishedInSeriesVolume "{number}".
                 }}
@@ -334,7 +333,7 @@ class DblpEndpoint:
         entityUrl = self.DBLP_REC_PREFIX + entityId
         query = f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
                 SELECT *
-                WHERE {{ 
+                WHERE {{
                     <{entityUrl}> dblp:listedOnTocPage ?url .
                     }}
             """
@@ -408,7 +407,7 @@ class DblpEndpoint:
         query = f"""PREFIX datacite: <http://purl.org/spar/datacite/>
                     PREFIX dblp: <https://dblp.org/rdf/schema#>
                     PREFIX litre: <http://purl.org/spar/literal/>
-                    SELECT DISTINCT (group_concat(DISTINCT ?nameVar;separator='|') as ?name) 
+                    SELECT DISTINCT (group_concat(DISTINCT ?nameVar;separator='|') as ?name)
                                     (group_concat(DISTINCT ?homepageVar;separator='|') as ?homepage)
                                     (group_concat(DISTINCT ?affiliationVar;separator='|') as ?affiliation)
                                     {id_selects}
@@ -511,7 +510,7 @@ class DblpAuthorIdentifier:
                 values = " ".join([f'"{value}"' for value in value])
                 query = f"""{{OPTIONAL{{
                             VALUES ?{id_name} {{ {values} }}
-                            {var} wdt:{wd_prop} ?{id_name}.}} 
+                            {var} wdt:{wd_prop} ?{id_name}.}}
                             }}  # {id_name}"""
             else:
                 query = f"""{{ {var} wdt:{wd_prop} "{value}". }}  # {id_name}"""

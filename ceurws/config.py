@@ -19,7 +19,7 @@ class CEURWS:
             home = Path(os.environ["GITHUB_WORKSPACE"])
         return home
 
-    URL = "http://ceur-ws.org"
+    URL = "https://ceur-ws.org"
     home = get_home_path()
     CACHE_DIR = home.joinpath(".ceurws")
     CACHE_FILE = CACHE_DIR.joinpath("ceurws.db")

@@ -86,11 +86,10 @@ class CeurWsCmd(WebserverCmd):
         )
         return parser
 
-    def handle_args(self) -> bool:
+    def handle_args(self, args) -> bool:
         """
         handle the command line arguments
         """
-        args = self.args
         if args.namedqueries:
             nq = NamedQueries()
             yaml = nq.toYaml()
@@ -137,7 +136,7 @@ class CeurWsCmd(WebserverCmd):
             table = tabulate(table_data, headers="keys", tablefmt="grid")
             print(table)
             pass
-        handled = super().handle_args()
+        handled = super().handle_args(args)
         return handled
 
 

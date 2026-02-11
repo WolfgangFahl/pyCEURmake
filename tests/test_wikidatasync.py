@@ -15,8 +15,9 @@ from ez_wikidata.wikidata import UrlReference
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator import datatypes as wbi_datatype
 
+from lodstorage.query import EndpointManager
+
 from ceurws.dblp import DblpAuthorIdentifier
-from ceurws.endpoints import DBLP_ENDPOINT
 from ceurws.volumeparser import VolumeParser
 from ceurws.wikidatasync import WikidataSync
 from tests.basetest import Basetest, requires_sparql_endpoint
@@ -126,7 +127,7 @@ class TestWikidataSync(Basetest):
                 self.assertEqual(expected, actual)
 
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
-    @requires_sparql_endpoint(endpoint=DBLP_ENDPOINT)
+    @requires_sparql_endpoint(endpoint=EndpointManager.getEndpoints().get("qlever-dblp"))
     def test_getWikidataIdByDblpEventId(self):
         """tests getWikidataIdByDblpEventId"""
         test_params = [

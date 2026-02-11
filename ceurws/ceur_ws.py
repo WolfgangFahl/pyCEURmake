@@ -7,8 +7,8 @@ from urllib.request import Request, urlopen
 import dateutil.parser
 from bs4 import BeautifulSoup
 from geograpy.locator import City, Country, Location, LocationContext, Region
-from lodstorage.entity import EntityManager
-from lodstorage.jsonable import JSONAble
+from lodentity.entity import EntityManager
+from lodentity.jsonable import JSONAble
 
 from ceurws.config import CEURWS
 from ceurws.indexparser import IndexHtmlParser, ParserConfig

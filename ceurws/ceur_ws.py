@@ -526,7 +526,7 @@ class VolumeManager(EntityManager):
         else:
             req = Request(CEURWS.URL, headers={"User-Agent": "pyCEURMake"})
             html_page = urlopen(req).read().decode()
-            CEURWS.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            CEURWS.CACHE_DIR.mkdir(parents=True, exist_ok=True)  # @UndefinedVariable
             with open(cacheHtml, mode="w", encoding="utf-8") as htmlFile:
                 print(html_page, file=htmlFile)
         return html_page

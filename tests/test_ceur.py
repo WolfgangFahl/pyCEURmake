@@ -23,10 +23,6 @@ class TestCEUR(Basetest):
         Basetest.setUp(self, debug=debug, profile=profile)
         self.sql_db = SqlDB(CEURWS.CACHE_FILE, debug=False)
 
-    @unittest.skip(
-        "Deactivated until 'TypeError: fromisoformat: argument must be str "
-        "lib/sqlalchemy/cyextension/processors.pyx:40: TypeError' is fixed"
-    )
     def testCEUR(self):
         """
         test CEUR tables

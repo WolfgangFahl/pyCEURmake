@@ -42,7 +42,7 @@ class TestDblpEndpoint(Basetest):
         override Basetest.setUp
         """
         super().setUp(debug, profile)
-        self.endpointUrl = "http://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
+        self.endpointUrl = "https://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl, debug=self.debug)
         # force cache refresh
         self.dblpEndpoint.cache_manager.base_dir = "/tmp"

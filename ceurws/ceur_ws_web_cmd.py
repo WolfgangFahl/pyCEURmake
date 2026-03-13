@@ -53,7 +53,7 @@ class CeurWsCmd(WebserverCmd):
             "-den",
             "--dblp_endpoint_name",
             help="name of dblp endpoint to use %(default)s",
-            default="qlever-dblp",
+            default="dblp-qlever",
         )
         parser.add_argument(
             "--list",

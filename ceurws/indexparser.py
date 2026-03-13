@@ -69,9 +69,9 @@ class IndexHtmlParser(Textparser):
         # trStart, trEnd = makeHTMLTags("tr")
         # self.tr = trStart + SkipTo(trEnd).setResultsName("tr") + trEnd.suppress()
         self.linkPattern = re.compile(r""".*href=[\'"]?([^\'" >]+).*""", re.I)
-        self.volPattern = re.compile("http://ceur-ws.org/Vol-([0-9]+)")
+        self.volPattern = re.compile(r"https?://ceur-ws.org/Vol-([0-9]+)")
         self.volLinkPattern = re.compile(
-            r""".*<a\s+href=[\'"]http://ceur-ws.org/Vol-([0-9]+)[/]?[\'"]>([^<]*)</a>.*""",
+            r""".*<a\s+href=[\'"]https?://ceur-ws.org/Vol-([0-9]+)[/]?[\'"]>([^<]*)</a>.*""",
             re.I | re.DOTALL,
         )
         # Pre-compile patterns used in find and findVolume

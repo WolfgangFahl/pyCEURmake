@@ -464,6 +464,7 @@ class VolumeManager(EntityManager, JSONAbleList):
         self.loadFromIndexHtml(parser_config)
         if progress_bar:
             progress_bar.reset(total=len(self.volumes))
+            progress_bar.set_description("fetching volumes")
         invalid = 0
         for volume in self.volumes:
             if volume.number and volume.number < parser_config.down_to_volume:
@@ -508,6 +509,10 @@ class VolumeManager(EntityManager, JSONAbleList):
         force = parser_config.force_download if parser_config else True
         htmlText = self.getIndexHtml(force)
         indexParser = IndexHtmlParser(htmlText, parser_config)
+        if parser_config and parser_config.progress_bar:
+            vol_count_estimate = htmlText.count("ceur-ws.org/Vol-")
+            parser_config.progress_bar.reset(total=vol_count_estimate)
+            parser_config.progress_bar.set_description("parsing index")
         volumeRecords = indexParser.parse(vol_limit)
         self.volumes = []
         for volumeRecord in volumeRecords.values():

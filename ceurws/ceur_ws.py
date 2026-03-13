@@ -462,7 +462,7 @@ class VolumeManager(EntityManager, JSONAbleList):
 
         # first reload me from the main index
         self.loadFromIndexHtml(parser_config)
-        if progress_bar:
+        if progress_bar is not None:
             progress_bar.reset(total=len(self.volumes))
             progress_bar.set_description("fetching volumes")
         invalid = 0
@@ -488,7 +488,7 @@ class VolumeManager(EntityManager, JSONAbleList):
                         setattr(volume, attr, value)
                     volume.resolveLoctime()
             # update progress bar
-            if progress_bar:
+            if progress_bar is not None:
                 if volume.valid:
                     # print(f"{volume.url}:{volume.acronym}:{volume.desc}:{volume.h1}:{volume.title}")
                     description = volume.acronym[:20] if volume.acronym else "?"
@@ -509,7 +509,7 @@ class VolumeManager(EntityManager, JSONAbleList):
         force = parser_config.force_download if parser_config else True
         htmlText = self.getIndexHtml(force)
         indexParser = IndexHtmlParser(htmlText, parser_config)
-        if parser_config and parser_config.progress_bar:
+        if parser_config and parser_config.progress_bar is not None:
             vol_count_estimate = htmlText.count("ceur-ws.org/Vol-")
             parser_config.progress_bar.reset(total=vol_count_estimate)
             parser_config.progress_bar.set_description("parsing index")

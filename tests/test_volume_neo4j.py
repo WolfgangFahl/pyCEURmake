@@ -42,7 +42,7 @@ class TestVolumeEditorLocation(Basetest):
         with self.neo4j.driver.session() as session:
             with session.begin_transaction() as tx:
                 acronym = f"CILC {year}"
-                title = f"Proceedings of the {year-1985}th Italian Conference on Computational Logic"
+                title = f"Proceedings of the {year - 1985}th Italian Conference on Computational Logic"
                 loctime = f"Some City, Italy, June 21-23, {year}"
                 volume = Volume(acronym=acronym, title=title, loctime=loctime)
                 volume_id = volume.create_node(tx)

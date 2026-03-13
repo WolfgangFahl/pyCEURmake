@@ -216,7 +216,7 @@ class WikidataSync:
             "short name": volume.acronym,
             "locationWikidataId": volume.cityWikidataId,
             "countryWikidataId": volume.countryWikidataId,
-            "start time": start_time.isoformat() if start_time is not None else start_time,
+            "start time": (start_time.isoformat() if start_time is not None else start_time),
             "end time": end_time.isoformat() if end_time is not None else end_time,
             "referenceUrl": volume.getVolumeUrl(),
         }

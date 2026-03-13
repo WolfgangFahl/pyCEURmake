@@ -12,10 +12,9 @@ import unittest
 
 from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 from ez_wikidata.wikidata import UrlReference
+from lodstorage.query import EndpointManager
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator import datatypes as wbi_datatype
-
-from lodstorage.query import EndpointManager
 
 from ceurws.dblp import DblpAuthorIdentifier
 from ceurws.volumeparser import VolumeParser
@@ -545,7 +544,7 @@ class TestWikidataSync(Basetest):
         total = len(editors)
         for i, identifiers in enumerate(editors):
             editor = identifiers.get("name")
-            print(f"({i+1:04}/{total})", end=" ")
+            print(f"({i + 1:04}/{total})", end=" ")
             authors = self.wdSync.getAuthorByIds(identifiers)
             ids = list(authors.keys())
             if len(authors) == 1:
@@ -660,7 +659,7 @@ class TestWikidataSync(Basetest):
                     if len(result.errors) > 0:
                         print(f"error adding homepage for volume  {volnumber} failed")
                         for index, error in enumerate(result.errors.values()):
-                            print(f"{index+1}:{str(error)}")
+                            print(f"{index + 1}:{str(error)}")
                 else:
                     print("event has already a homepage")
             else:

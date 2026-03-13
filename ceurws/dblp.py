@@ -10,6 +10,7 @@ import time
 from dataclasses import dataclass
 from itertools import groupby
 from urllib.error import HTTPError
+
 from lodentity.cache import CacheManager
 from lodstorage.lod import LOD
 from lodstorage.query import QueryManager
@@ -393,12 +394,10 @@ class DblpEndpoint:
         id_vars: list[str] = []
         for identifier in dblp_identifiers:
             id_var = f"?{identifier.name}"
-            optional_clauses.append(
-                f"""OPTIONAL{{
+            optional_clauses.append(f"""OPTIONAL{{
                 ?editor datacite:hasIdentifier {id_var}_blank.
                 {id_var}_blank datacite:usesIdentifierScheme {identifier.dblp_property};
-                litre:hasLiteralValue {id_var}Var.}}"""
-            )
+                litre:hasLiteralValue {id_var}Var.}}""")
             id_vars.append(id_var)
         id_selects = "\n".join(
             [f"(group_concat(DISTINCT {id_var}Var;separator='|') as {id_var})" for id_var in id_vars]

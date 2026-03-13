@@ -126,7 +126,7 @@ class TestWikidataSync(Basetest):
                 self.assertEqual(expected, actual)
 
     @unittest.skipIf(Basetest.inPublicCI(), "queries unreliable wikidata endpoint")
-    @requires_sparql_endpoint(endpoint=EndpointManager.getEndpoints().get("qlever-dblp"))
+    @requires_sparql_endpoint(endpoint=EndpointManager.getEndpoints().get("dblp-qlever"))
     def test_getWikidataIdByDblpEventId(self):
         """tests getWikidataIdByDblpEventId"""
         test_params = [

@@ -47,7 +47,12 @@ class EntityLinker:
 
         # Attaches raw data to doc
         doc._.annotations = data.get("annotations")
-        doc._.metadata = {"status_code": r.status_code, "reason": r.reason, "ok": r.ok, "encoding": r.encoding}
+        doc._.metadata = {
+            "status_code": r.status_code,
+            "reason": r.reason,
+            "ok": r.ok,
+            "encoding": r.encoding,
+        }
 
         # Attaches indexes, label and QID to spans
         # Processes annotations: if 'best_qid'==None, then no annotation
@@ -105,7 +110,11 @@ class EntityLinker:
         return doc
 
     def make_request(self, doc: Doc):
-        return requests.post(url=self.url, data={"query": doc.text}, headers={"User-Agent": "spaCyOpenTapioca"})
+        return requests.post(
+            url=self.url,
+            data={"query": doc.text},
+            headers={"User-Agent": "spaCyOpenTapioca"},
+        )
 
     def __call__(self, doc):
         """Requests the OpenTapioca API. Attaches entities to spans and doc."""

@@ -38,7 +38,13 @@ class Cached:
     """
 
     def __init__(
-        self, clazz: type[Any], sparql: SPARQL, sql_db: SqlDB, query_name: str, max_errors: int = 0, debug: bool = False
+        self,
+        clazz: type[Any],
+        sparql: SPARQL,
+        sql_db: SqlDB,
+        query_name: str,
+        max_errors: int = 0,
+        debug: bool = False,
     ):
         """
         Initializes the Manager with class reference, SPARQL endpoint URL, SQL database connection string,
@@ -110,7 +116,10 @@ class Cached:
         Returns:
             list[dict]: A list of dictionaries representing the data fetched.
         """
-        profiler = Profiler(f"fetch {self.query_name} from SPARQL endpoint {self.sparql.url}", profile=self.debug)
+        profiler = Profiler(
+            f"fetch {self.query_name} from SPARQL endpoint {self.sparql.url}",
+            profile=self.debug,
+        )
         query = qm.queriesByName[self.query_name]
         self.lod = self.sparql.queryAsListOfDicts(query.query)
         profiler.time()

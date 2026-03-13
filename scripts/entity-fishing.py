@@ -111,11 +111,11 @@ def download_datasets(urls: list[str]):
         unzipped_dir = target_dir.joinpath(Path(url).stem)
         if unzipped_dir.exists() and directory_size(unzipped_dir) > 0:
             # dataset already exists and in unzipped
-            logger.info(f"Dataset {unzipped_dir.name} already exists ({directory_size(unzipped_dir)/1e9:.02f} GB)")
+            logger.info(f"Dataset {unzipped_dir.name} already exists ({directory_size(unzipped_dir) / 1e9:.02f} GB)")
             pass
         elif zip_file.exists() and zip_file.is_file():
             # dataset is downloaded but not unzipped
-            logger.info(f"Dataset {zip_file.name} already downloaded ({zip_file.stat().st_size/1e9:.02f})")
+            logger.info(f"Dataset {zip_file.name} already downloaded ({zip_file.stat().st_size / 1e9:.02f})")
             unzip_file(zip_file)
         else:
             # dataset needs to be downloaded
@@ -260,7 +260,9 @@ def main(argv=None):
     parser_download.set_defaults(func=download_cmd)
     # handle docker start
     parser_docker_start = subparsers.add_parser(
-        "container-start", help="start entity-fishing docker container", parents=[common]
+        "container-start",
+        help="start entity-fishing docker container",
+        parents=[common],
     )
     parser_docker_start.set_defaults(func=docker_start_cmd)
     parser_docker_start.add_argument(
@@ -273,7 +275,11 @@ def main(argv=None):
     parser_docker_start.add_argument("--console-port", dest="console_port", help="console port", default=8090)
     parser_docker_start.add_argument("--service-port", dest="service_port", help="service port", default=8091)
     parser_docker_start.add_argument(
-        "-a", "--attached", dest="attached", help="start the container attached to the console", action="store_true"
+        "-a",
+        "--attached",
+        dest="attached",
+        help="start the container attached to the console",
+        action="store_true",
     )
     parser_docker_start.add_argument(
         "-c",

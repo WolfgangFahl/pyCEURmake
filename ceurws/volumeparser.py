@@ -326,7 +326,10 @@ class VolumeParser(Textparser):
         group_elements: list[PageElement] = []
         if isinstance(start.previous, Tag | NavigableString):
             for element in start.previous.nextGenerator():
-                if isinstance(element, Tag | NavigableString) and element.name in ["br", "hr"]:
+                if isinstance(element, Tag | NavigableString) and element.name in [
+                    "br",
+                    "hr",
+                ]:
                     affiliations_elements.append(group_elements)
                     group_elements = []
                 elif isinstance(element, NavigableString) and element.text.strip() == "":

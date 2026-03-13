@@ -124,11 +124,17 @@ class CeurEntityFishing:
         def load_url(type_url, type_files):
             if method == "POST":
                 return requests.post(
-                    url=type_url, headers={"Accept": "application/json"}, files=type_files, params=params
+                    url=type_url,
+                    headers={"Accept": "application/json"},
+                    files=type_files,
+                    params=params,
                 )
             else:
                 return requests.get(
-                    url=type_url, headers={"Accept": "application/json"}, files=type_files, params=params
+                    url=type_url,
+                    headers={"Accept": "application/json"},
+                    files=type_files,
+                    params=params,
                 )
 
         response_batch = []
@@ -270,7 +276,10 @@ class CeurEntityFishing:
         """
         url_concept_lookup_batch = [self.api_ef_base + "kb/concept/" + wiki_id for wiki_id in wiki_id_batch]
         return self.generic_client_batch(
-            method="GET", url_batch=url_concept_lookup_batch, params=self.language, verbose=self.verbose
+            method="GET",
+            url_batch=url_concept_lookup_batch,
+            params=self.language,
+            verbose=self.verbose,
         )
 
     def disambiguate_text_batch(self, files_batch: list[dict]) -> list[requests.Response]:
@@ -286,7 +295,10 @@ class CeurEntityFishing:
         url_disambiguate = self.api_ef_base + "disambiguate"
         url_disambiguate_batch = [url_disambiguate for file in files_batch]
         return self.generic_client_batch(
-            method="POST", url_batch=url_disambiguate_batch, files_batch=files_batch, verbose=self.verbose
+            method="POST",
+            url_batch=url_disambiguate_batch,
+            files_batch=files_batch,
+            verbose=self.verbose,
         )
 
     def look_extra_informations_on_entity(self, span: Span, res_desc: dict) -> None:
@@ -340,7 +352,13 @@ class CeurEntityFishing:
         :return: A list of tuples, each tuple containing the response, metadata, and entities_enhanced.
         """
         data_to_post_batch = [
-            self.prepare_data(text=text, terms=terms, entities=entities, language=self.language, full=self.flag_extra)
+            self.prepare_data(
+                text=text,
+                terms=terms,
+                entities=entities,
+                language=self.language,
+                full=self.flag_extra,
+            )
             for text, terms, entities in zip(text_batch, terms_batch, entities_batch, strict=False)
         ]
         reqs = self.disambiguate_text_batch(files_batch=data_to_post_batch)
@@ -457,7 +475,9 @@ class CeurEntityFishing:
 
             # 1. Disambiguate and linking named entities in Doc object with Entity-Fishing
             result_from_ef_text_batch = self.main_disambiguation_process_batch(
-                text_batch=text_batch, terms_batch=terms_batch, entities_batch=entities_batch
+                text_batch=text_batch,
+                terms_batch=terms_batch,
+                entities_batch=entities_batch,
             )
 
             for doc, result_from_ef_text in zip(docs, result_from_ef_text_batch, strict=False):

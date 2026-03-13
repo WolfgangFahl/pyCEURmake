@@ -1,13 +1,6 @@
 import datetime
 
-from ceurws.ceur_ws import (
-    Conference,
-    Editor,
-    Paper,
-    Session,
-    Volume,
-    VolumeManager,
-)
+from ceurws.ceur_ws import Conference, Editor, Paper, Session, Volume, VolumeManager
 from tests.basetest import Basetest
 
 
@@ -234,7 +227,10 @@ class TestVolume(Basetest):
                 vol = Volume()
                 vol.fromDict({"number": 1, "loctime": loctime})
                 vol.resolveLoctime()
-                self.assertEqual(datetime.datetime.fromisoformat(expectedDateFrom).date(), vol.dateFrom)
+                self.assertEqual(
+                    datetime.datetime.fromisoformat(expectedDateFrom).date(),
+                    vol.dateFrom,
+                )
                 self.assertEqual(datetime.datetime.fromisoformat(expectedDateTo).date(), vol.dateTo)
                 self.assertEqual(expectedCity, vol.cityWikidataId)
                 self.assertEqual(expectedCountry, vol.countryWikidataId)

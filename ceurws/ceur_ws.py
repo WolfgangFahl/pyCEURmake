@@ -8,7 +8,7 @@ import dateutil.parser
 from bs4 import BeautifulSoup
 from geograpy.locator import City, Country, Location, LocationContext, Region
 from lodentity.entity import EntityManager
-from lodentity.jsonable import JSONAble
+from lodentity.jsonable import JSONAble, JSONAbleList
 
 from ceurws.config import CEURWS
 from ceurws.indexparser import IndexHtmlParser, ParserConfig
@@ -386,7 +386,7 @@ class Volume(JSONAble):
         return submitter
 
 
-class VolumeManager(EntityManager):
+class VolumeManager(EntityManager, JSONAbleList):
     """
     Contains multiple ceurws volumes
     """
@@ -617,7 +617,7 @@ class Paper(JSONAble):
         return text
 
 
-class PaperManager(EntityManager):
+class PaperManager(EntityManager, JSONAbleList):
     """
     Contains multiple ceurws papers
     """
@@ -697,7 +697,7 @@ class Session(JSONAble):
             self._papers = paper
 
 
-class SessionManager(EntityManager):
+class SessionManager(EntityManager, JSONAbleList):
     """
     Contains multiple ceurws sessions
     """
@@ -747,7 +747,7 @@ class Editor(JSONAble):
         return samples
 
 
-class EditorManager(EntityManager):
+class EditorManager(EntityManager, JSONAbleList):
     """
     Contains multiple ceurws editors
     """
@@ -786,7 +786,7 @@ class Conference(JSONAble):
         return samples
 
 
-class ConferenceManager(EntityManager):
+class ConferenceManager(EntityManager, JSONAbleList):
     """
     Contains multiple ceurws sessions
     """

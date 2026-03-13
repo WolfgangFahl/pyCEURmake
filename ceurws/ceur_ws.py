@@ -471,7 +471,7 @@ class VolumeManager(EntityManager, JSONAbleList):
                 break
             _volume_record, soup = volume.extractValuesFromVolumePage()
             if soup:
-                ptp = PaperTocParser(number=str(volume.number), soup=soup, debug=self.debug)
+                ptp = PaperTocParser(number=str(volume.number), soup=soup, debug=parser_config.debug)
                 paper_records = ptp.parsePapers()
                 for paper_record in paper_records:
                     paper = Paper()

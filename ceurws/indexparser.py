@@ -245,14 +245,19 @@ class IndexHtmlParser(Textparser):
             if info in ["editors", "submittedBy"]:
                 infoValue = html.unescape(infoValue)
             if info == "pubDate":
+                raw_date = infoValue
                 try:
-                    infoValue = datetime.datetime.strptime(infoValue, "%d-%b-%Y")
+                    infoValue = datetime.datetime.strptime(raw_date, "%d-%b-%Y")
                     published = infoValue.strftime("%Y-%m-%d")
                     volume["published"] = published
                     volume["year"] = infoValue.year
                 except ValueError as ve:
-                    msg = f"pubDate: {infoValue} of {volume} parsing failed with {ve}"
+                    msg = f"pubDate: {raw_date} of {volume} parsing failed with {ve}"
                     self.log(msg)
+                    year_match = re.search(r"\b(\d{4})\b", raw_date)
+                    if year_match:
+                        volume["year"] = int(year_match.group(1))
+                    infoValue = None
             if info in ["urn", "url", "archive"]:
                 href = self.getMatch(self.linkPattern, infoValue, 1)
                 if href is not None:

@@ -431,7 +431,7 @@ class VolumeManager(EntityManager, JSONAbleList):
     def set_down_to_volume(self, parser_config):
         volumeCount = len(self.volumes)
         if volumeCount > 0:
-            max_vol = self.volumes[-1]
+            max_vol = max(self.volumes, key=lambda v: v.number or 0)
             parser_config.down_to_volume = max_vol.number + 1
         else:
             pass
@@ -462,6 +462,8 @@ class VolumeManager(EntityManager, JSONAbleList):
 
         # first reload me from the main index
         self.loadFromIndexHtml(parser_config)
+        if progress_bar:
+            progress_bar.reset(total=len(self.volumes))
         invalid = 0
         for volume in self.volumes:
             if volume.number and volume.number < parser_config.down_to_volume:
@@ -507,6 +509,7 @@ class VolumeManager(EntityManager, JSONAbleList):
         htmlText = self.getIndexHtml(force)
         indexParser = IndexHtmlParser(htmlText, parser_config)
         volumeRecords = indexParser.parse(vol_limit)
+        self.volumes = []
         for volumeRecord in volumeRecords.values():
             volume = Volume()
             volume.fromDict(volumeRecord)

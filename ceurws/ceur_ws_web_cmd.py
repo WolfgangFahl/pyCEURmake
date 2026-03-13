@@ -102,7 +102,7 @@ class CeurWsCmd(WebserverCmd):
         if args.recreate or args.update:
             manager = VolumeManager()
             manager.load()
-            progress_bar = tqdm(total=len(manager.volumes))
+            progress_bar = tqdm()
             parser_config = ParserConfig(progress_bar, debug=args.debug)
 
             if args.recreate:

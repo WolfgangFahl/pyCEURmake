@@ -18,7 +18,7 @@ class Version:
     name = "CEUR-WS Volume Browser"
     version = ceurws.__version__
     date = "2022-08-14"
-    updated = "2024-07-31"
+    updated = "2026-03-13"
     description = "CEUR-WS Volume browser"
 
     authors = "Tim Holzheim, Wolfgang Fahl"
@@ -27,7 +27,7 @@ class Version:
     chat_url = "https://github.com/WolfgangFahl/pyCEURmake/discussions"
     cm_url = "https://github.com/WolfgangFahl/pyCEURmake"
 
-    license = """Copyright 2022 contributors. All rights reserved.
+    license = """Copyright 2022-2026 contributors. All rights reserved.
 
   Licensed under the Apache License 2.0
   http://www.apache.org/licenses/LICENSE-2.0

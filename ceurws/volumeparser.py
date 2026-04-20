@@ -465,10 +465,9 @@ class VolumePageCache:
             return
         Path(cls.cache_location).mkdir(parents=True, exist_ok=True)
         filename = cls._get_volume_cache_path(number)
-        mode = "w"
-        if isinstance(html, bytes):
-            mode += "b"
-        with open(filename, mode=mode, encoding="utf-8") as f:
+        mode = "wb" if isinstance(html, bytes) else "w"
+        encoding = None if isinstance(html, bytes) else "utf-8"
+        with open(filename, mode=mode, encoding=encoding) as f:
             f.write(html)
 
     @classmethod

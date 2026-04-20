@@ -108,7 +108,8 @@ class CeurWsWebServer(InputWebserver):
             direct fastapi return of paper information from dblp
             """
             authors = self.wdSync.dblpEndpoint.get_all_ceur_authors()
-            return ORJSONResponse(content=authors)
+            json_response=ORJSONResponse(content=authors)
+            return json_response
 
         @app.get("/dblp/papers", tags=["dblp complete dataset"])
         async def dblp_papers(limit: int = 100, offset: int = 0) -> list[DblpPaper]:

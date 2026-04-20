@@ -468,7 +468,7 @@ class VolumePageCache:
         mode = "w"
         if isinstance(html, bytes):
             mode += "b"
-        with open(filename, mode=mode) as f:
+        with open(filename, mode=mode, encoding="utf-8") as f:
             f.write(html)
 
     @classmethod

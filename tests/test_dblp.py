@@ -42,7 +42,7 @@ class TestDblpEndpoint(Basetest):
         override Basetest.setUp
         """
         super().setUp(debug, profile)
-        self.endpointUrl = "https://dblp.wikidata.dbis.rwth-aachen.de/api/dblp"
+        self.endpointUrl = "https://sparql.dblp.org/sparql"
         self.dblpEndpoint = DblpEndpoint(self.endpointUrl, debug=self.debug)
         # force cache refresh
         self.dblpEndpoint.cache_manager.base_dir = "/tmp"
@@ -117,8 +117,8 @@ class TestDblpEndpoint(Basetest):
         tests getEditorsOfVolume
         """
         test_params = [  # (volNumber, {editor:expIds})
-            (1, {"Franz": 13, "Manfred": 8, "Martin": 2, "Werner": 10}),
-            ("1", {"Franz": 13, "Manfred": 8, "Martin": 2, "Werner": 10}),
+            (1, {"Franz": 13, "Manfred": 7, "Martin": 2, "Werner": 9}),
+            ("1", {"Franz": 13, "Manfred": 7, "Martin": 2, "Werner": 9}),
             (None, 4600),
         ]
         for param in test_params:
@@ -151,7 +151,7 @@ class TestDblpEndpoint(Basetest):
             label="Stefan Decker",
             wikidata_id="Q54303353",
             orcid_id="0000-0001-6324-7164",
-            # gnd_id="173443443",
+            gnd_id="173443443",
         )
         decker = dblp_authors.authorsById.get("https://dblp.org/pid/d/StefanDecker")
         self.assertEqual(expected_decker, decker)

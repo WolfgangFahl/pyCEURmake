@@ -205,6 +205,7 @@ class DblpVolumes(DblpManager):
                 if self.endpoint.progress_bar:
                     self.endpoint.progress_bar.update(int(30 / 3650))
                 self.endpoint.cache_manager.store(cache_name, volume)
+            self.volumes = volumes
         return self.volumes
 
 
@@ -400,15 +401,15 @@ class DblpEndpoint:
                 litre:hasLiteralValue {id_var}Var.}}""")
             id_vars.append(id_var)
         id_selects = "\n".join(
-            [f"(group_concat(DISTINCT {id_var}Var;separator='|') as {id_var})" for id_var in id_vars]
+            [f"(group_concat(DISTINCT str({id_var}Var);separator='|') as {id_var})" for id_var in id_vars]
         )
         id_queries = "\n".join(optional_clauses)
         query = f"""PREFIX datacite: <http://purl.org/spar/datacite/>
                     PREFIX dblp: <https://dblp.org/rdf/schema#>
                     PREFIX litre: <http://purl.org/spar/literal/>
-                    SELECT DISTINCT (group_concat(DISTINCT ?nameVar;separator='|') as ?name)
-                                    (group_concat(DISTINCT ?homepageVar;separator='|') as ?homepage)
-                                    (group_concat(DISTINCT ?affiliationVar;separator='|') as ?affiliation)
+                    SELECT DISTINCT (group_concat(DISTINCT str(?nameVar);separator='|') as ?name)
+                                    (group_concat(DISTINCT str(?homepageVar);separator='|') as ?homepage)
+                                    (group_concat(DISTINCT str(?affiliationVar);separator='|') as ?affiliation)
                                     {id_selects}
                     WHERE{{
                         ?proceeding dblp:publishedIn "CEUR Workshop Proceedings";

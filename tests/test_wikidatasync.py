@@ -29,7 +29,7 @@ class TestWikidataSync(Basetest):
 
     def setUp(self, debug=False, profile=True):
         Basetest.setUp(self, debug=debug, profile=profile)
-        self.wdSync = WikidataSync()
+        self.wdSync = WikidataSync(dblp_endpoint_url="https://sparql.dblp.org/sparql")
 
     def testWikidataSync(self):
         """
@@ -540,7 +540,8 @@ class TestWikidataSync(Basetest):
         """
         classifier = ["identified", "conflict", "unknown"]
         res = []
-        editors = self.wdSync.dbpEndpoint.getEditorsOfVolume(None)
+        editors = self.wdSync.dblpEndpoint.getEditorsOfVolume(None)
+        print(editors)
         total = len(editors)
         for i, identifiers in enumerate(editors):
             editor = identifiers.get("name")

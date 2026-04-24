@@ -643,7 +643,7 @@ class PaperManager(EntityManager, JSONAbleList):
             listSeparator=",",
             name=self.__class__.__name__,
         )
-        self.debug=False
+        self.debug = False
         self.papers: list[Paper] = []
 
 

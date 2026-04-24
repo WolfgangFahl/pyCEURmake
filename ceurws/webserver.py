@@ -9,7 +9,7 @@ from pathlib import Path
 
 import orjson
 from fastapi import HTTPException
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import JSONResponse
 from ngwidgets.input_webserver import InputWebserver, InputWebSolution
 from ngwidgets.webserver import WebserverConfig
 from nicegui import Client, app, ui
@@ -59,7 +59,7 @@ class CeurWsWebServer(InputWebserver):
         async def wikidatasync(client: Client):
             return await self.page(client, CeurWsSolution.wikidatasync)
 
-        @app.get("/volumes.json")
+        @app.get("/volumes.json", response_class=JSONResponse)
         async def volumes():
             """
             direct fastapi return of volumes

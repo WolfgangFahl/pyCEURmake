@@ -73,7 +73,7 @@ class CeurWsWebServer(InputWebserver):
             direct fastapi return of proceedings
             """
             proceedingsList = self.wdSync.loadProceedingsFromCache()
-            return ORJSONResponse(proceedingsList)
+            return proceedingsList
 
         @app.get("/papers.json")
         async def papers():
@@ -96,7 +96,7 @@ class CeurWsWebServer(InputWebserver):
             papers = self.wdSync.dblpEndpoint.dblp_papers.papers
             records = [p.to_json() for p in papers]
             lod = [orjson.loads(json_str) for json_str in records]
-            return ORJSONResponse(lod)
+            return lod
 
         @app.get(
             "/authors_dblp.json",
@@ -107,9 +107,9 @@ class CeurWsWebServer(InputWebserver):
             """
             direct fastapi return of paper information from dblp
             """
-            authors = self.wdSync.dblpEndpoint.get_all_ceur_authors()
-            json_response=ORJSONResponse(content=authors)
-            return json_response
+            authors = self.wdSync.dblpEndpoint.dblp_authors
+            authors.load()
+            return authors.lod
 
         @app.get("/dblp/papers", tags=["dblp complete dataset"])
         async def dblp_papers(limit: int = 100, offset: int = 0) -> list[DblpPaper]:
@@ -121,7 +121,8 @@ class CeurWsWebServer(InputWebserver):
 
             Returns:
             """
-            papers = self.wdSync.dblpEndpoint.get_all_ceur_papers()
+            self.wdSync.dblpEndpoint.dblp_papers.load()
+            papers = self.wdSync.dblpEndpoint.dblp_papers.papers
             return papers[offset:limit]
 
         @app.get("/dblp/editors", tags=["dblp complete dataset"])
@@ -134,11 +135,12 @@ class CeurWsWebServer(InputWebserver):
 
             Returns:
             """
-            editors = self.wdSync.dblpEndpoint.get_all_ceur_editors()
+            self.wdSync.dblpEndpoint.dblp_editors.load()
+            editors = self.wdSync.dblpEndpoint.dblp_editors.lod
             return editors[offset:limit]
 
         @app.get("/dblp/volumes", tags=["dblp complete dataset"])
-        async def dblp_volumes(limit: int = 100, offset: int = 0) -> list[DblpPaper]:
+        async def dblp_volumes(limit: int = 100, offset: int = 0) -> list[DblpProceeding]:
             """
             Get ceur-ws volumes form dblp
             Args:
@@ -147,7 +149,7 @@ class CeurWsWebServer(InputWebserver):
 
             Returns:
             """
-            proceedings = self.wdSync.dblpEndpoint.get_all_ceur_proceedings()
+            proceedings = self.wdSync.dblpEndpoint.dblp_volumes.load()
             return proceedings[offset:limit]
 
         @app.get("/dblp/volume/{volume_number}", tags=["dblp"])

@@ -30,6 +30,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Setup SPARQL endpoints
+      run: |
+        mkdir -p ~/.pylodstorage
+        cp resources/endpoints.yaml ~/.pylodstorage/endpoints.yaml
+
     - name: start neo4j
       run: |
         scripts/neo4j

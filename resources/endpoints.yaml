@@ -1,0 +1,14 @@
+# SPARQL endpoints for sparqlquery and snapquery tools
+# 2026-04-24 Wolfgang Fahl - added for CI testing
+endpoints:
+    'dblp-qlever':
+      description: "DBLP Computer Science Bibliography hosted by QLever."
+      lang: sparql
+      method: POST
+      database: qlever
+      endpoint: https://qlever.dev/api/dblp
+      website: https://qlever.dev/dblp
+      prefix_sets:
+        - rdf
+        - dblp
+      auto_update: false

@@ -4,7 +4,6 @@ Created on 2024-03-17
 @author: wf
 """
 
-
 from sqlmodel import select  # Added 'select' here
 
 from ceurws.config import CEURWS

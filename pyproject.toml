@@ -82,9 +82,9 @@ dynamic = ["version", "description"]
 path = "ceurws/__init__.py"
 
 [project.urls]
-Home = "https://github.com/WolfgangFahl/py-sidif"
-Documentation = "https://wiki.bitplan.com/index.php/Py-sidif"
-Source = "https://github.com/WolfgangFahl/py-sidif"
+Home = "https://github.com/WolfgangFahl/pyCEURmake"
+Documentation = "https://wiki.bitplan.com/index.php/PyCEURmake"
+Source = "https://github.com/WolfgangFahl/PyCEURmake"
 
 [project.optional-dependencies]
 test = [

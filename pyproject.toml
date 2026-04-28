@@ -101,8 +101,6 @@ only-include = ["ceurws"]
 [tool.hatch.build.targets.wheel.sources]
 "ngwidgets" = "ceurws"
 
-[project.scripts]
-ceur-ws = "ceurws.ceur_ws_web_cmd:main"
 
 
 [tool.ruff]
@@ -208,3 +206,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["yaml","dateutil.parser", "dateutil", "tabulate", "requests"]
 ignore_missing_imports = true
+
+[project.scripts]
+ceur-ws = "ceurws.ceur_ws_web_cmd:main"

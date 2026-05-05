@@ -1,6 +1,18 @@
-# AGENTS.md - Guidance for Agentic Coding Tools
+This is a guidance document for agentic AI tools. It may also give some insight for humans.
+# PLAN AND ASK BEFORE DO
 
-This file provides guidance for agentic coding agents working in the pyCEURmake repository.
+CRITICAL: NEVER EVER DO ANY ACTION READING, MODIFYING OR RUNNING without explaing the plan Each set of intended actions needs to be explained in the format: I understood that <YOUR ANALYSIS> so that i plan to <GOALS YOU PURSUE> by <ACTIONS TO BE CONFIRMED> estimating <# of ITEMS> <ITEMS> to be worked on. confirm with go! YOU WILL NEVER PROCEED WITH OUT POSITIVE CONFIRMATION by go!
+# Efficiency
+
+    Do NOT do unneeded file lookups based on guessing or assuming typos.
+    Do NOT use TodoWrite for tasks with fewer than 4 steps.
+    Do NOT read files you already have contents for.
+    Keep summaries to 2-3 lines max unless asked for detail.
+    Minimize tool calls. Batch parallel calls. Avoid redundant calls.
+
+# SECURITY
+
+CRITICAL: NEVER leak credentials, passwords, hashes, internal hostnames, IPs, or any infrastructure details to public platforms (GitHub, Discourse, etc.). Firing offense.
 
 ## Build/Lint/Test Commands
 

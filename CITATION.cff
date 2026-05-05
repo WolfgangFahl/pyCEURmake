@@ -1,0 +1,35 @@
+# CITATION.cff for https://github.com/WolfgangFahl/pyCEURmake
+# Generated following https://citation-file-format.github.io/
+cff-version: 1.2.0
+title: pyCEURmake
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Wolfgang
+    family-names: Fahl
+    affiliation: BITPlan GmbH
+    orcid: 'https://orcid.org/0000-0002-0821-6995'
+  - given-names: Tim
+    family-names: Holzheim
+    orcid: 'https://orcid.org/0000-0003-2533-6363'
+  - alias: Ayan9801
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.20034998
+    description: Concept DOI (all versions) on Zenodo
+repository-code: 'https://github.com/WolfgangFahl/pyCEURmake'
+url: 'https://github.com/WolfgangFahl/pyCEURmake'
+abstract: >-
+  Python implementation for parsing, managing and browsing
+  CEUR Workshop Proceedings (https://ceur-ws.org/), with
+  enrichment from Wikidata and DBLP.
+keywords:
+  - CEUR-WS
+  - Workshop Proceedings
+  - Wikidata
+  - DBLP
+  - Scholarly Metadata
+  - FAIR
+license: Apache-2.0

@@ -179,6 +179,15 @@
             wdt:P4745 ?item .
       ?item wdt:P31 wd:{class_qid} .
     }}
+'AllEntityList':
+  sparql: |
+    # List all Wikidata items of a given class (no CEUR-WS filter).
+    # Parameter: {class_qid}
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    SELECT DISTINCT ?item WHERE {{
+      ?item wdt:P31 wd:{class_qid} .
+    }}
 'WikidataSync':
   sql: |
     -- Volumes in Proceedings not in Volumes (no title, so we don't include these)

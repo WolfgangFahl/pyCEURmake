@@ -94,6 +94,25 @@ class TestWdContributions(Basetest):
         js = WdContributionAnalyzer.as_json(stats)
         self.assertIn('"label": "Proceedings"', js)
 
+    def testPlotDistribution(self):
+        """Pure-local: render a small distribution chart to a temp PNG."""
+        import tempfile
+
+        records = (
+            [HistoryRecord(qid=f"Q{i}", creator="CEUR-WS") for i in range(20)]
+            + [HistoryRecord(qid=f"Q1{i:02d}", creator="WolfgangFahl") for i in range(18)]
+            + [HistoryRecord(qid=f"Q2{i:02d}", creator="Tholzheim") for i in range(16)]
+            + [HistoryRecord(qid=f"Q3{i:02d}", creator=f"Rare{i}") for i in range(5)]
+        )
+        with tempfile.TemporaryDirectory() as td:
+            out = self.analyzer.plot_distribution(
+                records,
+                title="Test Distribution",
+                out_path=f"{td}/dist.png",
+            )
+            self.assertTrue(out.exists())
+            self.assertGreater(out.stat().st_size, 5_000)  # non-trivial PNG
+
     @requires_sparql_endpoint(endpoint=WIKIDATA)
     @unittest.skipIf(
         Basetest.inPublicCI(),

@@ -28,8 +28,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
+import requests
 from lodstorage.query import QueryManager
+from lodstorage.rate_limiter import RateLimiter
 from lodstorage.sparql import SPARQL
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from ceurws.config import CEURWS
 
@@ -274,6 +278,93 @@ class WdContributionAnalyzer:
         # Return only records for the requested qids (in original order)
         return [cache[q] for q in qids if q in cache]
 
+    def fetch_creators_batched(
+        self,
+        qids: list[str],
+        class_qid: str,
+        batch_size: int = 50,
+        force: bool = False,
+        api_url: str = "https://www.wikidata.org/w/api.php",
+        calls_per_minute: int = 200,
+    ) -> list[HistoryRecord]:
+        """
+        Fast path: fetch only the *creator* of each item via
+        MediaWiki ``action=query&prop=revisions&rvdir=newer&rvlimit=1``.
+
+        The MediaWiki API rejects multi-page queries combined with
+        ``rvdir``/``rvlimit``, so we issue one request per QID. Request rate
+        is capped via ``lodstorage.rate_limiter.RateLimiter`` to stay under
+        Wikimedia's unauthenticated read limit (default 500/min).
+
+        ``batch_size`` controls cache-flush granularity (every N requests).
+
+        Returns HistoryRecord with ``editors=[]`` (not collected; use
+        ``fetch_history`` for full editor list).
+        """
+        cache = {} if force else self.load_cache(class_qid)
+        to_fetch = [q for q in qids if q not in cache]
+        total = len(to_fetch)
+        session = requests.Session()
+        session.headers.update(
+            {
+                "User-Agent": (
+                    "pyCEURmake/wd_contributions "
+                    "(https://github.com/WolfgangFahl/pyCEURmake)"
+                )
+            }
+        )
+        # Honour 429 Retry-After with exponential backoff (standard urllib3).
+        retry = Retry(
+            total=8,
+            backoff_factor=2.0,
+            status_forcelist=(429, 500, 502, 503, 504),
+            allowed_methods=frozenset(["GET"]),
+            respect_retry_after_header=True,
+            raise_on_status=False,
+        )
+        session.mount("https://", HTTPAdapter(max_retries=retry))
+        session.mount("http://", HTTPAdapter(max_retries=retry))
+
+        limiter = RateLimiter(calls_per_minute=calls_per_minute)
+
+        @limiter.rate_limited
+        def _fetch_one(qid: str) -> tuple[str, str | None]:
+            params = {
+                "action": "query",
+                "format": "json",
+                "prop": "revisions",
+                "rvprop": "user|timestamp",
+                "rvdir": "newer",
+                "rvlimit": 1,
+                "titles": qid,
+                "formatversion": 2,
+            }
+            resp = session.get(api_url, params=params, timeout=30)
+            resp.raise_for_status()
+            pages = resp.json().get("query", {}).get("pages", [])
+            if not pages:
+                return qid, None
+            revs = pages[0].get("revisions", [])
+            return qid, (revs[0].get("user") if revs else None)
+
+        for i, qid in enumerate(to_fetch, 1):
+            try:
+                _, creator = _fetch_one(qid)
+                cache[qid] = HistoryRecord(qid=qid, creator=creator, editors=[])
+            except Exception as e:  # pragma: no cover - network defensive
+                if self.debug:
+                    print(f"[wd_contributions] {qid} failed: {e}")
+
+            if self.debug and i % batch_size == 0:
+                print(f"[wd_contributions] creators {i:5d}/{total:5d}")
+            if i % (batch_size * 10) == 0:
+                self.save_cache(class_qid, cache)
+
+        if self.debug and total:
+            print(f"[wd_contributions] creators {total:5d}/{total:5d} done")
+        self.save_cache(class_qid, cache)
+        return [cache[q] for q in qids if q in cache]
+
     # --------------------------------------------------------------- analysis
 
     def classify_contributions(
@@ -296,6 +387,8 @@ class WdContributionAnalyzer:
         classes: list[tuple[str, str, str]] | None = None,
         sample_size: int | None = None,
         force: bool = False,
+        full_history: bool = False,
+        progress: bool | None = None,
     ) -> list[ContributionStats]:
         """
         Compute ContributionStats for each (class_qid, label, kind) tuple.
@@ -306,7 +399,13 @@ class WdContributionAnalyzer:
             sample_size: if set, only fetch history for this many QIDs per class
                 (useful for tests; counts/coverage are still computed in full).
             force: ignore the on-disk cache.
+            full_history: if True use slow per-item ``fetch_history`` (collects
+                full editor list); otherwise use the fast batched creator fetch
+                (~50x fewer HTTP calls; sufficient for the distribution chart).
+            progress: print per-batch progress (defaults to self.debug).
         """
+        if progress is None:
+            progress = self.debug
         classes = classes or DEFAULT_CLASSES
         results: list[ContributionStats] = []
         for class_qid, label, kind in classes:
@@ -315,9 +414,16 @@ class WdContributionAnalyzer:
             coverage = (100.0 * ceurws_count / total_count) if total_count else 0.0
 
             qids = self.list_ceurws_qids(class_qid, kind=kind)
-            records = self.fetch_history(
-                qids, class_qid=class_qid, max_items=sample_size, force=force
-            )
+            if sample_size is not None:
+                qids = qids[:sample_size]
+            if full_history:
+                records = self.fetch_history(
+                    qids, class_qid=class_qid, force=force
+                )
+            else:
+                records = self.fetch_creators_batched(
+                    qids, class_qid=class_qid, force=force
+                )
             community, bots, creators = self.classify_contributions(records)
             top = creators.most_common(5)
 
@@ -379,3 +485,103 @@ class WdContributionAnalyzer:
     @staticmethod
     def as_json(stats: list[ContributionStats]) -> str:
         return json.dumps([s.to_dict() for s in stats], indent=2)
+
+    # --------------------------------------------------------------- plotting
+
+    def plot_distribution(
+        self,
+        records: list[HistoryRecord],
+        title: str,
+        out_path: Path | str,
+        threshold: int = 15,
+        highlight: Iterable[str] = ("Tholzheim", "WolfgangFahl", "Seppl2013", "CEUR-WS"),
+        figsize: tuple[float, float] = (8.0, 6.0),
+        dpi: int = 150,
+    ) -> Path:
+        """
+        Render a creator-distribution pie chart (ported from the wiki prototype).
+
+        Args:
+            records: HistoryRecord list (only ``creator`` is used).
+            title: chart title.
+            out_path: PNG output path.
+            threshold: creators with fewer than ``threshold`` items are
+                aggregated into "others".
+            highlight: usernames to "explode" (offset visually) in the pie.
+            figsize/dpi: matplotlib figure params.
+
+        Returns:
+            Path to the written PNG.
+        """
+        # lazy import so the module can be imported headless
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        out_path = Path(out_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        creators = Counter(r.creator or "<unknown>" for r in records)
+        distribution: dict[str, int] = {"others": 0}
+        for label, count in creators.most_common():
+            if count < threshold:
+                distribution["others"] += count
+            else:
+                distribution[label] = count
+        if distribution["others"] == 0:
+            distribution.pop("others")
+
+        labels = list(distribution.keys())
+        sizes = list(distribution.values())
+        explode = [0.1 if lab in set(highlight) else 0.0 for lab in labels]
+
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.pie(
+            sizes,
+            explode=explode,
+            labels=labels,
+            autopct="%1.1f%%",
+            startangle=90,
+            textprops={"fontsize": 9},
+        )
+        ax.axis("equal")
+        plt.title(f"{title}\n(n = {len(records)})")
+        plt.tight_layout()
+        fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+        return out_path
+
+    def plot_all(
+        self,
+        out_dir: Path | str,
+        classes: list[tuple[str, str, str]] | None = None,
+        force: bool = False,
+        prefix: str = "distribution_of_",
+        suffix: str = "_wd_creators.png",
+    ) -> list[Path]:
+        """
+        Generate one creator-distribution chart per entity class and write
+        them as PNGs into ``out_dir``.
+
+        Returns the list of written paths.
+        """
+        classes = classes or DEFAULT_CLASSES
+        out_dir = Path(out_dir)
+        written: list[Path] = []
+        for class_qid, label, kind in classes:
+            qids = self.list_ceurws_qids(class_qid, kind=kind)
+            records = self.fetch_creators_batched(
+                qids, class_qid=class_qid, force=force
+            )
+            slug = label.lower().replace(" ", "_")
+            out_path = out_dir / f"{prefix}{slug}{suffix}"
+            self.plot_distribution(
+                records,
+                title=f"Distribution of Item Creators of {label}",
+                out_path=out_path,
+            )
+            written.append(out_path)
+            if self.debug:
+                print(f"[wd_contributions] wrote {out_path} ({len(records)} items)")
+        return written

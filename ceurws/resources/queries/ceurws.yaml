@@ -125,6 +125,60 @@
     where acronymlen < 20
     group by acronymlen
     order by 2 desc
+'CeurwsEntityCount':
+  sparql: |
+    # Count entities of a given class that are part of CEUR-WS (P179 -> Q27230297)
+    # Parameter: {class_qid} e.g. Q1143604 (Proceedings)
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    SELECT (COUNT(DISTINCT ?item) AS ?count) WHERE {{
+      ?item wdt:P31 wd:{class_qid} ;
+            wdt:P179 wd:Q27230297 .
+    }}
+'CeurwsEventEntityCount':
+  sparql: |
+    # Count CEUR-WS-affiliated *events* of a given class
+    # (linked from a CEUR-WS proceeding via P4745).
+    # Parameter: {class_qid} e.g. Q40444998 (Workshop), Q2020153 (Conference)
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    SELECT (COUNT(DISTINCT ?item) AS ?count) WHERE {{
+      ?proc wdt:P31 wd:Q1143604 ;
+            wdt:P179 wd:Q27230297 ;
+            wdt:P4745 ?item .
+      ?item wdt:P31 wd:{class_qid} .
+    }}
+'TotalEntityCount':
+  sparql: |
+    # Count all entities of a given Wikidata class (no CEUR-WS filter)
+    # Parameter: {class_qid}
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    SELECT (COUNT(DISTINCT ?item) AS ?count) WHERE {{
+      ?item wdt:P31 wd:{class_qid} .
+    }}
+'CeurwsEntityList':
+  sparql: |
+    # List CEUR-WS entities (QIDs) of a given class for contribution analysis
+    # Parameter: {class_qid}
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    SELECT DISTINCT ?item WHERE {{
+      ?item wdt:P31 wd:{class_qid} ;
+            wdt:P179 wd:Q27230297 .
+    }}
+'CeurwsEventEntityList':
+  sparql: |
+    # List CEUR-WS-affiliated *events* (QIDs) of a given class
+    # Parameter: {class_qid}
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    SELECT DISTINCT ?item WHERE {{
+      ?proc wdt:P31 wd:Q1143604 ;
+            wdt:P179 wd:Q27230297 ;
+            wdt:P4745 ?item .
+      ?item wdt:P31 wd:{class_qid} .
+    }}
 'WikidataSync':
   sql: |
     -- Volumes in Proceedings not in Volumes (no title, so we don't include these)

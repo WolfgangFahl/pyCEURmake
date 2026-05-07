@@ -126,7 +126,7 @@ ceur-ws --version
 
 ## Model
 
-![pyCEURmake dblp model](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/WolfgangFahl/pyCEURmake/main/docs/model.puml)
+![pyCEURmake dblp model](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/WolfgangFahl/pyCEURmake/main/docs/model.puml&version=1)
 
 Source: [`docs/model.puml`](./docs/model.puml)
 

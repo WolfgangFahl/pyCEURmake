@@ -1,0 +1,55 @@
+#!/bin/bash
+# WF 2026-04-28
+# update CEUR-WS
+DBLP_ENDPOINT_NAME="dblp"
+
+# 
+# reinstall the given python repo with pull and pipx
+# $1: the repo
+reinstall() {
+  local repo="$1"
+  cd ~/source/python/$repo
+  git pull
+  pipx install . --force
+}
+
+# reinstall all repos
+reinstall_all() {
+  reinstall pyCEURmake
+  reinstall ceur-spt
+}
+
+# clear the cache
+clear_cache() {
+  cd $HOME/.ceurws
+  rm ceurws.db
+  rm index.html
+  rm *.json
+}
+
+# update the CEUR Volume browser data
+update_cvb() {
+  # recreate 
+  ceur-ws -rc
+  # DBLP
+  ceur-ws -dbu -den $DBLP_ENDPOINT_NAME
+  # Wikdata
+  ceur-ws -wdu
+}
+
+# update the Single Point of truth
+update_spt() {
+  ceur-spt -rc
+}
+
+# restartup
+restartup() {
+  startup --cvb
+  start_ceurspt
+}
+
+#reinstall_all
+clear_cache
+update_cvb
+update_spt
+restartup

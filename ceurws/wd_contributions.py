@@ -20,8 +20,10 @@ Created: 2026-05-06
 import json
 import os
 import time
+import warnings
 from collections import Counter
 from collections.abc import Iterable
+from contextlib import contextmanager
 from dataclasses import field
 from pathlib import Path
 
@@ -30,9 +32,32 @@ from basemkit.yamlable import lod_storable
 from lodstorage.query import QueryManager
 from lodstorage.rate_limiter import RateLimiter
 from requests.adapters import HTTPAdapter
+from tqdm.auto import tqdm
 from urllib3.util.retry import Retry
 
 from ceurws.config import CEURWS, make_sparql
+
+
+@contextmanager
+def _unpatched_warnings():
+    """
+    Temporarily install a ``warnings.warn`` that silently accepts and drops
+    any unknown keyword arguments, in case a module in the import chain
+    (e.g. ``shutup``, pulled in by ``basemkit.base_cmd``) has monkey-patched
+    it with a signature that rejects newer kwargs such as
+    ``skip_file_prefixes`` introduced in Python 3.12. Matplotlib's
+    ``warn_on_missing_glyph`` uses that kwarg and crashes otherwise.
+    """
+    original_warn = warnings.warn
+
+    def _tolerant_warn(message, category=UserWarning, stacklevel=1, source=None, **_ignored):
+        return original_warn(message, category, stacklevel + 1, source)
+
+    warnings.warn = _tolerant_warn
+    try:
+        yield
+    finally:
+        warnings.warn = original_warn
 
 
 @lod_storable
@@ -344,6 +369,7 @@ class WdContributionAnalyzer:
         force: bool = False,
         api_url: str = "https://www.wikidata.org/w/api.php",
         calls_per_minute: int = 200,
+        progress: bool = False,
     ) -> list[HistoryRecord]:
         """
         Fast path: fetch only the *creator* of each item via
@@ -386,7 +412,10 @@ class WdContributionAnalyzer:
             revs = pages[0].get("revisions", [])
             return qid, (revs[0].get("user") if revs else None)
 
-        for i, qid in enumerate(to_fetch, 1):
+        for i, qid in enumerate(
+            tqdm(to_fetch, desc=f"creators {class_qid}", unit="qid", disable=not progress),
+            1,
+        ):
             try:
                 _, creator = _fetch_one(qid)
                 cache[qid] = HistoryRecord(qid=qid, creator=creator, editors=[])
@@ -412,6 +441,7 @@ class WdContributionAnalyzer:
         api_url: str = "https://www.wikidata.org/w/api.php",
         calls_per_minute: int = 200,
         progress_every: int = 25,
+        progress: bool = False,
     ) -> list[HistoryRecord]:
         """
         Fetch *every* revision (user + timestamp) for each QID with
@@ -449,7 +479,10 @@ class WdContributionAnalyzer:
             resp.raise_for_status()
             return resp.json()
 
-        for i, qid in enumerate(to_fetch, 1):
+        for i, qid in enumerate(
+            tqdm(to_fetch, desc=f"revisions {class_qid}", unit="qid", disable=not progress),
+            1,
+        ):
             try:
                 edit_counts: Counter = Counter()
                 earliest_user: str | None = None
@@ -574,7 +607,7 @@ class WdContributionAnalyzer:
                 qids = qids[:sample_size]
 
             records = self.fetch_revisions_full(
-                qids, class_qid=class_qid, force=force
+                qids, class_qid=class_qid, force=force, progress=progress
             )
             total_edits, sot_edits, community_edits, community_counter = (
                 self.classify_edits(records)
@@ -712,23 +745,24 @@ class WdContributionAnalyzer:
         labels = list(distribution.keys())
         sizes = list(distribution.values())
 
-        fig, ax = plt.subplots(figsize=figsize)
-        ax.pie(
-            sizes,
-            labels=labels,
-            autopct="%1.1f%%",
-            startangle=90,
-            textprops={"fontsize": 9},
-        )
-        ax.axis("equal")
-        subtitle = (
-            f"items={len(records)}, contributions={total_contribs}, "
-            f"distinct editors={len(counter)}"
-        )
-        plt.title(f"{title}\n({subtitle})")
-        plt.tight_layout()
-        fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
-        plt.close(fig)
+        with _unpatched_warnings():
+            fig, ax = plt.subplots(figsize=figsize)
+            ax.pie(
+                sizes,
+                labels=labels,
+                autopct="%1.1f%%",
+                startangle=90,
+                textprops={"fontsize": 9},
+            )
+            ax.axis("equal")
+            subtitle = (
+                f"items={len(records)}, contributions={total_contribs}, "
+                f"distinct editors={len(counter)}"
+            )
+            plt.title(f"{title}\n({subtitle})")
+            plt.tight_layout()
+            fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
+            plt.close(fig)
         return out_path
 
     def plot_all(
@@ -739,6 +773,7 @@ class WdContributionAnalyzer:
         prefix: str = "distribution_of_",
         suffix: str = "_community_editors.png",
         mode: str = "edits",
+        progress: bool = False,
     ) -> list[Path]:
         """
         Generate one community-contribution pie per entity class and write
@@ -757,7 +792,7 @@ class WdContributionAnalyzer:
             class_qid, label, kind = spec.qid, spec.label, spec.kind
             qids = self.list_qids(class_qid, kind=kind)
             records = self.fetch_revisions_full(
-                qids, class_qid=class_qid, force=force
+                qids, class_qid=class_qid, force=force, progress=progress
             )
             slug = label.lower().replace(" ", "_")
             out_path = out_dir / f"{prefix}{slug}{suffix}"

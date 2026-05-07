@@ -209,3 +209,4 @@ ignore_missing_imports = true
 
 [project.scripts]
 ceur-ws = "ceurws.ceur_ws_web_cmd:main"
+ceur-wd-contributions = "ceurws.wd_contributions_cmd:main"

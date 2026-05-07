@@ -29,7 +29,7 @@ class CeurWsWebServer(InputWebserver):
 
     @classmethod
     def get_config(cls) -> WebserverConfig:
-        copy_right = "(c)2023-2024 Wolfgang Fahl"
+        copy_right = "(c)2023-2026 Wolfgang Fahl"
         config = WebserverConfig(
             copy_right=copy_right,
             version=Version(),

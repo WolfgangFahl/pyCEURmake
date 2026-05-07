@@ -86,3 +86,116 @@ options:
   -wdu, --wikidata_update
                         update tables from wikidata
 ```
+
+### List
+
+List all volumes:
+
+```bash
+ceur-ws --list | tail
+Vol-4193
+Vol-4194
+Vol-4195
+Vol-4196
+Vol-4197
+Vol-4198
+Vol-4199
+Vol-4200
+Vol-4201
+Vol-4202
+```
+
+### Serve
+
+Start the local CEUR-WS volume browser (default port 9998):
+
+```bash
+ceur-ws --serve
+```
+
+See also the public demo:
+[CEUR-Volume Browser at RWTH Aachen i5](http://cvb.wikidata.dbis.rwth-aachen.de/)
+
+### Version
+
+Show the current version:
+
+```bash
+ceur-ws --version
+```
+
+## Model
+
+![pyCEURmake dblp model](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/WolfgangFahl/pyCEURmake/main/docs/model.puml)
+
+Source: [`docs/model.puml`](./docs/model.puml)
+
+## Wikidata Community Contributions
+
+`ceur-wd-contributions` analyses community contributions to CEUR-WS
+related items on Wikidata. It fetches revision histories for items in
+the configured Wikidata classes and produces per-user statistics and
+optional pie charts.
+
+```
+usage: ceur-wd-contributions [-h] [-a] [-d] [--debugLocalPath DEBUGLOCALPATH]
+                             [--debugPort DEBUGPORT] [--debugRemotePath DEBUGREMOTEPATH]
+                             [--debugServer DEBUGSERVER] [-f] [-q] [-v] [-V]
+                             [--class CLASS_QIDS] [--config CONFIG] [--endpoint ENDPOINT]
+                             [--format {markdown,latex,json}] [--threshold THRESHOLD]
+                             [--plot DIR] [--progress] [--sample N]
+
+CEUR-WS Wikidata community contribution analysis
+
+options:
+  -h, --help            show this help message and exit
+  -a, --about           show version info and open documentation
+  -d, --debug           enable debug output
+  --debugLocalPath DEBUGLOCALPATH
+                        remote debug Server path mapping - localPath - path on machine
+                        where python runs
+  --debugPort DEBUGPORT
+                        remote debug Port [default: 5678]
+  --debugRemotePath DEBUGREMOTEPATH
+                        remote debug Server path mapping - remotePath - path on debug
+                        server
+  --debugServer DEBUGSERVER
+                        remote debug Server
+  -f, --force           force overwrite or unsafe actions
+  -q, --quiet           suppress all output
+  -v, --verbose         increase output verbosity
+  -V, --version         show program's version number and exit
+  --class CLASS_QIDS    restrict analysis to this Wikidata class QID (repeatable).
+                        Default: all classes from config.
+  --config CONFIG       path to a WdContributionsConfig YAML file (defaults to bundled
+                        resource)
+  --endpoint ENDPOINT   override SPARQL endpoint URL from config
+  --format {markdown,latex,json}
+                        output format for the statistics table [default: markdown]
+  --threshold THRESHOLD
+                        in plots, aggregate users below this percent of total into
+                        'others' [default: 1.0]
+  --plot DIR            also render community-contribution pie charts (PNG) into DIR
+  --progress            show tqdm progress bars during revision fetch
+  --sample N            cap analysis to N QIDs per class (useful for testing)
+```
+
+### Options explained
+
+- `--class CLASS_QIDS`: restrict the analysis to one or more Wikidata
+  class QIDs (repeatable). Defaults to all classes listed in the config.
+- `--config CONFIG`: path to a `WdContributionsConfig` YAML file.
+  Defaults to the bundled resource shipped with pyCEURmake.
+- `--endpoint ENDPOINT`: override the SPARQL endpoint URL from the
+  config (for example to target a private Wikidata mirror).
+- `--format {markdown,latex,json}`: output format for the statistics
+  table; defaults to `markdown`.
+- `--threshold THRESHOLD`: in pie charts, aggregate users contributing
+  less than this percent of the total into an `others` slice. Default
+  `1.0`.
+- `--plot DIR`: render community-contribution pie charts as PNG files
+  into the given directory (in addition to the text table).
+- `--progress`: show `tqdm` progress bars while fetching revisions.
+- `--sample N`: cap the analysis to `N` QIDs per class, useful for
+  quick test runs before a full analysis.
+

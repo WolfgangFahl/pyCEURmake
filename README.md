@@ -29,3 +29,60 @@ For a specific release, use the version DOI shown on the corresponding
 
 ## Demos
 [CEUR-Volume Browser at RWTH Aachen i5](http://cvb.wikidata.dbis.rwth-aachen.de/)
+## Installation
+```
+pipx install pyCEURmake
+```
+## Usage
+```
+usage: ceur-ws [-h] [-a] [-d] [--debugLocalPath DEBUGLOCALPATH]
+               [--debugPort DEBUGPORT] [--debugRemotePath DEBUGREMOTEPATH]
+               [--debugServer DEBUGSERVER] [-f] [-q] [-v] [-V]
+               [--apache APACHE] [-c] [-l] [-i INPUT] [-rol] [--host HOST]
+               [--port PORT] [-s] [-dbu] [-nq] [-den DBLP_ENDPOINT_NAME]
+               [--list] [-rc] [-uv] [-wen WIKIDATA_ENDPOINT_NAME] [-wdu]
+
+CEUR-WS Volume browser
+
+options:
+  -h, --help            show this help message and exit
+  -a, --about           show version info and open documentation
+  -d, --debug           enable debug output
+  --debugLocalPath DEBUGLOCALPATH
+                        remote debug Server path mapping - localPath - path on
+                        machine where python runs
+  --debugPort DEBUGPORT
+                        remote debug Port [default: 5678]
+  --debugRemotePath DEBUGREMOTEPATH
+                        remote debug Server path mapping - remotePath - path
+                        on debug server
+  --debugServer DEBUGSERVER
+                        remote debug Server
+  -f, --force           force overwrite or unsafe actions
+  -q, --quiet           suppress all output
+  -v, --verbose         increase output verbosity
+  -V, --version         show program's version number and exit
+  --apache APACHE       create an apache configuration file for the given
+                        domain
+  -c, --client          start client
+  -l, --local           run with local file system access
+  -i INPUT, --input INPUT
+                        input file
+  -rol, --render_on_load
+                        render on load
+  --host HOST           the host to serve / listen from (default: localhost)
+  --port PORT           the port to serve from (default: 9998)
+  -s, --serve           start webserver
+  -dbu, --dblp_update   update dblp cache
+  -nq, --namedqueries   generate named queries [default: False]
+  -den DBLP_ENDPOINT_NAME, --dblp_endpoint_name DBLP_ENDPOINT_NAME
+                        name of dblp endpoint to use dblp-qlever
+  --list                list all volumes [default: False]
+  -rc, --recreate       recreate caches e.g. volume table
+  -uv, --update         update volumes by parsing index.html adding recently
+                        published volumes
+  -wen WIKIDATA_ENDPOINT_NAME, --wikidata_endpoint_name WIKIDATA_ENDPOINT_NAME
+                        name of wikidata endpoint to use wikidata
+  -wdu, --wikidata_update
+                        update tables from wikidata
+```

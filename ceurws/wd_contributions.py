@@ -17,18 +17,16 @@ Created: 2026-05-06
 @author: wf
 """
 
-from __future__ import annotations
-
-import dataclasses
 import json
 import os
 import time
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import field
 from pathlib import Path
 from typing import Iterable
 
 import requests
+from basemkit.yamlable import lod_storable
 from lodstorage.query import QueryManager
 from lodstorage.rate_limiter import RateLimiter
 from lodstorage.sparql import SPARQL
@@ -37,38 +35,47 @@ from urllib3.util.retry import Retry
 
 from ceurws.config import CEURWS
 
-# Wikidata QIDs of bot accounts that mass-created CEUR-WS entries.
-# Anything outside this set is treated as a community contribution.
-DEFAULT_BOT_USERS: frozenset[str] = frozenset(
-    {
-        "CEUR-WS",        # primary CEUR-WS bot account
-        "PreScholarBot",
-        "DBLP-Bot",
-        "KrBot",          # generic Wikidata maintenance bot
-    }
-)
 
-# "Source of truth" users: the three accounts whose edits we treat as the
-# bot / maintainer baseline. Edits by anyone else are "community" edits.
-DEFAULT_SOURCE_OF_TRUTH: frozenset[str] = frozenset(
-    {"WolfgangFahl", "Tholzheim", "CEUR-WS"}
-)
+@lod_storable
+class WdClassSpec:
+    """A Wikidata class to analyse.
 
-# Default classes analysed.
-# Each entry is (class_qid, label, kind) where kind is:
-#   - "proceedings": item itself has wdt:P179 wd:Q27230297
-#   - "event":       item is reachable as ?proc wdt:P4745 ?item from a CEUR-WS proceeding
-#   - "all":         any item with wdt:P31 wd:<class>, no CEUR-WS filter
-DEFAULT_CLASSES: list[tuple[str, str, str]] = [
-    ("Q1143604", "Proceedings", "all"),
-    ("Q2020153", "Academic conference", "all"),
-    ("Q40444998", "Academic workshop", "all"),
-]
+    kind:
+      - "proceedings": item itself has wdt:P179 wd:Q27230297
+      - "event":       item reachable as ?proc wdt:P4745 ?item from a CEUR-WS proceeding
+      - "all":         any item with wdt:P31 wd:<class>, no CEUR-WS filter
+    """
 
-WIKIDATA_ENTITY_PREFIX = "http://www.wikidata.org/entity/"
+    qid: str
+    label: str
+    kind: str = "all"
 
 
-@dataclass
+@lod_storable
+class WdContributionsConfig:
+    """Configuration for :class:`WdContributionAnalyzer`.
+
+    Defaults are loaded from ``ceurws/resources/yaml/wd_contributions.yaml``.
+    """
+
+    endpoint_url: str = "https://query.wikidata.org/sparql"
+    wikidata_entity_prefix: str = "http://www.wikidata.org/entity/"
+    bot_users: list[str] = field(default_factory=list)
+    source_of_truth: list[str] = field(default_factory=list)
+    classes: list[WdClassSpec] = field(default_factory=list)
+
+    @classmethod
+    def default_yaml_path(cls) -> Path:
+        """Return the path to the bundled default YAML resource."""
+        return Path(__file__).parent / "resources" / "yaml" / "wd_contributions.yaml"
+
+    @classmethod
+    def default(cls) -> "WdContributionsConfig":
+        """Load the bundled default configuration."""
+        return cls.load_from_yaml_file(str(cls.default_yaml_path()))
+
+
+@lod_storable
 class HistoryRecord:
     """One QID's contributor footprint."""
 
@@ -79,8 +86,22 @@ class HistoryRecord:
     # Empty when only creator/editors were collected.
     edit_counts: dict[str, int] = field(default_factory=dict)
 
-    def to_dict(self) -> dict:
-        return dataclasses.asdict(self)
+
+@lod_storable
+class ContributionStats:
+    """Aggregated per-class contribution statistics."""
+
+    entity_class_qid: str
+    label: str
+    # item counts
+    total_count: int        # total Wikidata items of this class
+    analysed: int           # items for which we collected revisions
+    # edit counts (revision-level)
+    total_edits: int
+    sot_edits: int
+    community_edits: int
+    distinct_community_editors: int
+    top_contributors: list[tuple[str, int]] = field(default_factory=list)    # community-only top editors
 
     @classmethod
     def from_dict(cls, d: dict) -> "HistoryRecord":
@@ -92,7 +113,7 @@ class HistoryRecord:
         )
 
 
-@dataclass
+@lod_storable
 class ContributionStats:
     """Aggregated per-class contribution statistics."""
 
@@ -122,7 +143,8 @@ class WdContributionAnalyzer:
 
     def __init__(
         self,
-        endpoint_url: str = "https://query.wikidata.org/sparql",
+        config: WdContributionsConfig | None = None,
+        endpoint_url: str | None = None,
         bot_users: Iterable[str] | None = None,
         source_of_truth: Iterable[str] | None = None,
         cache_dir: Path | None = None,
@@ -132,21 +154,22 @@ class WdContributionAnalyzer:
     ):
         """
         Args:
-            endpoint_url: Wikidata SPARQL endpoint URL.
-            bot_users: usernames considered bots; defaults to ``DEFAULT_BOT_USERS``.
-            source_of_truth: usernames whose edits represent the bot/maintainer
-                baseline; their revisions are counted separately from community
-                revisions. Defaults to ``DEFAULT_SOURCE_OF_TRUTH``.
+            config: :class:`WdContributionsConfig` to use; defaults to
+                ``WdContributionsConfig.default()`` (loaded from YAML).
+            endpoint_url: override SPARQL endpoint URL from config.
+            bot_users: override bot usernames from config.
+            source_of_truth: override SoT usernames from config.
             cache_dir: directory for JSON caches (default ``$CEURWS.CACHE_DIR/wd_contributions``).
             sleep_every: throttle the MediaWiki API every N pages.
             sleep_seconds: seconds to sleep when throttling.
             debug: verbose logging.
         """
-        self.endpoint_url = endpoint_url
-        self.sparql = SPARQL(endpoint_url)
-        self.bot_users: set[str] = set(bot_users) if bot_users is not None else set(DEFAULT_BOT_USERS)
+        self.config = config if config is not None else WdContributionsConfig.default()
+        self.endpoint_url = endpoint_url or self.config.endpoint_url
+        self.sparql = SPARQL(self.endpoint_url)
+        self.bot_users: set[str] = set(bot_users) if bot_users is not None else set(self.config.bot_users)
         self.source_of_truth: set[str] = (
-            set(source_of_truth) if source_of_truth is not None else set(DEFAULT_SOURCE_OF_TRUTH)
+            set(source_of_truth) if source_of_truth is not None else set(self.config.source_of_truth)
         )
         self.cache_dir = cache_dir or (CEURWS.CACHE_DIR / "wd_contributions")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -254,11 +277,12 @@ class WdContributionAnalyzer:
         query = self.qm.queriesByName[query_name]
         sparql_str = query.query.format(class_qid=class_qid)
         rows = self.sparql.queryAsListOfDicts(sparql_str)
+        prefix = self.config.wikidata_entity_prefix
         qids: list[str] = []
         for row in rows:
             uri = row.get("item", "")
-            if uri.startswith(WIKIDATA_ENTITY_PREFIX):
-                qids.append(uri[len(WIKIDATA_ENTITY_PREFIX):])
+            if uri.startswith(prefix):
+                qids.append(uri[len(prefix):])
         return qids
 
     # Backwards-compatible alias
@@ -549,22 +573,20 @@ class WdContributionAnalyzer:
 
     def analyze(
         self,
-        classes: list[tuple[str, str, str]] | None = None,
+        classes: list[WdClassSpec] | None = None,
         sample_size: int | None = None,
         force: bool = False,
         progress: bool | None = None,
     ) -> list[ContributionStats]:
         """
-        Compute ContributionStats for each (class_qid, label, kind) tuple.
+        Compute ContributionStats for each :class:`WdClassSpec`.
 
         Fetches the **full revision history** of every item and classifies
         each revision as source-of-truth (``self.source_of_truth``) or
         community.
 
         Args:
-            classes: list of (qid, label, kind); defaults to ``DEFAULT_CLASSES``.
-                ``kind`` is "all" (no CEUR-WS filter, default in DEFAULT_CLASSES),
-                "proceedings" (P179-based) or "event" (reverse P4745).
+            classes: list of :class:`WdClassSpec`; defaults to ``self.config.classes``.
             sample_size: if set, only analyse this many QIDs per class
                 (useful for tests).
             force: ignore the on-disk cache.
@@ -572,9 +594,10 @@ class WdContributionAnalyzer:
         """
         if progress is None:
             progress = self.debug
-        classes = classes or DEFAULT_CLASSES
+        classes = classes if classes is not None else self.config.classes
         results: list[ContributionStats] = []
-        for class_qid, label, kind in classes:
+        for spec in classes:
+            class_qid, label, kind = spec.qid, spec.label, spec.kind
             total_count = self.count_total(class_qid)
             qids = self.list_qids(class_qid, kind=kind)
             if sample_size is not None:
@@ -741,7 +764,7 @@ class WdContributionAnalyzer:
     def plot_all(
         self,
         out_dir: Path | str,
-        classes: list[tuple[str, str, str]] | None = None,
+        classes: list[WdClassSpec] | None = None,
         force: bool = False,
         prefix: str = "distribution_of_",
         suffix: str = "_community_editors.png",
@@ -757,10 +780,11 @@ class WdContributionAnalyzer:
 
         Returns the list of written paths.
         """
-        classes = classes or DEFAULT_CLASSES
+        classes = classes if classes is not None else self.config.classes
         out_dir = Path(out_dir)
         written: list[Path] = []
-        for class_qid, label, kind in classes:
+        for spec in classes:
+            class_qid, label, kind = spec.qid, spec.label, spec.kind
             qids = self.list_qids(class_qid, kind=kind)
             records = self.fetch_revisions_full(
                 qids, class_qid=class_qid, force=force

@@ -1,0 +1,32 @@
+# Defaults for CEUR-WS Wikidata contribution analysis.
+# See https://github.com/WolfgangFahl/pyCEURmake/issues/108
+endpoint_url: https://query.wikidata.org/sparql
+wikidata_entity_prefix: http://www.wikidata.org/entity/
+# Wikidata usernames of bot accounts that mass-created CEUR-WS entries.
+# Anything outside this set is treated as a community contribution.
+bot_users:
+  - CEUR-WS
+  - PreScholarBot
+  - DBLP-Bot
+  - KrBot
+# "Source of truth" users: accounts whose edits are treated as the
+# bot / maintainer baseline. Edits by anyone else are "community" edits.
+source_of_truth:
+  - WolfgangFahl
+  - Tholzheim
+  - CEUR-WS
+# Classes analysed by default.
+# kind:
+#   proceedings: item itself has wdt:P179 wd:Q27230297
+#   event:       item reachable as ?proc wdt:P4745 ?item from a CEUR-WS proceeding
+#   all:         any item with wdt:P31 wd:<class>, no CEUR-WS filter
+classes:
+  - qid: Q1143604
+    label: Proceedings
+    kind: all
+  - qid: Q2020153
+    label: Academic conference
+    kind: all
+  - qid: Q40444998
+    label: Academic workshop
+    kind: all

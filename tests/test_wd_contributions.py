@@ -14,7 +14,6 @@ from lodstorage.query import Endpoint
 from ceurws.wd_contributions import (
     ContributionStats,
     HistoryRecord,
-    WdClassSpec,
     WdContributionAnalyzer,
     WdContributionsConfig,
 )
@@ -50,14 +49,14 @@ class TestWdContributionsConfig(Basetest):
         """WdContributionsConfig round-trips through YAML."""
         cfg = WdContributionsConfig.default()
         yaml_str = cfg.to_yaml()
-        cfg2 = WdContributionsConfig.from_yaml(yaml_str)
+        cfg2 = WdContributionsConfig.from_yaml(yaml_str) # @UndefinedVariable
         self.assertEqual(cfg.endpoint_url, cfg2.endpoint_url)
         self.assertEqual(sorted(cfg.bot_users), sorted(cfg2.bot_users))
         self.assertEqual(
             sorted(cfg.source_of_truth), sorted(cfg2.source_of_truth)
         )
         self.assertEqual(len(cfg.classes), len(cfg2.classes))
-        for a, b in zip(cfg.classes, cfg2.classes):
+        for a, b in zip(cfg.classes, cfg2.classes, strict=True):
             self.assertEqual((a.qid, a.label, a.kind), (b.qid, b.label, b.kind))
 
     def testHistoryRecordRoundTrip(self):
@@ -71,11 +70,11 @@ class TestWdContributionsConfig(Basetest):
         d = rec.to_dict()
         self.assertEqual(d["qid"], "Q1")
         self.assertEqual(d["edit_counts"]["Alice"], 3)
-        rec2 = HistoryRecord.from_dict(d)
+        rec2 = HistoryRecord.from_dict(d) # @UndefinedVariable
         self.assertEqual(rec, rec2)
         # JSON round-trip
         js = rec.to_json()
-        rec3 = HistoryRecord.from_json(js)
+        rec3 = HistoryRecord.from_json(js) # @UndefinedVariable
         self.assertEqual(rec, rec3)
 
     def testContributionStatsRoundTrip(self):
@@ -92,7 +91,7 @@ class TestWdContributionsConfig(Basetest):
             top_contributors=[("Sic19", 400), ("Fnielsen", 200)],
         )
         yaml_str = stats.to_yaml()
-        stats2 = ContributionStats.from_yaml(yaml_str)
+        stats2 = ContributionStats.from_yaml(yaml_str) # @UndefinedVariable
         self.assertEqual(stats.entity_class_qid, stats2.entity_class_qid)
         self.assertEqual(stats.total_edits, stats2.total_edits)
         self.assertEqual(stats.community_edits, stats2.community_edits)
@@ -103,7 +102,7 @@ class TestWdContributions(Basetest):
 
     _wikidata_available: bool | None = None
 
-    def setUp(self, debug=False, profile=True):
+    def setUp(self, debug=True, profile=True):
         """
         set up test environment
         """
@@ -145,7 +144,8 @@ class TestWdContributions(Basetest):
         total = self.analyzer.count_total(proceedings)
         if self.debug:
             print(f"Proceedings CEUR-WS={ceurws} total={total}")
-        self.assertGreater(ceurws, 3000, "Expected > 3000 CEUR-WS proceedings")
+        expected_ceurws=4174
+        self.assertGreaterEqual(ceurws, expected_ceurws, f"Expected > {expected_ceurws} CEUR-WS proceedings")
         self.assertGreaterEqual(total, ceurws)
 
     def testListQidsAll(self):

@@ -111,6 +111,29 @@ def __init__(
 - **Constants**: `UPPER_SNAKE_CASE` (e.g., `CEURWS_BASE_URL`)
 - **Private methods**: Leading underscore (e.g., `_parse_html()`)
 - **File names**: `snake_case.py` (e.g., `volumeparser.py`)
+- **No placeholder names**: never use `foo`, `bar`, `baz`, `tmp` etc.
+  in production code or documentation examples — always use real,
+  descriptive domain names drawn from the actual change.
+
+### Return Style — Assign Before Return
+Do **not** return an expression directly. Assign the result to a
+descriptively named local variable first, then return the variable.
+This is a local-variable style rule. **It does NOT mean every function
+must grow a `debug` parameter** — do not propagate parameters through
+call chains just to satisfy this rule.
+
+Good:
+```python
+def make_sparql(endpoint_url: str) -> SPARQL:
+    sparql = SPARQL(endpoint_url)
+    return sparql
+```
+
+Bad:
+```python
+def make_sparql(endpoint_url: str) -> SPARQL:
+    return SPARQL(endpoint_url)
+```
 
 ### Error Handling
 - Use specific exception types rather than bare `except`

@@ -12,11 +12,10 @@ from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
 from ez_wikidata.wikidata import UrlReference, Wikidata, WikidataResult
 from lodstorage.lod import LOD
 from lodstorage.query import Endpoint, EndpointManager, QueryManager
-from lodstorage.sparql import SPARQL
 from lodstorage.sql import SQLDB
 
 from ceurws.ceur_ws import PaperManager, Volume, VolumeManager
-from ceurws.config import CEURWS
+from ceurws.config import CEURWS, make_sparql
 from ceurws.dblp import DblpAuthorIdentifier, DblpEndpoint
 from ceurws.indexparser import ParserConfig
 
@@ -104,7 +103,7 @@ class WikidataSync:
         # SPARQL setup
         self.endpoints = EndpointManager.getEndpoints(lang="sparql")
         self.endpointConf = self.endpoints.get("wikidata")
-        self.sparql = SPARQL(self.endpointConf.endpoint)
+        self.sparql = make_sparql(self.endpointConf.endpoint)
         path = os.path.dirname(__file__)
         qYamlFile = f"{path}/resources/queries/ceurws.yaml"
         if os.path.isfile(qYamlFile):

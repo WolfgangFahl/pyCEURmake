@@ -21,19 +21,18 @@ import json
 import os
 import time
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import field
 from pathlib import Path
-from typing import Iterable
 
 import requests
 from basemkit.yamlable import lod_storable
 from lodstorage.query import QueryManager
 from lodstorage.rate_limiter import RateLimiter
-from lodstorage.sparql import SPARQL
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from ceurws.config import CEURWS
+from ceurws.config import CEURWS, make_sparql
 
 
 @lod_storable
@@ -103,35 +102,6 @@ class ContributionStats:
     distinct_community_editors: int
     top_contributors: list[tuple[str, int]] = field(default_factory=list)    # community-only top editors
 
-    @classmethod
-    def from_dict(cls, d: dict) -> "HistoryRecord":
-        return cls(
-            qid=d["qid"],
-            creator=d.get("creator"),
-            editors=list(d.get("editors", [])),
-            edit_counts=dict(d.get("edit_counts", {})),
-        )
-
-
-@lod_storable
-class ContributionStats:
-    """Aggregated per-class contribution statistics."""
-
-    entity_class_qid: str
-    label: str
-    # item counts
-    total_count: int        # total Wikidata items of this class
-    analysed: int           # items for which we collected revisions
-    # edit counts (revision-level)
-    total_edits: int
-    sot_edits: int
-    community_edits: int
-    distinct_community_editors: int
-    top_contributors: list[tuple[str, int]]    # community-only top editors
-
-    def to_dict(self) -> dict:
-        return dataclasses.asdict(self)
-
 
 class WdContributionAnalyzer:
     """
@@ -166,7 +136,7 @@ class WdContributionAnalyzer:
         """
         self.config = config if config is not None else WdContributionsConfig.default()
         self.endpoint_url = endpoint_url or self.config.endpoint_url
-        self.sparql = SPARQL(self.endpoint_url)
+        self.sparql = make_sparql(self.endpoint_url)
         self.bot_users: set[str] = set(bot_users) if bot_users is not None else set(self.config.bot_users)
         self.source_of_truth: set[str] = (
             set(source_of_truth) if source_of_truth is not None else set(self.config.source_of_truth)

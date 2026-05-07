@@ -1,0 +1,35 @@
+@startuml
+hide circle
+package dblp {
+    class Scholar {
+        -dblp_author_id: str
+        -label: Optional[str]
+        -wikidata_id: Optional[str]
+        -orcid_id: Optional[str]
+        -gnd_id: Optional[str]
+    }
+
+    class Paper {
+        -dblp_publication_id: str
+        -dblp_proceeding_id: str
+        -volume_number: int
+        -title: str
+        -pdf_id: Optional[str]
+    }
+
+    class Proceeding {
+        -dblp_publication_id: str
+        -volume_number: int
+        -title: str
+        -dblp_event_id: Optional[str]
+    }
+
+    class Authorship {
+    }
+
+    Authorship "n authorships" - Scholar: author
+    Authorship "n authorships" - Paper: paper
+    Proceeding "1" -- "0..*" Paper : papers
+    Proceeding "1" -- "0..*" Scholar : editors
+}
+@enduml

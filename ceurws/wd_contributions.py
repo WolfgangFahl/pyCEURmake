@@ -370,6 +370,7 @@ class WdContributionAnalyzer:
         api_url: str = "https://www.wikidata.org/w/api.php",
         calls_per_minute: int = 200,
         progress: bool = False,
+        label: str | None = None,
     ) -> list[HistoryRecord]:
         """
         Fast path: fetch only the *creator* of each item via
@@ -413,7 +414,12 @@ class WdContributionAnalyzer:
             return qid, (revs[0].get("user") if revs else None)
 
         for i, qid in enumerate(
-            tqdm(to_fetch, desc=f"creators {class_qid}", unit="qid", disable=not progress),
+            tqdm(
+                to_fetch,
+                desc=f"creators {class_qid} ({label})" if label else f"creators {class_qid}",
+                unit="qid",
+                disable=not progress,
+            ),
             1,
         ):
             try:
@@ -442,6 +448,7 @@ class WdContributionAnalyzer:
         calls_per_minute: int = 200,
         progress_every: int = 25,
         progress: bool = False,
+        label: str | None = None,
     ) -> list[HistoryRecord]:
         """
         Fetch *every* revision (user + timestamp) for each QID with
@@ -480,7 +487,12 @@ class WdContributionAnalyzer:
             return resp.json()
 
         for i, qid in enumerate(
-            tqdm(to_fetch, desc=f"revisions {class_qid}", unit="qid", disable=not progress),
+            tqdm(
+                to_fetch,
+                desc=f"revisions {class_qid} ({label})" if label else f"revisions {class_qid}",
+                unit="qid",
+                disable=not progress,
+            ),
             1,
         ):
             try:
@@ -607,7 +619,7 @@ class WdContributionAnalyzer:
                 qids = qids[:sample_size]
 
             records = self.fetch_revisions_full(
-                qids, class_qid=class_qid, force=force, progress=progress
+                qids, class_qid=class_qid, force=force, progress=progress, label=label
             )
             total_edits, sot_edits, community_edits, community_counter = (
                 self.classify_edits(records)
@@ -680,7 +692,7 @@ class WdContributionAnalyzer:
         records: list[HistoryRecord],
         title: str,
         out_path: Path | str,
-        threshold: int = 10,
+        threshold: float = 1.0,
         exclude_users: Iterable[str] | None = None,
         mode: str = "edits",
         figsize: tuple[float, float] = (8.0, 6.0),
@@ -693,8 +705,8 @@ class WdContributionAnalyzer:
             records: HistoryRecord list.
             title: chart title.
             out_path: PNG output path.
-            threshold: users with fewer than this many contributions are
-                aggregated into "others".
+            threshold: users contributing less than this percentage of the
+                total are aggregated into an "others" slice (default 1.0%).
             exclude_users: users to drop entirely before plotting (defaults
                 to ``self.source_of_truth`` so the chart shows *community*
                 contributions only).
@@ -730,9 +742,10 @@ class WdContributionAnalyzer:
                     counter[r.creator] += 1
 
         total_contribs = sum(counter.values())
+        cutoff = total_contribs * (threshold / 100.0) if total_contribs else 0
         distribution: dict[str, int] = {"others": 0}
         for user, count in counter.most_common():
-            if count < threshold:
+            if count < cutoff:
                 distribution["others"] += count
             else:
                 distribution[user] = count
@@ -774,6 +787,7 @@ class WdContributionAnalyzer:
         suffix: str = "_community_editors.png",
         mode: str = "edits",
         progress: bool = False,
+        threshold: float = 1.0,
     ) -> list[Path]:
         """
         Generate one community-contribution pie per entity class and write
@@ -792,7 +806,7 @@ class WdContributionAnalyzer:
             class_qid, label, kind = spec.qid, spec.label, spec.kind
             qids = self.list_qids(class_qid, kind=kind)
             records = self.fetch_revisions_full(
-                qids, class_qid=class_qid, force=force, progress=progress
+                qids, class_qid=class_qid, force=force, progress=progress, label=label
             )
             slug = label.lower().replace(" ", "_")
             out_path = out_dir / f"{prefix}{slug}{suffix}"
@@ -801,6 +815,7 @@ class WdContributionAnalyzer:
                 title=f"Community Editors of {label} (SoT excluded)",
                 out_path=out_path,
                 mode=mode,
+                threshold=threshold,
             )
             written.append(out_path)
             if self.debug:

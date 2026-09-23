@@ -98,11 +98,14 @@ def requires_sparql_endpoint(*, endpoint: Endpoint):
     test case requires given SPARQL endpoint
     """
     is_unavailable = True
-    sparql = SPARQL(endpoint.endpoint, method=endpoint.method)
-    availability_query = "SELECT * WHERE {}"
-    try:
-        sparql.query(availability_query)
-        is_unavailable = False
-    except Exception as e:
-        print(e)
-    return pytest.mark.skipif(is_unavailable, reason=f" SPARQL endpoint {endpoint.name} is unavailable")
+    reason = "SPARQL endpoint is not configured"
+    if endpoint is not None:
+        reason = f"SPARQL endpoint {endpoint.name} is unavailable"
+        sparql = SPARQL(endpoint.endpoint, method=endpoint.method)
+        availability_query = "SELECT * WHERE {}"
+        try:
+            sparql.query(availability_query)
+            is_unavailable = False
+        except Exception as e:
+            print(e)
+    return pytest.mark.skipif(is_unavailable, reason=reason)

@@ -30,9 +30,7 @@ class CEURWS:
     # Default User-Agent used for all SPARQL and HTTP calls made by this
     # project. Wikimedia enforces a descriptive UA policy and rejects
     # default urllib UAs with 403.
-    USER_AGENT = (
-        "pyCEURmake/1.0 (https://github.com/WolfgangFahl/pyCEURmake)"
-    )
+    USER_AGENT = "pyCEURmake/1.0 (https://github.com/WolfgangFahl/pyCEURmake)"
     # Conservative per-minute cap for unauthenticated SPARQL / MediaWiki
     # access (Wikidata Query Service).
     SPARQL_CALLS_PER_MINUTE = 60
@@ -59,10 +57,7 @@ def make_sparql(
         Configured :class:`SPARQL` instance.
     """
     used_agent = agent if agent is not None else CEURWS.USER_AGENT
-    used_rate = (
-        calls_per_minute if calls_per_minute is not None
-        else CEURWS.SPARQL_CALLS_PER_MINUTE
-    )
+    used_rate = calls_per_minute if calls_per_minute is not None else CEURWS.SPARQL_CALLS_PER_MINUTE
     sparql = SPARQL(
         endpoint_url,
         method=method,

@@ -6,6 +6,7 @@ See https://github.com/WolfgangFahl/pyCEURmake/issues/108
 Created: 2026-05-06
 @author: wf
 """
+
 import tempfile
 import unittest
 
@@ -33,9 +34,7 @@ class TestWdContributionsConfig(Basetest):
         """Default YAML resource loads and contains expected values."""
         cfg = WdContributionsConfig.default()
         self.assertEqual(cfg.endpoint_url, "https://query.wikidata.org/sparql")
-        self.assertEqual(
-            cfg.wikidata_entity_prefix, "http://www.wikidata.org/entity/"
-        )
+        self.assertEqual(cfg.wikidata_entity_prefix, "http://www.wikidata.org/entity/")
         self.assertIn("CEUR-WS", cfg.bot_users)
         self.assertEqual(
             set(cfg.source_of_truth),
@@ -49,12 +48,10 @@ class TestWdContributionsConfig(Basetest):
         """WdContributionsConfig round-trips through YAML."""
         cfg = WdContributionsConfig.default()
         yaml_str = cfg.to_yaml()
-        cfg2 = WdContributionsConfig.from_yaml(yaml_str) # @UndefinedVariable
+        cfg2 = WdContributionsConfig.from_yaml(yaml_str)  # @UndefinedVariable
         self.assertEqual(cfg.endpoint_url, cfg2.endpoint_url)
         self.assertEqual(sorted(cfg.bot_users), sorted(cfg2.bot_users))
-        self.assertEqual(
-            sorted(cfg.source_of_truth), sorted(cfg2.source_of_truth)
-        )
+        self.assertEqual(sorted(cfg.source_of_truth), sorted(cfg2.source_of_truth))
         self.assertEqual(len(cfg.classes), len(cfg2.classes))
         for a, b in zip(cfg.classes, cfg2.classes, strict=True):
             self.assertEqual((a.qid, a.label, a.kind), (b.qid, b.label, b.kind))
@@ -70,11 +67,11 @@ class TestWdContributionsConfig(Basetest):
         d = rec.to_dict()
         self.assertEqual(d["qid"], "Q1")
         self.assertEqual(d["edit_counts"]["Alice"], 3)
-        rec2 = HistoryRecord.from_dict(d) # @UndefinedVariable
+        rec2 = HistoryRecord.from_dict(d)  # @UndefinedVariable
         self.assertEqual(rec, rec2)
         # JSON round-trip
         js = rec.to_json()
-        rec3 = HistoryRecord.from_json(js) # @UndefinedVariable
+        rec3 = HistoryRecord.from_json(js)  # @UndefinedVariable
         self.assertEqual(rec, rec3)
 
     def testContributionStatsRoundTrip(self):
@@ -91,7 +88,7 @@ class TestWdContributionsConfig(Basetest):
             top_contributors=[("Sic19", 400), ("Fnielsen", 200)],
         )
         yaml_str = stats.to_yaml()
-        stats2 = ContributionStats.from_yaml(yaml_str) # @UndefinedVariable
+        stats2 = ContributionStats.from_yaml(yaml_str)  # @UndefinedVariable
         self.assertEqual(stats.entity_class_qid, stats2.entity_class_qid)
         self.assertEqual(stats.total_edits, stats2.total_edits)
         self.assertEqual(stats.community_edits, stats2.community_edits)
@@ -125,6 +122,7 @@ class TestWdContributions(Basetest):
         cls = type(self)
         if cls._wikidata_available is None:
             from lodstorage.sparql import SPARQL
+
             try:
                 sparql = SPARQL(self.wikidata.endpoint, method=self.wikidata.method)
                 sparql.query("SELECT * WHERE {} LIMIT 1")
@@ -144,7 +142,7 @@ class TestWdContributions(Basetest):
         total = self.analyzer.count_total(proceedings)
         if self.debug:
             print(f"Proceedings CEUR-WS={ceurws} total={total}")
-        expected_ceurws=4174
+        expected_ceurws = 4174
         self.assertGreaterEqual(ceurws, expected_ceurws, f"Expected > {expected_ceurws} CEUR-WS proceedings")
         self.assertGreaterEqual(total, ceurws)
 

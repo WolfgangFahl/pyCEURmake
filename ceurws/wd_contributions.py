@@ -118,14 +118,14 @@ class ContributionStats:
     entity_class_qid: str
     label: str
     # item counts
-    total_count: int        # total Wikidata items of this class
-    analysed: int           # items for which we collected revisions
+    total_count: int  # total Wikidata items of this class
+    analysed: int  # items for which we collected revisions
     # edit counts (revision-level)
     total_edits: int
     sot_edits: int
     community_edits: int
     distinct_community_editors: int
-    top_contributors: list[tuple[str, int]] = field(default_factory=list)    # community-only top editors
+    top_contributors: list[tuple[str, int]] = field(default_factory=list)  # community-only top editors
 
 
 class WdContributionAnalyzer:
@@ -225,12 +225,7 @@ class WdContributionAnalyzer:
         """
         session = requests.Session()
         session.headers.update(
-            {
-                "User-Agent": (
-                    "pyCEURmake/wd_contributions "
-                    "(https://github.com/WolfgangFahl/pyCEURmake)"
-                )
-            }
+            {"User-Agent": ("pyCEURmake/wd_contributions (https://github.com/WolfgangFahl/pyCEURmake)")}
         )
         retry = Retry(
             total=8,
@@ -277,7 +272,7 @@ class WdContributionAnalyzer:
         for row in rows:
             uri = row.get("item", "")
             if uri.startswith(prefix):
-                qids.append(uri[len(prefix):])
+                qids.append(uri[len(prefix) :])
         return qids
 
     # Backwards-compatible alias
@@ -462,9 +457,7 @@ class WdContributionAnalyzer:
         ``edit_counts`` are skipped unless ``force=True``.
         """
         cache = {} if force else self.load_cache(class_qid)
-        to_fetch = [
-            q for q in qids if q not in cache or not cache[q].edit_counts
-        ]
+        to_fetch = [q for q in qids if q not in cache or not cache[q].edit_counts]
         total = len(to_fetch)
         session = self._build_session()
         limiter = RateLimiter(calls_per_minute=calls_per_minute)
@@ -618,12 +611,8 @@ class WdContributionAnalyzer:
             if sample_size is not None:
                 qids = qids[:sample_size]
 
-            records = self.fetch_revisions_full(
-                qids, class_qid=class_qid, force=force, progress=progress, label=label
-            )
-            total_edits, sot_edits, community_edits, community_counter = (
-                self.classify_edits(records)
-            )
+            records = self.fetch_revisions_full(qids, class_qid=class_qid, force=force, progress=progress, label=label)
+            total_edits, sot_edits, community_edits, community_counter = self.classify_edits(records)
             top = community_counter.most_common(10)
 
             results.append(
@@ -768,10 +757,7 @@ class WdContributionAnalyzer:
                 textprops={"fontsize": 9},
             )
             ax.axis("equal")
-            subtitle = (
-                f"items={len(records)}, contributions={total_contribs}, "
-                f"distinct editors={len(counter)}"
-            )
+            subtitle = f"items={len(records)}, contributions={total_contribs}, distinct editors={len(counter)}"
             plt.title(f"{title}\n({subtitle})")
             plt.tight_layout()
             fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
@@ -805,9 +791,7 @@ class WdContributionAnalyzer:
         for spec in classes:
             class_qid, label, kind = spec.qid, spec.label, spec.kind
             qids = self.list_qids(class_qid, kind=kind)
-            records = self.fetch_revisions_full(
-                qids, class_qid=class_qid, force=force, progress=progress, label=label
-            )
+            records = self.fetch_revisions_full(qids, class_qid=class_qid, force=force, progress=progress, label=label)
             slug = label.lower().replace(" ", "_")
             out_path = out_dir / f"{prefix}{slug}{suffix}"
             self.plot_distribution(

@@ -56,6 +56,8 @@ dependencies = [
     'sqlmodel>=0.0.16',
     # https://pypi.org/project/wdgrid/
     'wdgrid>=0.3.0',
+    # https://pypi.org/project/scholar_auth/
+    'scholar_auth[nicegui]>=0.0.2',
     "requests",
     "tabulate",
     "spacy"

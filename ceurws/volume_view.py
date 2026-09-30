@@ -33,6 +33,7 @@ class VolumeView(View):
         self.solution = solution
         self.parent = parent
         self.volumeToolBar = None
+        self.wikidataButton = None
         self.wdSync = self.solution.wdSync
         self.wdSpan = None
 
@@ -50,14 +51,15 @@ class VolumeView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("Refresh from CEUR-WS Volume page")
                 )
-                self.wikidataButton = (
-                    ui.button(
-                        icon="web",
-                        on_click=self.onWikidataButtonClick,
+                if self.solution.may_sync_wikidata():
+                    self.wikidataButton = (
+                        ui.button(
+                            icon="web",
+                            on_click=self.onWikidataButtonClick,
+                        )
+                        .classes("btn btn-primary btn-sm col-1")
+                        .tooltip("Export to Wikidata")
                     )
-                    .classes("btn btn-primary btn-sm col-1")
-                    .tooltip("Export to Wikidata")
-                )
             self.header_view = ui.html()
             self.iframe_view = ui.html().classes("w-full").style("height: 80vh;")
 
@@ -90,7 +92,8 @@ class VolumeView(View):
                 self.setup_ui()
 
             wdProc = self.wdSync.getProceedingsForVolume(volume.number)
-            self.wikidataButton.disabled = wdProc is not None
+            if self.wikidataButton is not None:
+                self.wikidataButton.disabled = wdProc is not None
             links = ""
             if wdProc is not None:
                 # wikidata proceedings link
@@ -179,16 +182,22 @@ class VolumeView(View):
         handle wikidata sync request
         """
         try:
-            wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
-            result = self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
-            qId = result.qid
-            if qId is not None:
-                msg = f"wikidata export of {self.volume.number} to {qId} done"
-                ui.notify(msg)
-                self.updateWikidataSpan(qId=qId, volume=self.volume)
+            if not self.solution.may_sync_wikidata():
+                ui.notify("not authorized for wikidata sync")
             else:
-                err_msg = f"error:{result.error}"
-                self.solution.log_view.push(err_msg)
+                wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
+                result = self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
+                qId = result.qid
+                if qId is not None:
+                    msg = f"wikidata export of {self.volume.number} to {qId} done"
+                    ui.notify(msg)
+                    self.updateWikidataSpan(qId=qId, volume=self.volume)
+                else:
+                    err_msg = f"error:{result.errors}"
+                    if self.solution.log_view:
+                        self.solution.log_view.push(err_msg)
+                    else:
+                        ui.notify(err_msg)
         except Exception as ex:
             self.solution.handle_exception(ex)
 
@@ -229,19 +238,19 @@ class VolumeListView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("check for recently added volumes")
                 )
-                self.wikidataButton = (
-                    ui.button(
-                        icon="web",
-                        on_click=self.onWikidataButtonClick,
+                if self.solution.may_sync_wikidata():
+                    self.wikidataButton = (
+                        ui.button(
+                            icon="web",
+                            on_click=self.onWikidataButtonClick,
+                        )
+                        .classes("btn btn-primary btn-sm col-1")
+                        .tooltip("Export to Wikidata")
                     )
-                    .classes("btn btn-primary btn-sm col-1")
-                    .tooltip("Export to Wikidata")
-                )
-                self.dry_run_switch = ui.switch("dry run").bind_value(self, "dry_run")
-                self.ignore_errors_check_box = ui.checkbox("ignore_errors", value=self.ignore_errors).bind_value(
-                    self, "ignore_errors"
-                )
-                pass
+                    self.dry_run_switch = ui.switch("dry run").bind_value(self, "dry_run")
+                    self.ignore_errors_check_box = ui.checkbox("ignore_errors", value=self.ignore_errors).bind_value(
+                        self, "ignore_errors"
+                    )
                 self.progress_bar = NiceguiProgressbar(total=100, desc="added", unit="volume")
             with ui.row() as self.log_row:
                 self.log_view = ui.html()
@@ -297,8 +306,11 @@ class VolumeListView(View):
         """
         handle wikidata sync request
         """
-        selected_rows = await self.lod_grid.get_selected_rows()
-        await run.io_bound(self.updateWikidataVolumes, selected_rows)
+        if not self.solution.may_sync_wikidata():
+            ui.notify("not authorized for wikidata sync")
+        else:
+            selected_rows = await self.lod_grid.get_selected_rows()
+            await run.io_bound(self.updateWikidataVolumes, selected_rows)
 
     def check_recently_updated_volumes(self):
         """

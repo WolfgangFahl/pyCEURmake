@@ -14,6 +14,7 @@ from ngwidgets.input_webserver import InputWebserver, InputWebSolution
 from ngwidgets.webserver import WebserverConfig
 from nicegui import Client, app, ui
 from nicegui.events import ValueChangeEventArguments
+from scholar_auth.nicegui_login import NiceGuiScholarLogin
 
 from ceurws.models.dblp import DblpPaper, DblpProceeding, DblpScholar
 from ceurws.version import Version
@@ -46,6 +47,8 @@ class CeurWsWebServer(InputWebserver):
         constructor
         """
         InputWebserver.__init__(self, config=CeurWsWebServer.get_config())
+        self.scholar_login = NiceGuiScholarLogin(Path(self.config.base_path))
+        self.scholar_login.register_routes()
 
         @ui.page("/volumes")
         async def show_volumes(client: Client):
@@ -238,6 +241,9 @@ class CeurWsSolution(InputWebSolution):
 
     """
 
+    RIGHT_LOG = "log"
+    RIGHT_WIKIDATA_SYNC = "wikidatasync"
+
     def __init__(self, webserver: CeurWsWebServer, client: Client):
         """
         Initialize the solution
@@ -250,6 +256,33 @@ class CeurWsSolution(InputWebSolution):
         super().__init__(webserver, client)  # Call to the superclass constructor
         self.wdSync = self.webserver.wdSync
 
+    def may_see_log(self) -> bool:
+        """
+        check whether the user of the current session may see the log
+
+        Returns:
+            bool: True if the user is logged in and has the log right
+        """
+        granted = self.webserver.scholar_login.has_right(self.RIGHT_LOG)
+        return granted
+
+    def may_sync_wikidata(self) -> bool:
+        """
+        check whether the user of the current session may write to Wikidata
+
+        Returns:
+            bool: True if the user is logged in and has the wikidatasync right
+        """
+        granted = self.webserver.scholar_login.has_right(self.RIGHT_WIKIDATA_SYNC)
+        return granted
+
+    async def setup_footer(self):
+        """
+        setup the footer - the log view is for authorized users only
+        """
+        with_log = self.may_see_log()
+        await InputWebSolution.setup_footer(self, with_log=with_log)
+
     def configure_menu(self):
         InputWebSolution.configure_menu(self)
         self.link_button(name="volumes", icon_name="table", target="/volumes", new_tab=False)
@@ -259,6 +292,15 @@ class CeurWsSolution(InputWebSolution):
             target="/wikidatasync",
             new_tab=False,
         )
+        scholar_login = self.webserver.scholar_login
+        user_description = scholar_login.user_description()
+        if user_description is not None:
+            self.link_button(name="logout", icon_name="logout", target=scholar_login.logout_path, new_tab=False)
+            ui.label(user_description)
+        elif scholar_login.available():
+            self.link_button(
+                name="login with orcid", icon_name="login", target=scholar_login.login_url(), new_tab=False
+            )
 
     def prepare_ui(self):
         """

@@ -175,7 +175,7 @@ class VolumeView(View):
         if not self.solution.may_sync_wikidata():
             ui.notify("not authorized for wikidata sync")
         else:
-            busy_text = f"exporting Vol {self.volume.number} to Wikidata ..."
+            busy_text = f"Exporting Vol {self.volume.number} to Wikidata …"
             self.run_sync(
                 self.export_volume,
                 self.wikidataButton,
@@ -200,7 +200,7 @@ class VolumeView(View):
                 wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
                 result = self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
             else:
-                self.export_hint = f"{wikidata_lag.timeout_message()} - {what} not exported"
+                self.export_hint = f"{wikidata_lag.timeout_message()} {what} was not exported. Please try again later."
         except Exception as ex:
             self.solution.handle_exception(ex)
         return result
@@ -331,18 +331,18 @@ class VolumeListView(View):
             for index, row in enumerate(sorted_rows, start=1):
                 vol_number = row["#"]
                 volume = self.wdSync.volumesByNumber[vol_number]
-                what = f"Vol {vol_number} ({index}/{total})"
+                what = f"Vol {vol_number} ({index} of {total})"
                 if not self.dry_run:
                     wikidata_lag = self.wait_for_wikidata(self.button_row, what)
                     if not wikidata_lag.ready:
                         summary = (
-                            f"{wikidata_lag.timeout_message()} - sync stopped before Vol {vol_number}, "
-                            f"{total - synced} of {total} volumes not synced"
+                            f"{wikidata_lag.timeout_message()} Sync stopped at Vol {vol_number}; "
+                            f"{total - synced} of {total} volumes are not synced. Please try again later."
                         )
                         self.add_msg(f"<br>{summary}")
                         break
                 with self.button_row:
-                    self.sync_status.set_text(f"syncing {what} with Wikidata ...")
+                    self.sync_status.set_text(f"Syncing {what} with Wikidata …")
                 self.add_or_update_volume_in_wikidata(volume)
                 synced += 1
                 with self.button_row:
@@ -371,7 +371,7 @@ class VolumeListView(View):
             ui.notify("not authorized for wikidata sync")
         else:
             selected_rows = await self.lod_grid.get_selected_rows()
-            busy_text = f"syncing {len(selected_rows)} volumes with Wikidata ..."
+            busy_text = f"Syncing {len(selected_rows)} volumes with Wikidata …"
             self.run_sync(
                 lambda: self.updateWikidataVolumes(selected_rows),
                 self.wikidataButton,

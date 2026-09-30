@@ -45,10 +45,7 @@ class View:
         wikidata_lag = WikidataLag(self.wikidata_timeout())
 
         def show_wait(lag: float, elapsed: float) -> None:
-            text = (
-                f"{what} waits for Wikidata: lag {lag:.1f} s, limit {wikidata_lag.limit} s, "
-                f"{elapsed / 60:.1f} of {wikidata_lag.timeout_minutes:g} min"
-            )
+            text = wikidata_lag.wait_message(what, lag, elapsed)
             with container:
                 self.sync_status.set_text(text)
 

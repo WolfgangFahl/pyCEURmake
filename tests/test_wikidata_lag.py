@@ -28,7 +28,15 @@ class TestWikidataLag(Basetest):
         wikidata_lag = WikidataLag(timeout_minutes=5.0)
         self.assertEqual(5, wikidata_lag.limit)
         self.assertEqual("https://www.wikidata.org/w/api.php", wikidata_lag.api_url)
-        self.assertEqual("Wikidata lag stayed above 5 s for 5 min", wikidata_lag.timeout_message())
+        self.assertEqual(
+            "Wikidata lag stayed above the 5 seconds max lag for edits for 5 minutes.",
+            wikidata_lag.timeout_message(),
+        )
+        self.assertEqual(
+            "Vol 4237 (2 of 3): Wikidata lag is 9.3 seconds, more than the 5 seconds max lag for edits. "
+            "Waiting, minute 3 of 5 …",
+            wikidata_lag.wait_message("Vol 4237 (2 of 3)", 9.316666666666666, 130.0),
+        )
 
     def test_get_lag(self):
         """

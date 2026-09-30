@@ -82,6 +82,35 @@ class WikidataLag:
                 time.sleep(self.poll_seconds)
         return ready
 
+    def max_lag_text(self) -> str:
+        """
+        get the limit in plain words
+
+        Returns:
+            str: e.g. the 5 seconds max lag for edits
+        """
+        text = f"the {self.limit} seconds max lag for edits"
+        return text
+
+    def wait_message(self, what: str, lag: float, elapsed: float) -> str:
+        """
+        get the message for a wait
+
+        Args:
+            what: what is waiting, e.g. Vol 4237 (1 of 2)
+            lag: the current lag in seconds
+            elapsed: the seconds waited so far
+
+        Returns:
+            str: the message
+        """
+        minute = int(elapsed // 60) + 1
+        message = (
+            f"{what}: Wikidata lag is {lag:.1f} seconds, more than {self.max_lag_text()}. "
+            f"Waiting, minute {minute} of {self.timeout_minutes:g} …"
+        )
+        return message
+
     def timeout_message(self) -> str:
         """
         get the message for a lag that did not drop in time
@@ -89,5 +118,5 @@ class WikidataLag:
         Returns:
             str: the message
         """
-        message = f"Wikidata lag stayed above {self.limit} s for {self.timeout_minutes:g} min"
+        message = f"Wikidata lag stayed above {self.max_lag_text()} for {self.timeout_minutes:g} minutes."
         return message

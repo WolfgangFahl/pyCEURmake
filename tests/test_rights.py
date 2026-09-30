@@ -156,7 +156,7 @@ class TestRights(Basetest):
             if expected_calls == 0:
                 ui.notify.assert_called_once_with("not authorized for wikidata sync")
             else:
-                self.check_busy_call(solution, volume_view, "exporting Vol 4203 to Wikidata ...", 1)
+                self.check_busy_call(solution, volume_view, "Exporting Vol 4203 to Wikidata …", 1)
                 export = solution.run_busy.call_args.args[0]
                 on_result = solution.run_busy.call_args.kwargs["on_result"]
                 result = export()
@@ -198,7 +198,7 @@ class TestRights(Basetest):
                 ui.notify.assert_called_once_with("not authorized for wikidata sync")
                 volume_list_view.lod_grid.get_selected_rows.assert_not_awaited()
             else:
-                self.check_busy_call(solution, volume_list_view, "syncing 2 volumes with Wikidata ...", 2)
+                self.check_busy_call(solution, volume_list_view, "Syncing 2 volumes with Wikidata …", 2)
 
     def test_sync_progress(self):
         """
@@ -218,7 +218,7 @@ class TestRights(Basetest):
         synced = [call.args[0].number for call in volume_list_view.add_or_update_volume_in_wikidata.call_args_list]
         self.assertEqual([4202, 4237, 4241], synced)
         status_texts = [call.args[0] for call in volume_list_view.sync_status.set_text.call_args_list]
-        self.assertEqual("syncing Vol 4241 (3/3) with Wikidata ...", status_texts[-1])
+        self.assertEqual("Syncing Vol 4241 (3 of 3) with Wikidata …", status_texts[-1])
 
     def test_sync_stops_on_lag(self):
         """
@@ -230,7 +230,10 @@ class TestRights(Basetest):
         solution.wdSync.volumesByNumber = {number: MagicMock(number=number) for number in (4202, 4237, 4241)}
         volume_list_view.add_or_update_volume_in_wikidata = MagicMock()
         summary = volume_list_view.updateWikidataVolumes([{"#": 4241}, {"#": 4202}, {"#": 4237}])
-        expected = "Wikidata lag stayed above 5 s for 5 min - sync stopped before Vol 4237, 2 of 3 volumes not synced"
+        expected = (
+            "Wikidata lag stayed above the 5 seconds max lag for edits for 5 minutes. "
+            "Sync stopped at Vol 4237; 2 of 3 volumes are not synced. Please try again later."
+        )
         self.assertEqual(expected, summary)
         self.assertEqual(1, volume_list_view.add_or_update_volume_in_wikidata.call_count)
         self.assertEqual(1, volume_list_view.progress_bar.update.call_count)
@@ -263,7 +266,10 @@ class TestRights(Basetest):
         result = volume_view.export_volume()
         self.assertIsNone(result)
         solution.wdSync.addProceedingsToWikidata.assert_not_called()
-        expected = "Wikidata lag stayed above 5 s for 5 min - Vol 4203 not exported"
+        expected = (
+            "Wikidata lag stayed above the 5 seconds max lag for edits for 5 minutes. "
+            "Vol 4203 was not exported. Please try again later."
+        )
         self.assertEqual(expected, volume_view.export_hint)
         with patch("ceurws.volume_view.ui") as ui:
             volume_view.on_volume_exported(result)
@@ -282,8 +288,12 @@ class TestRights(Basetest):
             patch.object(WikidataLag, "get_lag", side_effect=[9.3, 4.1]),
             patch("ceurws.wikidata_lag.time.sleep") as sleep,
         ):
-            wikidata_lag = volume_view.wait_for_wikidata(container, "Vol 4237 (1/2)")
+            wikidata_lag = volume_view.wait_for_wikidata(container, "Vol 4237 (1 of 2)")
         self.assertTrue(wikidata_lag.ready)
         sleep.assert_called_once_with(10.0)
         status_text = volume_view.sync_status.set_text.call_args.args[0]
-        self.assertEqual("Vol 4237 (1/2) waits for Wikidata: lag 9.3 s, limit 5 s, 0.0 of 5 min", status_text)
+        expected = (
+            "Vol 4237 (1 of 2): Wikidata lag is 9.3 seconds, more than the 5 seconds max lag for edits. "
+            "Waiting, minute 1 of 5 …"
+        )
+        self.assertEqual(expected, status_text)

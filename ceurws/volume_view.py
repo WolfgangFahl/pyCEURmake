@@ -172,25 +172,47 @@ class VolumeView(View):
         """
         handle wikidata sync request
         """
+        if not self.solution.may_sync_wikidata():
+            ui.notify("not authorized for wikidata sync")
+        else:
+            busy_text = f"exporting Vol {self.volume.number} to Wikidata ..."
+            self.run_sync(self.export_volume, self.wikidataButton, busy_text, on_result=self.on_volume_exported)
+
+    def export_volume(self):
+        """
+        export my volume to Wikidata - blocking, to be run in the background
+
+        Returns:
+            WikidataResult: the result of the export or None if the export raised an exception
+        """
+        result = None
         try:
-            if not self.solution.may_sync_wikidata():
-                ui.notify("not authorized for wikidata sync")
-            else:
-                wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
-                result = self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
-                qId = result.qid
-                if qId is not None:
-                    msg = f"wikidata export of {self.volume.number} to {qId} done"
-                    ui.notify(msg)
-                    self.updateWikidataSpan(qId=qId, volume=self.volume)
-                else:
-                    err_msg = f"error:{result.errors}"
-                    if self.solution.log_view:
-                        self.solution.log_view.push(err_msg)
-                    else:
-                        ui.notify(err_msg)
+            wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
+            result = self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
         except Exception as ex:
             self.solution.handle_exception(ex)
+        return result
+
+    def on_volume_exported(self, result):
+        """
+        show the result of the export of my volume
+
+        Args:
+            result(WikidataResult): the result of the export or None if the export raised an exception
+        """
+        if result is not None:
+            qId = result.qid
+            if qId is not None:
+                msg = f"wikidata export of {self.volume.number} to {qId} done"
+                ui.notify(msg)
+                self.updateWikidataSpan(qId=qId, volume=self.volume)
+                self.wikidataButton.set_enabled(False)
+            else:
+                err_msg = f"error:{result.errors}"
+                if self.solution.log_view:
+                    self.solution.log_view.push(err_msg)
+                else:
+                    ui.notify(err_msg)
 
 
 class VolumeListView(View):
@@ -280,11 +302,19 @@ class VolumeListView(View):
             self.clear_msg(msg)
             # First, sort selected_rows by the volume number in ascending order
             sorted_rows = sorted(selected_rows, key=lambda row: row["#"])
-            for row in sorted_rows:
+            total = len(sorted_rows)
+            with self.button_row:
+                self.progress_bar.total = total
+                self.progress_bar.reset()
+                self.progress_bar.set_description("synced")
+            for index, row in enumerate(sorted_rows, start=1):
                 vol_number = row["#"]
                 volume = self.wdSync.volumesByNumber[vol_number]
+                with self.button_row:
+                    self.sync_status.set_text(f"syncing Vol {vol_number} with Wikidata ({index}/{total}) ...")
                 self.add_or_update_volume_in_wikidata(volume)
-            pass
+                with self.button_row:
+                    self.progress_bar.update(1)
         except Exception as ex:
             self.solution.handle_exception(ex)
 
@@ -296,7 +326,8 @@ class VolumeListView(View):
             ui.notify("not authorized for wikidata sync")
         else:
             selected_rows = await self.lod_grid.get_selected_rows()
-            await run.io_bound(self.updateWikidataVolumes, selected_rows)
+            busy_text = f"syncing {len(selected_rows)} volumes with Wikidata ..."
+            self.run_sync(lambda: self.updateWikidataVolumes(selected_rows), self.wikidataButton, busy_text)
 
     def check_recently_updated_volumes(self):
         """

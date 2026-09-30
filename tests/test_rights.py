@@ -34,7 +34,27 @@ class TestRights(Basetest):
         solution.log_view = None
         solution.wdSync = MagicMock()
         solution.wdSync.addProceedingsToWikidata.return_value = MagicMock(qid="Q1")
+        solution.run_busy = MagicMock()
         return solution
+
+    def add_sync_elements(self, view) -> None:
+        """
+        give the view the elements that add_sync_button creates
+        """
+        view.wikidataButton = MagicMock()
+        view.sync_status = MagicMock()
+        view.sync_spinner = MagicMock()
+
+    def check_busy_call(self, solution: CeurWsSolution, view, busy_text: str) -> None:
+        """
+        check that the export was started in the background with the busy indicator of the view
+        """
+        kwargs = solution.run_busy.call_args.kwargs
+        self.assertEqual(busy_text, kwargs["busy_text"])
+        self.assertIs(view.wikidataButton, kwargs["button"])
+        self.assertIs(view.sync_status, kwargs["status"])
+        self.assertIs(view.sync_spinner, kwargs["spinner"])
+        self.assertEqual(view.SYNC_TIMEOUT, kwargs["timeout"])
 
     def get_volume_view(self, solution: CeurWsSolution) -> VolumeView:
         """
@@ -43,6 +63,7 @@ class TestRights(Basetest):
         volume_view = VolumeView(solution, parent=None)
         volume_view.volume = MagicMock(number=4203)
         volume_view.updateWikidataSpan = MagicMock()
+        self.add_sync_elements(volume_view)
         return volume_view
 
     def get_volume_list_view(self, solution: CeurWsSolution) -> VolumeListView:
@@ -54,6 +75,11 @@ class TestRights(Basetest):
         volume_list_view.wdSync = solution.wdSync
         volume_list_view.lod_grid = MagicMock()
         volume_list_view.lod_grid.get_selected_rows = AsyncMock(return_value=[])
+        volume_list_view.progress_bar = MagicMock()
+        volume_list_view.button_row = MagicMock()
+        volume_list_view.log_row = MagicMock()
+        volume_list_view.log_view = MagicMock()
+        self.add_sync_elements(volume_list_view)
         return volume_list_view
 
     def test_rights_of_solution(self):
@@ -99,28 +125,76 @@ class TestRights(Basetest):
 
     def test_volume_export(self):
         """
-        test that the export of a single volume needs the wikidatasync right
+        test that the export of a single volume needs the wikidatasync right and runs with a busy indicator
         """
         for rights, expected_calls in [([], 0), (["log"], 0), (["wikidatasync"], 1)]:
             solution = self.get_solution(rights)
             volume_view = self.get_volume_view(solution)
             with patch("ceurws.volume_view.ui") as ui:
                 asyncio.run(volume_view.onWikidataButtonClick(None))
-            self.assertEqual(expected_calls, solution.wdSync.addProceedingsToWikidata.call_count, rights)
+            self.assertEqual(expected_calls, solution.run_busy.call_count, rights)
+            solution.wdSync.addProceedingsToWikidata.assert_not_called()
             if expected_calls == 0:
                 ui.notify.assert_called_once_with("not authorized for wikidata sync")
+            else:
+                self.check_busy_call(solution, volume_view, "exporting Vol 4203 to Wikidata ...")
+                export = solution.run_busy.call_args.args[0]
+                on_result = solution.run_busy.call_args.kwargs["on_result"]
+                result = export()
+                solution.wdSync.addProceedingsToWikidata.assert_called_once()
+                self.assertTrue(solution.wdSync.addProceedingsToWikidata.call_args.kwargs["write"])
+                with patch("ceurws.volume_view.ui"):
+                    on_result(result)
+                volume_view.updateWikidataSpan.assert_called_once_with(qId="Q1", volume=volume_view.volume)
+                volume_view.wikidataButton.set_enabled.assert_called_once_with(False)
+
+    def test_volume_export_failure(self):
+        """
+        test that a failing export is handed to the exception handling and shows no result
+        """
+        solution = self.get_solution(["wikidatasync"])
+        solution.handle_exception = MagicMock()
+        solution.wdSync.addProceedingsToWikidata.side_effect = RuntimeError("write failed")
+        volume_view = self.get_volume_view(solution)
+        result = volume_view.export_volume()
+        self.assertIsNone(result)
+        solution.handle_exception.assert_called_once()
+        with patch("ceurws.volume_view.ui") as ui:
+            volume_view.on_volume_exported(result)
+        ui.notify.assert_not_called()
+        volume_view.updateWikidataSpan.assert_not_called()
 
     def test_volume_list_sync(self):
         """
-        test that the sync of selected volumes needs the wikidatasync right
+        test that the sync of selected volumes needs the wikidatasync right and runs with a busy indicator
         """
         for rights, expected_calls in [([], 0), (["log"], 0), (["wikidatasync"], 1)]:
             solution = self.get_solution(rights)
             volume_list_view = self.get_volume_list_view(solution)
-            with patch("ceurws.volume_view.ui") as ui, patch("ceurws.volume_view.run") as run:
-                run.io_bound = AsyncMock()
+            volume_list_view.lod_grid.get_selected_rows = AsyncMock(return_value=[{"#": 4237}, {"#": 4241}])
+            with patch("ceurws.volume_view.ui") as ui:
                 asyncio.run(volume_list_view.onWikidataButtonClick(None))
-            self.assertEqual(expected_calls, run.io_bound.await_count, rights)
+            self.assertEqual(expected_calls, solution.run_busy.call_count, rights)
             if expected_calls == 0:
                 ui.notify.assert_called_once_with("not authorized for wikidata sync")
                 volume_list_view.lod_grid.get_selected_rows.assert_not_awaited()
+            else:
+                self.check_busy_call(solution, volume_list_view, "syncing 2 volumes with Wikidata ...")
+
+    def test_sync_progress(self):
+        """
+        test that the progress bar advances by one step per synced volume in ascending volume order
+        """
+        solution = self.get_solution(["wikidatasync"])
+        volume_list_view = self.get_volume_list_view(solution)
+        volumes = {number: MagicMock(number=number) for number in (4202, 4237, 4241)}
+        solution.wdSync.volumesByNumber = volumes
+        volume_list_view.add_or_update_volume_in_wikidata = MagicMock()
+        volume_list_view.updateWikidataVolumes([{"#": 4241}, {"#": 4202}, {"#": 4237}])
+        self.assertEqual(3, volume_list_view.progress_bar.total)
+        volume_list_view.progress_bar.reset.assert_called_once()
+        self.assertEqual(3, volume_list_view.progress_bar.update.call_count)
+        synced = [call.args[0].number for call in volume_list_view.add_or_update_volume_in_wikidata.call_args_list]
+        self.assertEqual([4202, 4237, 4241], synced)
+        status_texts = [call.args[0] for call in volume_list_view.sync_status.set_text.call_args_list]
+        self.assertEqual("syncing Vol 4241 with Wikidata (3/3) ...", status_texts[-1])

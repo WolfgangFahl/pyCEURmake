@@ -18,12 +18,15 @@ class View:
     wdPrefix = "http://www.wikidata.org/entity/"
     SYNC_TOOLTIP = "Export to Wikidata"
     SYNC_HINT = "Export to Wikidata needs an ORCID login with the wikidatasync right"
+    # a write waits while Wikidata reports replication lag - this may take minutes per volume
+    SYNC_TIMEOUT = 4 * 3600.0
 
     def add_sync_button(self, on_click) -> ui.button:
         """
-        add the Export to Wikidata button
+        add the Export to Wikidata button with its busy indicator
 
-        the button is greyed out with a hint for users without the wikidatasync right
+        the button is greyed out with a hint for users without the wikidatasync right,
+        the spinner and the status label show a running export
 
         Args:
             on_click: the handler of the button
@@ -36,7 +39,31 @@ class View:
         with ui.element("div").tooltip(tooltip):
             button = ui.button(icon="web", on_click=on_click).classes("btn btn-primary btn-sm")
         button.set_enabled(may_sync)
+        self.sync_spinner = ui.spinner(size="lg")
+        self.sync_spinner.set_visibility(False)
+        self.sync_status = ui.label()
         return button
+
+    def run_sync(self, func, button: ui.button, busy_text: str, on_result=None) -> None:
+        """
+        run the given blocking Wikidata export in the background and show the busy state meanwhile
+
+        Args:
+            func: the blocking export function
+            button: the export button to disable while the export runs
+            busy_text: the status text while the export runs
+            on_result: called in the user interface context with the return value of func
+        """
+        self.solution.run_busy(
+            func,
+            status=self.sync_status,
+            button=button,
+            spinner=self.sync_spinner,
+            on_result=on_result,
+            busy_text=busy_text,
+            done_text="Wikidata export finished",
+            timeout=self.SYNC_TIMEOUT,
+        )
 
     def getValue(self, obj, attr):
         value = getattr(obj, attr, View.noneValue)

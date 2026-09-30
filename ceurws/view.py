@@ -8,6 +8,8 @@ from ngwidgets.widgets import Link
 from nicegui import ui
 from tabulate import tabulate
 
+from ceurws.wikidata_lag import WikidataLag
+
 
 class View:
     """
@@ -18,8 +20,40 @@ class View:
     wdPrefix = "http://www.wikidata.org/entity/"
     SYNC_TOOLTIP = "Export to Wikidata"
     SYNC_HINT = "Export to Wikidata needs an ORCID login with the wikidatasync right"
-    # a write waits while Wikidata reports replication lag - this may take minutes per volume
-    SYNC_TIMEOUT = 4 * 3600.0
+
+    def wikidata_timeout(self) -> float:
+        """
+        get the minutes to wait per volume for Wikidata to accept writes
+
+        Returns:
+            float: the value of the --wikidata_timeout command line option
+        """
+        timeout_minutes = self.solution.args.wikidata_timeout
+        return timeout_minutes
+
+    def wait_for_wikidata(self, container, what: str) -> WikidataLag:
+        """
+        wait until the replication lag of Wikidata allows a write and show the wait in the status label
+
+        Args:
+            container: the user interface container of the status label
+            what: what is waiting, e.g. Vol 4237
+
+        Returns:
+            WikidataLag: the lag check, its ready flag tells whether Wikidata accepts writes
+        """
+        wikidata_lag = WikidataLag(self.wikidata_timeout())
+
+        def show_wait(lag: float, elapsed: float) -> None:
+            text = (
+                f"{what} waits for Wikidata: lag {lag:.1f} s, limit {wikidata_lag.limit} s, "
+                f"{elapsed / 60:.1f} of {wikidata_lag.timeout_minutes:g} min"
+            )
+            with container:
+                self.sync_status.set_text(text)
+
+        wikidata_lag.ready = wikidata_lag.wait_until_ready(show_wait)
+        return wikidata_lag
 
     def add_sync_button(self, on_click) -> ui.button:
         """
@@ -44,7 +78,7 @@ class View:
         self.sync_status = ui.label()
         return button
 
-    def run_sync(self, func, button: ui.button, busy_text: str, on_result=None) -> None:
+    def run_sync(self, func, button: ui.button, busy_text: str, volume_count: int, on_result=None) -> None:
         """
         run the given blocking Wikidata export in the background and show the busy state meanwhile
 
@@ -52,8 +86,11 @@ class View:
             func: the blocking export function
             button: the export button to disable while the export runs
             busy_text: the status text while the export runs
+            volume_count: the number of volumes to export
             on_result: called in the user interface context with the return value of func
         """
+        # per volume the wait for Wikidata and the write itself may each take the timeout
+        timeout_seconds = max(volume_count, 1) * 2 * self.wikidata_timeout() * 60
         self.solution.run_busy(
             func,
             status=self.sync_status,
@@ -62,7 +99,7 @@ class View:
             on_result=on_result,
             busy_text=busy_text,
             done_text="Wikidata export finished",
-            timeout=self.SYNC_TIMEOUT,
+            timeout=timeout_seconds,
         )
 
     def getValue(self, obj, attr):

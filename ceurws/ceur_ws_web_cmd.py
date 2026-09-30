@@ -84,6 +84,14 @@ class CeurWsCmd(WebserverCmd):
             action="store_true",
             help="update tables from wikidata",
         )
+        parser.add_argument(
+            "-wto",
+            "--wikidata_timeout",
+            type=float,
+            default=5.0,
+            help="minutes to wait per volume for Wikidata to accept writes while it reports replication lag "
+            "(default: %(default)s)",
+        )
         return parser
 
     def handle_args(self, args) -> bool:

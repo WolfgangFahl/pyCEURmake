@@ -176,19 +176,31 @@ class VolumeView(View):
             ui.notify("not authorized for wikidata sync")
         else:
             busy_text = f"exporting Vol {self.volume.number} to Wikidata ..."
-            self.run_sync(self.export_volume, self.wikidataButton, busy_text, on_result=self.on_volume_exported)
+            self.run_sync(
+                self.export_volume,
+                self.wikidataButton,
+                busy_text,
+                volume_count=1,
+                on_result=self.on_volume_exported,
+            )
 
     def export_volume(self):
         """
         export my volume to Wikidata - blocking, to be run in the background
 
         Returns:
-            WikidataResult: the result of the export or None if the export raised an exception
+            WikidataResult: the result of the export or None if the export did not take place
         """
         result = None
+        self.export_hint = None
         try:
-            wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
-            result = self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
+            what = f"Vol {self.volume.number}"
+            wikidata_lag = self.wait_for_wikidata(self.volumeToolBar, what)
+            if wikidata_lag.ready:
+                wdRecord = self.wdSync.getWikidataProceedingsRecord(self.volume)
+                result = self.wdSync.addProceedingsToWikidata(wdRecord, write=True, ignoreErrors=False)
+            else:
+                self.export_hint = f"{wikidata_lag.timeout_message()} - {what} not exported"
         except Exception as ex:
             self.solution.handle_exception(ex)
         return result
@@ -198,9 +210,13 @@ class VolumeView(View):
         show the result of the export of my volume
 
         Args:
-            result(WikidataResult): the result of the export or None if the export raised an exception
+            result(WikidataResult): the result of the export or None if the export did not take place
         """
-        if result is not None:
+        if result is None:
+            if self.export_hint is not None:
+                ui.notify(self.export_hint)
+                self.sync_status.set_text(self.export_hint)
+        else:
             qId = result.qid
             if qId is not None:
                 msg = f"wikidata export of {self.volume.number} to {qId} done"
@@ -293,16 +309,21 @@ class VolumeListView(View):
         with self.log_row:
             self.log_view.content += html_markup
 
-    def updateWikidataVolumes(self, selected_rows):
+    def updateWikidataVolumes(self, selected_rows) -> str:
         """
         update wikidata volumes for the selected rows
+
+        Returns:
+            str: the summary of the sync
         """
+        synced = 0
+        total = len(selected_rows)
+        summary = None
         try:
             msg = f"{len(selected_rows)} Volumes selected<br>"
             self.clear_msg(msg)
             # First, sort selected_rows by the volume number in ascending order
             sorted_rows = sorted(selected_rows, key=lambda row: row["#"])
-            total = len(sorted_rows)
             with self.button_row:
                 self.progress_bar.total = total
                 self.progress_bar.reset()
@@ -310,13 +331,37 @@ class VolumeListView(View):
             for index, row in enumerate(sorted_rows, start=1):
                 vol_number = row["#"]
                 volume = self.wdSync.volumesByNumber[vol_number]
+                what = f"Vol {vol_number} ({index}/{total})"
+                if not self.dry_run:
+                    wikidata_lag = self.wait_for_wikidata(self.button_row, what)
+                    if not wikidata_lag.ready:
+                        summary = (
+                            f"{wikidata_lag.timeout_message()} - sync stopped before Vol {vol_number}, "
+                            f"{total - synced} of {total} volumes not synced"
+                        )
+                        self.add_msg(f"<br>{summary}")
+                        break
                 with self.button_row:
-                    self.sync_status.set_text(f"syncing Vol {vol_number} with Wikidata ({index}/{total}) ...")
+                    self.sync_status.set_text(f"syncing {what} with Wikidata ...")
                 self.add_or_update_volume_in_wikidata(volume)
+                synced += 1
                 with self.button_row:
                     self.progress_bar.update(1)
         except Exception as ex:
             self.solution.handle_exception(ex)
+        if summary is None:
+            summary = f"Wikidata sync finished: {synced} of {total} volumes processed"
+        return summary
+
+    def on_volumes_synced(self, summary: str):
+        """
+        show the summary of the sync
+
+        Args:
+            summary: the summary of the sync
+        """
+        ui.notify(summary)
+        self.sync_status.set_text(summary)
 
     async def onWikidataButtonClick(self, _args):
         """
@@ -327,7 +372,13 @@ class VolumeListView(View):
         else:
             selected_rows = await self.lod_grid.get_selected_rows()
             busy_text = f"syncing {len(selected_rows)} volumes with Wikidata ..."
-            self.run_sync(lambda: self.updateWikidataVolumes(selected_rows), self.wikidataButton, busy_text)
+            self.run_sync(
+                lambda: self.updateWikidataVolumes(selected_rows),
+                self.wikidataButton,
+                busy_text,
+                volume_count=len(selected_rows),
+                on_result=self.on_volumes_synced,
+            )
 
     def check_recently_updated_volumes(self):
         """

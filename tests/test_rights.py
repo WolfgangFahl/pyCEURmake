@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from ceurws.volume_view import VolumeListView, VolumeView
 from ceurws.webserver import CeurWsSolution
+from ceurws.wikidata_lag import WikidataLag
 from tests.basetest import Basetest
 
 
@@ -35,6 +36,7 @@ class TestRights(Basetest):
         solution.wdSync = MagicMock()
         solution.wdSync.addProceedingsToWikidata.return_value = MagicMock(qid="Q1")
         solution.run_busy = MagicMock()
+        solution.args = MagicMock(wikidata_timeout=5.0)
         return solution
 
     def add_sync_elements(self, view) -> None:
@@ -44,8 +46,23 @@ class TestRights(Basetest):
         view.wikidataButton = MagicMock()
         view.sync_status = MagicMock()
         view.sync_spinner = MagicMock()
+        self.set_wikidata_ready(view, [True])
 
-    def check_busy_call(self, solution: CeurWsSolution, view, busy_text: str) -> None:
+    def set_wikidata_ready(self, view, ready_flags: list[bool]) -> None:
+        """
+        let the lag check of the view answer with the given ready flags, the last one repeats
+        """
+        flags = list(ready_flags)
+
+        def lag_check(_container, _what):
+            ready = flags.pop(0) if len(flags) > 1 else flags[0]
+            wikidata_lag = WikidataLag(timeout_minutes=5.0)
+            wikidata_lag.ready = ready
+            return wikidata_lag
+
+        view.wait_for_wikidata = MagicMock(side_effect=lag_check)
+
+    def check_busy_call(self, solution: CeurWsSolution, view, busy_text: str, volume_count: int) -> None:
         """
         check that the export was started in the background with the busy indicator of the view
         """
@@ -54,7 +71,7 @@ class TestRights(Basetest):
         self.assertIs(view.wikidataButton, kwargs["button"])
         self.assertIs(view.sync_status, kwargs["status"])
         self.assertIs(view.sync_spinner, kwargs["spinner"])
-        self.assertEqual(view.SYNC_TIMEOUT, kwargs["timeout"])
+        self.assertEqual(volume_count * 2 * 5.0 * 60, kwargs["timeout"])
 
     def get_volume_view(self, solution: CeurWsSolution) -> VolumeView:
         """
@@ -63,6 +80,7 @@ class TestRights(Basetest):
         volume_view = VolumeView(solution, parent=None)
         volume_view.volume = MagicMock(number=4203)
         volume_view.updateWikidataSpan = MagicMock()
+        volume_view.volumeToolBar = MagicMock()
         self.add_sync_elements(volume_view)
         return volume_view
 
@@ -79,6 +97,7 @@ class TestRights(Basetest):
         volume_list_view.button_row = MagicMock()
         volume_list_view.log_row = MagicMock()
         volume_list_view.log_view = MagicMock()
+        volume_list_view.dry_run = False
         self.add_sync_elements(volume_list_view)
         return volume_list_view
 
@@ -137,7 +156,7 @@ class TestRights(Basetest):
             if expected_calls == 0:
                 ui.notify.assert_called_once_with("not authorized for wikidata sync")
             else:
-                self.check_busy_call(solution, volume_view, "exporting Vol 4203 to Wikidata ...")
+                self.check_busy_call(solution, volume_view, "exporting Vol 4203 to Wikidata ...", 1)
                 export = solution.run_busy.call_args.args[0]
                 on_result = solution.run_busy.call_args.kwargs["on_result"]
                 result = export()
@@ -179,7 +198,7 @@ class TestRights(Basetest):
                 ui.notify.assert_called_once_with("not authorized for wikidata sync")
                 volume_list_view.lod_grid.get_selected_rows.assert_not_awaited()
             else:
-                self.check_busy_call(solution, volume_list_view, "syncing 2 volumes with Wikidata ...")
+                self.check_busy_call(solution, volume_list_view, "syncing 2 volumes with Wikidata ...", 2)
 
     def test_sync_progress(self):
         """
@@ -190,11 +209,81 @@ class TestRights(Basetest):
         volumes = {number: MagicMock(number=number) for number in (4202, 4237, 4241)}
         solution.wdSync.volumesByNumber = volumes
         volume_list_view.add_or_update_volume_in_wikidata = MagicMock()
-        volume_list_view.updateWikidataVolumes([{"#": 4241}, {"#": 4202}, {"#": 4237}])
+        summary = volume_list_view.updateWikidataVolumes([{"#": 4241}, {"#": 4202}, {"#": 4237}])
+        self.assertEqual("Wikidata sync finished: 3 of 3 volumes processed", summary)
+        self.assertEqual(3, volume_list_view.wait_for_wikidata.call_count)
         self.assertEqual(3, volume_list_view.progress_bar.total)
         volume_list_view.progress_bar.reset.assert_called_once()
         self.assertEqual(3, volume_list_view.progress_bar.update.call_count)
         synced = [call.args[0].number for call in volume_list_view.add_or_update_volume_in_wikidata.call_args_list]
         self.assertEqual([4202, 4237, 4241], synced)
         status_texts = [call.args[0] for call in volume_list_view.sync_status.set_text.call_args_list]
-        self.assertEqual("syncing Vol 4241 with Wikidata (3/3) ...", status_texts[-1])
+        self.assertEqual("syncing Vol 4241 (3/3) with Wikidata ...", status_texts[-1])
+
+    def test_sync_stops_on_lag(self):
+        """
+        test that the sync stops with a summary when Wikidata does not accept writes in time
+        """
+        solution = self.get_solution(["wikidatasync"])
+        volume_list_view = self.get_volume_list_view(solution)
+        self.set_wikidata_ready(volume_list_view, [True, False])
+        solution.wdSync.volumesByNumber = {number: MagicMock(number=number) for number in (4202, 4237, 4241)}
+        volume_list_view.add_or_update_volume_in_wikidata = MagicMock()
+        summary = volume_list_view.updateWikidataVolumes([{"#": 4241}, {"#": 4202}, {"#": 4237}])
+        expected = "Wikidata lag stayed above 5 s for 5 min - sync stopped before Vol 4237, 2 of 3 volumes not synced"
+        self.assertEqual(expected, summary)
+        self.assertEqual(1, volume_list_view.add_or_update_volume_in_wikidata.call_count)
+        self.assertEqual(1, volume_list_view.progress_bar.update.call_count)
+        with patch("ceurws.volume_view.ui") as ui:
+            volume_list_view.on_volumes_synced(summary)
+        ui.notify.assert_called_once_with(expected)
+        volume_list_view.sync_status.set_text.assert_called_with(expected)
+
+    def test_dry_run_skips_lag_check(self):
+        """
+        test that a dry run does not wait for Wikidata
+        """
+        solution = self.get_solution(["wikidatasync"])
+        volume_list_view = self.get_volume_list_view(solution)
+        volume_list_view.dry_run = True
+        self.set_wikidata_ready(volume_list_view, [False])
+        solution.wdSync.volumesByNumber = {4237: MagicMock(number=4237)}
+        volume_list_view.add_or_update_volume_in_wikidata = MagicMock()
+        summary = volume_list_view.updateWikidataVolumes([{"#": 4237}])
+        self.assertEqual("Wikidata sync finished: 1 of 1 volumes processed", summary)
+        volume_list_view.wait_for_wikidata.assert_not_called()
+
+    def test_volume_export_stops_on_lag(self):
+        """
+        test that a single volume is not exported when Wikidata does not accept writes in time
+        """
+        solution = self.get_solution(["wikidatasync"])
+        volume_view = self.get_volume_view(solution)
+        self.set_wikidata_ready(volume_view, [False])
+        result = volume_view.export_volume()
+        self.assertIsNone(result)
+        solution.wdSync.addProceedingsToWikidata.assert_not_called()
+        expected = "Wikidata lag stayed above 5 s for 5 min - Vol 4203 not exported"
+        self.assertEqual(expected, volume_view.export_hint)
+        with patch("ceurws.volume_view.ui") as ui:
+            volume_view.on_volume_exported(result)
+        ui.notify.assert_called_once_with(expected)
+        volume_view.sync_status.set_text.assert_called_with(expected)
+
+    def test_wait_is_shown(self):
+        """
+        test that the wait for Wikidata shows lag, limit and elapsed time in the status label
+        """
+        solution = self.get_solution(["wikidatasync"])
+        volume_view = VolumeView(solution, parent=None)
+        volume_view.sync_status = MagicMock()
+        container = MagicMock()
+        with (
+            patch.object(WikidataLag, "get_lag", side_effect=[9.3, 4.1]),
+            patch("ceurws.wikidata_lag.time.sleep") as sleep,
+        ):
+            wikidata_lag = volume_view.wait_for_wikidata(container, "Vol 4237 (1/2)")
+        self.assertTrue(wikidata_lag.ready)
+        sleep.assert_called_once_with(10.0)
+        status_text = volume_view.sync_status.set_text.call_args.args[0]
+        self.assertEqual("Vol 4237 (1/2) waits for Wikidata: lag 9.3 s, limit 5 s, 0.0 of 5 min", status_text)

@@ -51,15 +51,7 @@ class VolumeView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("Refresh from CEUR-WS Volume page")
                 )
-                if self.solution.may_sync_wikidata():
-                    self.wikidataButton = (
-                        ui.button(
-                            icon="web",
-                            on_click=self.onWikidataButtonClick,
-                        )
-                        .classes("btn btn-primary btn-sm col-1")
-                        .tooltip("Export to Wikidata")
-                    )
+                self.wikidataButton = self.add_sync_button(self.onWikidataButtonClick)
             self.header_view = ui.html()
             self.iframe_view = ui.html().classes("w-full").style("height: 80vh;")
 
@@ -92,8 +84,7 @@ class VolumeView(View):
                 self.setup_ui()
 
             wdProc = self.wdSync.getProceedingsForVolume(volume.number)
-            if self.wikidataButton is not None:
-                self.wikidataButton.disabled = wdProc is not None
+            self.wikidataButton.set_enabled(self.solution.may_sync_wikidata() and wdProc is None)
             links = ""
             if wdProc is not None:
                 # wikidata proceedings link
@@ -238,19 +229,14 @@ class VolumeListView(View):
                     .classes("btn btn-primary btn-sm col-1")
                     .tooltip("check for recently added volumes")
                 )
-                if self.solution.may_sync_wikidata():
-                    self.wikidataButton = (
-                        ui.button(
-                            icon="web",
-                            on_click=self.onWikidataButtonClick,
-                        )
-                        .classes("btn btn-primary btn-sm col-1")
-                        .tooltip("Export to Wikidata")
-                    )
-                    self.dry_run_switch = ui.switch("dry run").bind_value(self, "dry_run")
-                    self.ignore_errors_check_box = ui.checkbox("ignore_errors", value=self.ignore_errors).bind_value(
-                        self, "ignore_errors"
-                    )
+                may_sync = self.solution.may_sync_wikidata()
+                self.wikidataButton = self.add_sync_button(self.onWikidataButtonClick)
+                self.dry_run_switch = ui.switch("dry run").bind_value(self, "dry_run")
+                self.dry_run_switch.set_enabled(may_sync)
+                self.ignore_errors_check_box = ui.checkbox("ignore_errors", value=self.ignore_errors).bind_value(
+                    self, "ignore_errors"
+                )
+                self.ignore_errors_check_box.set_enabled(may_sync)
                 self.progress_bar = NiceguiProgressbar(total=100, desc="added", unit="volume")
             with ui.row() as self.log_row:
                 self.log_view = ui.html()

@@ -81,6 +81,22 @@ class TestRights(Basetest):
                 asyncio.run(solution.setup_footer())
             setup_footer.assert_awaited_once_with(solution, with_log=expected_with_log)
 
+    def test_sync_button(self):
+        """
+        test that the export button is greyed out with a hint without the wikidatasync right
+        """
+        for rights, expected_enabled, expected_tooltip in [
+            ([], False, VolumeView.SYNC_HINT),
+            (["log"], False, VolumeView.SYNC_HINT),
+            (["wikidatasync"], True, VolumeView.SYNC_TOOLTIP),
+        ]:
+            solution = self.get_solution(rights)
+            volume_view = self.get_volume_view(solution)
+            with patch("ceurws.view.ui") as ui:
+                button = volume_view.add_sync_button(volume_view.onWikidataButtonClick)
+            ui.element.return_value.tooltip.assert_called_once_with(expected_tooltip)
+            button.set_enabled.assert_called_once_with(expected_enabled)
+
     def test_volume_export(self):
         """
         test that the export of a single volume needs the wikidatasync right

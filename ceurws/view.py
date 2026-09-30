@@ -5,6 +5,7 @@ Created on 2024-02-23
 """
 
 from ngwidgets.widgets import Link
+from nicegui import ui
 from tabulate import tabulate
 
 
@@ -15,6 +16,27 @@ class View:
 
     noneValue = "-"
     wdPrefix = "http://www.wikidata.org/entity/"
+    SYNC_TOOLTIP = "Export to Wikidata"
+    SYNC_HINT = "Export to Wikidata needs an ORCID login with the wikidatasync right"
+
+    def add_sync_button(self, on_click) -> ui.button:
+        """
+        add the Export to Wikidata button
+
+        the button is greyed out with a hint for users without the wikidatasync right
+
+        Args:
+            on_click: the handler of the button
+
+        Returns:
+            ui.button: the button
+        """
+        may_sync = self.solution.may_sync_wikidata()
+        tooltip = self.SYNC_TOOLTIP if may_sync else self.SYNC_HINT
+        with ui.element("div").tooltip(tooltip):
+            button = ui.button(icon="web", on_click=on_click).classes("btn btn-primary btn-sm")
+        button.set_enabled(may_sync)
+        return button
 
     def getValue(self, obj, attr):
         value = getattr(obj, attr, View.noneValue)

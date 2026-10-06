@@ -335,6 +335,60 @@ class TestWikidataSync(Basetest):
                 self.assertEqual(expectedQid, actualQid)
                 self.assertEqual(expectedDesc, actualDesc)
 
+    def test_bundled_mappings_dry_run(self):
+        """
+        test that a dry run of the proceedings and event records of Vol-4280
+        builds the claims of Q141623730 and Q141623731 (except P4745) with the
+        mappings bundled in py_ez_wikidata - see issue #112
+        """
+        proceedings = {
+            "label": "Proceedings of the CAiSE 2026 Research Projects Exhibition (CAiSE-RPE 2026)",
+            "description": "Proceedings of CAiSE-RPE 2026 workshop",
+            "volume": "4280",
+            "short name": "CAiSE-RPE 2026",
+            "pubDate": "2026-10-02",
+            "title": "Proceedings of the CAiSE 2026 Research Projects Exhibition (CAiSE-RPE 2026)",
+            "ceurwsUrl": "https://ceur-ws.org/Vol-4280/",
+            "language of work or name": "Q1860",
+            "fullWorkUrl": "https://ceur-ws.org/Vol-4280/",
+            "urn": "urn:nbn:de:0074-4280-x",
+        }
+        event = {
+            "label": "CAiSE 2026 Research Projects Exhibition (CAiSE-RPE 2026)",
+            "description": "academic workshop",
+            "instanceOf": "Q40444998",
+            "short name": "CAiSE-RPE 2026",
+            "title": "CAiSE 2026 Research Projects Exhibition (CAiSE-RPE 2026)",
+            "describedAt": "https://ceur-ws.org/Vol-4280/",
+            "start time": "2026-06-08",
+            "end time": "2026-06-12",
+            "locationWikidataId": "Q2028",
+            "countryWikidataId": "Q38",
+            "referenceUrl": "https://ceur-ws.org/Vol-4280/",
+        }
+        result = self.wdSync.doAddProceedingsToWikidata(proceedings, write=False)
+        self.assertEqual({}, result.errors)
+        claims = result.item.get_json()["claims"]
+        self.assertEqual(
+            ["P1476", "P179", "P1813", "P31", "P4109", "P577", "P953", "P973"],
+            sorted(claims),
+        )
+        series = claims["P179"][0]
+        self.assertEqual("4280", series["qualifiers"]["P478"][0]["datavalue"]["value"])
+        url_claim = claims["P973"][0]
+        self.assertEqual("Q1860", url_claim["qualifiers"]["P407"][0]["datavalue"]["value"]["id"])
+        for pid, claim_list in claims.items():
+            with self.subTest(pid=pid):
+                self.assertEqual(1, len(claim_list[0]["references"]))
+        result = self.wdSync.doAddEventToWikidata(event, write=False)
+        self.assertEqual({}, result.errors)
+        claims = result.item.get_json()["claims"]
+        self.assertEqual(
+            ["P1476", "P17", "P1813", "P276", "P31", "P580", "P582", "P973"],
+            sorted(claims),
+        )
+        self.assertEqual("Q40444998", claims["P31"][0]["mainsnak"]["datavalue"]["value"]["id"])
+
     @unittest.skipIf(True, "Only manual execution of the test since it edits wikidata")
     def test_addLinkBetweenProceedingsAndEvent(self):
         """tests addLinkBetweenProceedingsAndEvent"""

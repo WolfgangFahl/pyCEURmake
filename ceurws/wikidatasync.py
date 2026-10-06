@@ -8,7 +8,7 @@ import datetime
 import os
 import sys
 
-from ez_wikidata.wdproperty import PropertyMapping, WdDatatype
+from ez_wikidata.wdproperty import PropertyMapping, PropertyMappings, WdDatatype
 from ez_wikidata.wikidata import UrlReference, Wikidata, WikidataResult
 from lodstorage.lod import LOD
 from lodstorage.query import Endpoint, EndpointManager, QueryManager
@@ -395,72 +395,7 @@ class WikidataSync:
         Returns:
             WikidataResult: the result of the add operation
         """
-        mappings = [
-            PropertyMapping(
-                column="instanceof",
-                propertyName="instanceof",
-                propertyId="P31",
-                propertyType=WdDatatype.itemid,
-                value="Q1143604",
-            ),
-            PropertyMapping(
-                column="part of the series",
-                propertyName="part of the series",
-                propertyId="P179",
-                propertyType=WdDatatype.itemid,
-                value="Q27230297",
-            ),
-            PropertyMapping(
-                column="volume",
-                propertyName="volume",
-                propertyId="P478",
-                propertyType=WdDatatype.string,
-                qualifierOf="part of the series",
-            ),  # ToDo: refactor qualifier of anchor column or property name?
-            PropertyMapping(
-                column="short name",
-                propertyName="short name",
-                propertyId="P1813",
-                propertyType=WdDatatype.text,
-            ),
-            PropertyMapping(
-                column="pubDate",
-                propertyName="publication date",
-                propertyId="P577",
-                propertyType=WdDatatype.date,
-            ),
-            PropertyMapping(
-                column="title",
-                propertyName="title",
-                propertyId="P1476",
-                propertyType=WdDatatype.text,
-            ),
-            PropertyMapping(
-                column="ceurwsUrl",
-                propertyName="described at URL",
-                propertyId="P973",
-                propertyType=WdDatatype.url,
-            ),
-            PropertyMapping(
-                column="language of work or name",
-                propertyName="language of work or name",
-                propertyId="P407",
-                propertyType=WdDatatype.itemid,
-                qualifierOf="ceurwsUrl",
-            ),
-            PropertyMapping(
-                column="fullWorkUrl",
-                propertyName="full work available at URL",
-                propertyId="P953",
-                propertyType=WdDatatype.url,
-            ),
-            PropertyMapping(
-                column="urn",
-                propertyName="URN-NBN",
-                propertyId="P4109",
-                propertyType=WdDatatype.extid,
-            ),
-        ]
+        mappings = list(PropertyMappings.of_name("proceedings").mappings.values())
         reference = UrlReference(url=record.get("ceurwsUrl"))
         result = self.wd.add_record(
             record=record,
@@ -564,77 +499,9 @@ class WikidataSync:
         """
         entityQid = record.get("instanceOf")
         # entity = record.get("description")
-        mappings = [
-            PropertyMapping(
-                column="instanceof",
-                propertyName="instanceof",
-                propertyId="P31",
-                propertyType=WdDatatype.itemid,
-                value=entityQid,
-            ),
-            PropertyMapping(
-                column="short name",
-                propertyName="short name",
-                propertyId="P1813",
-                propertyType=WdDatatype.text,
-            ),
-            PropertyMapping(
-                column="describedAt",
-                propertyName="described at URL",
-                propertyId="P973",
-                propertyType=WdDatatype.url,
-            ),
-            PropertyMapping(
-                column="language of work or name",
-                propertyName="language of work or name",
-                propertyId="P407",
-                propertyType=WdDatatype.itemid,
-                qualifierOf="describedAt",
-                value="Q1860",
-            ),
-            PropertyMapping(
-                column="title",
-                propertyName="title",
-                propertyId="P1476",
-                propertyType=WdDatatype.text,
-            ),
-            PropertyMapping(
-                column="describedAt",
-                propertyName="described at URL",
-                propertyId="P973",
-                propertyType=WdDatatype.url,
-            ),
-            PropertyMapping(
-                column="dblpEventId",
-                propertyName="DBLP event ID",
-                propertyId="P10692",
-                propertyType=WdDatatype.extid,
-            ),
-            PropertyMapping(
-                column="start time",
-                propertyName="start time",
-                propertyId="P580",
-                propertyType=WdDatatype.date,
-            ),
-            PropertyMapping(
-                column="end time",
-                propertyName="end time",
-                propertyId="P582",
-                propertyType=WdDatatype.date,
-            ),
-            PropertyMapping(
-                column="locationWikidataId",
-                propertyName="location",
-                propertyId="P276",
-                propertyType=WdDatatype.itemid,
-            ),
-            PropertyMapping(
-                column="countryWikidataId",
-                propertyName="country",
-                propertyId="P17",
-                propertyType=WdDatatype.itemid,
-            ),
-        ]
+        # the class of the event comes from the record
+        record["instanceof"] = entityQid
+        mappings = list(PropertyMappings.of_name("event").mappings.values())
         reference_url = record.pop("referenceUrl")
         reference = UrlReference(url=reference_url)
         result = self.wd.add_record(

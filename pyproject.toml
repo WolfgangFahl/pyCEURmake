@@ -43,7 +43,7 @@ dependencies = [
     # https://pypi.org/project/pyGenericSpreadSheet/
     #'pyGenericSpreadSheet>=0.2.4',
     # https://pypi.org/project/py-ez-wikidata/
-    'py-ez-wikidata>=0.3.2',
+    'py-ez-wikidata>=0.5.1',
     # https://pypi.org/project/py-3rdparty-mediawiki/
     'py-3rdparty-mediawiki>=0.18.1',
     # https://github.com/tqdm/tqdm
@@ -60,7 +60,6 @@ dependencies = [
     'scholar_auth[nicegui]>=0.0.2',
     "requests",
     "tabulate",
-    "spacy"
 ]
 
 requires-python = ">=3.10"

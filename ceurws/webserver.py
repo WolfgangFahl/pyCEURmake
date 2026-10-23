@@ -55,8 +55,8 @@ class CeurWsWebServer(InputWebserver):
             return await self.page(client, CeurWsSolution.volumes)
 
         @ui.page("/volume/{volnumber}")
-        async def show_volume_page(client: Client, vol_number):
-            return await self.page(client, CeurWsSolution.volumePage, vol_number)
+        async def show_volume_page(client: Client, volnumber: int):
+            return await self.page(client, CeurWsSolution.volumePage, volnumber)
 
         @ui.page("/wikidatasync")
         async def wikidatasync(client: Client):
@@ -373,3 +373,26 @@ class CeurWsSolution(InputWebSolution):
         volume = self.wdSync.volumesByNumber[vol_number]
         self.volume_view.showVolume(volume)
         pass
+
+    async def volumePage(self, volnumber: int):
+        """
+        show the page of the volume with the given number, the target of the
+        /volume/{volnumber} links, see https://github.com/WolfgangFahl/pyCEURmake/issues/113
+
+        Args:
+            volnumber(int): the number of the volume
+        """
+
+        def show():
+            try:
+                with self.container:
+                    volume = self.wdSync.volumesByNumber.get(volnumber)
+                    if volume is None:
+                        ui.label(f"Vol-{volnumber} not found")
+                    else:
+                        self.volume_view = VolumeView(self, self.container)
+                        self.volume_view.showVolume(volume)
+            except Exception as ex:
+                self.handle_exception(ex)
+
+        await self.setup_content_div(show)

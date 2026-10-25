@@ -945,6 +945,10 @@ class WikidataSync:
         if len(wd_items) > 0 and self.checkIfProceedingsFromExists(volume.number, eventItemQid=None):
             results["Event"] = WikidataResult(msg=f"Vol-{volume.number} is already linked to its event")
         elif proceedings_id is not None or not write:
+            if write:
+                # addProceedingsToWikidata logs out after its write, the event
+                # and link writes need the session again, see issue 114
+                self.login()
             event_results = self.doCreateEventItemAndLinkProceedings(volume, proceedings_id, write=write)
             results.update(event_results)
         return results

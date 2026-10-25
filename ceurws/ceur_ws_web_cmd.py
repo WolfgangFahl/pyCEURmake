@@ -15,7 +15,9 @@ from tqdm import tqdm
 from ceurws.ceur_ws import VolumeManager
 from ceurws.indexparser import ParserConfig
 from ceurws.namedqueries import NamedQueries
+from ceurws.volume_range import VolumeRange
 from ceurws.webserver import CeurWsWebServer
+from ceurws.wikidata_lag import WikidataLag
 from ceurws.wikidatasync import WikidataSync
 
 
@@ -92,7 +94,74 @@ class CeurWsCmd(WebserverCmd):
             help="minutes to wait per volume for Wikidata to accept writes while it reports replication lag "
             "(default: %(default)s)",
         )
+        parser.add_argument(
+            "-wds",
+            "--wikidata_sync",
+            nargs="+",
+            metavar="VOLUMES",
+            help="sync the given volumes to Wikidata, numbers and ranges e.g. 4065-4069 4003: proceedings item,"
+            " event item and their link",
+        )
+        parser.add_argument(
+            "-dr",
+            "--dry_run",
+            action="store_true",
+            help="with --wikidata_sync: show the records and write nothing",
+        )
         return parser
+
+    def sync_volumes(self, args) -> int:
+        """
+        sync the volumes of the --wikidata_sync ranges to Wikidata
+
+        Args:
+            args: the parsed command line arguments
+
+        Returns:
+            int: the number of volumes synced
+        """
+        numbers = VolumeRange.numbers(args.wikidata_sync)
+        write = not args.dry_run
+        mode = "write" if write else "dry run"
+        wdsync = WikidataSync.from_args(args)
+        if write:
+            wdsync.login()
+        synced = 0
+        try:
+            for index, number in enumerate(numbers, start=1):
+                what = f"Vol-{number} ({index} of {len(numbers)})"
+                volume = wdsync.volumesByNumber.get(number)
+                if volume is None:
+                    print(f"{what}: not in the volume cache, skipped")
+                    continue
+                if write:
+                    wikidata_lag = WikidataLag(args.wikidata_timeout)
+                    ready = wikidata_lag.wait_until_ready(
+                        on_wait=lambda lag, elapsed, what=what, wikidata_lag=wikidata_lag: print(
+                            wikidata_lag.wait_message(what, lag, elapsed)
+                        )
+                    )
+                    if not ready:
+                        print(f"{what}: {wikidata_lag.timeout_message()} sync stopped")
+                        break
+                print(f"{what}: {mode} {volume.acronym}")
+                results = wdsync.sync_volume(volume, write=write, ignore_errors=args.force)
+                for step, result in results.items():
+                    line = f"  {step}: {result.qid or '-'}"
+                    if result.msg:
+                        line += f" {result.msg}"
+                    if result.errors:
+                        line += " errors: " + ", ".join(f"{key}: {error}" for key, error in result.errors.items())
+                    print(line)
+                    if not write and step == "Proceedings" and isinstance(result.item, dict):
+                        for key, value in result.item.items():
+                            print(f"    {key}: {value}")
+                synced += 1
+        finally:
+            if write:
+                wdsync.logout()
+        print(f"{mode}: {synced} of {len(numbers)} volumes processed")
+        return synced
 
     def handle_args(self, args) -> bool:
         """
@@ -120,6 +189,8 @@ class CeurWsCmd(WebserverCmd):
         if args.wikidata_update:
             wdsync = WikidataSync.from_args(args)
             wdsync.update(withStore=True)
+        if args.wikidata_sync:
+            self.sync_volumes(args)
         if args.dblp_update:
             wdsync = WikidataSync.from_args(args)
             endpoint = wdsync.dblpEndpoint

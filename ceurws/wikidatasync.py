@@ -910,6 +910,45 @@ class WikidataSync:
             results["link"] = link_result
         return results
 
+    def sync_volume(
+        self, volume: Volume, write: bool = False, ignore_errors: bool = False
+    ) -> dict[str, WikidataResult]:
+        """
+        add the given volume to Wikidata or complete it if it already exists:
+        the proceedings item by its URN, then the event item and the link
+        between the two, see https://github.com/WolfgangFahl/pyCEURmake/issues/115
+
+        Args:
+            volume: the CEUR-WS volume to sync
+            write: if True write to Wikidata, else only prepare the records
+            ignore_errors: if True ignore errors of the proceedings write
+
+        Returns:
+            dict[str, WikidataResult]: the results by step, Proceedings, dblp, Event and link;
+                the Proceedings result of a dry run carries the record in its item field
+        """
+        results = {}
+        proceedings_id = None
+        wd_items = self.getProceedingWdItemsByUrn(volume.urn)
+        if len(wd_items) > 0:
+            proceedings_id = wd_items[0].split("/")[-1]
+            results["Proceedings"] = WikidataResult(
+                qid=proceedings_id, msg=f"Proceedings for Vol-{volume.number} already in Wikidata"
+            )
+        else:
+            record = self.getWikidataProceedingsRecord(volume)
+            result = self.addProceedingsToWikidata(record, write=write, ignoreErrors=ignore_errors)
+            if not write:
+                result.item = record
+            proceedings_id = result.qid
+            results["Proceedings"] = result
+        if len(wd_items) > 0 and self.checkIfProceedingsFromExists(volume.number, eventItemQid=None):
+            results["Event"] = WikidataResult(msg=f"Vol-{volume.number} is already linked to its event")
+        elif proceedings_id is not None or not write:
+            event_results = self.doCreateEventItemAndLinkProceedings(volume, proceedings_id, write=write)
+            results.update(event_results)
+        return results
+
     @classmethod
     def removeWdPrefix(cls, value: str):
         """
